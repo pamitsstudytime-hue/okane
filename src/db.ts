@@ -1148,7 +1148,15 @@ export function loadDBFromSQLTables(): AppDB {
     const settlements: Settlement[] = sqlSettlements.map(s => {
       let expIds: string[] = [];
       try {
-        expIds = typeof s.expenseIds === 'string' ? JSON.parse(s.expenseIds) : (Array.isArray(s.expenseIds) ? (s.expenseIds as string[]) : []);
+        if (typeof s.expenseIds === 'string') {
+          try {
+            expIds = JSON.parse(s.expenseIds);
+          } catch {
+            expIds = s.expenseIds.split(',').map(x => x.trim()).filter(Boolean);
+          }
+        } else if (Array.isArray(s.expenseIds)) {
+          expIds = (s.expenseIds as string[]).map(String);
+        }
       } catch {
         expIds = [];
       }
@@ -1620,9 +1628,10 @@ export function getDBCalculationCache(db: AppDB): DBCalculationCache {
     }
 
     // Friend & Contact statistics calculation
-    if (e.friendId) {
-      const fb = getOrCreateFriendBal(e.friendId);
-      const cs = getOrCreateContactStat(e.friendId);
+    const fId = e.friendId ? String(e.friendId).trim() : null;
+    if (fId) {
+      const fb = getOrCreateFriendBal(fId);
+      const cs = getOrCreateContactStat(fId);
       cs.count += 1;
       cs.totalSpent += (isIncoming ? -amt : amt);
       if (!cs.lastTx || e.date > cs.lastTx.date || (e.date === cs.lastTx.date && (e.createdAt || 0) > (cs.lastTx.createdAt || 0))) {
@@ -1645,15 +1654,16 @@ export function getDBCalculationCache(db: AppDB): DBCalculationCache {
       }
     }
 
-    if (e.vendorId) {
-      const cs = getOrCreateContactStat(e.vendorId);
+    const vId = e.vendorId ? String(e.vendorId).trim() : null;
+    if (vId) {
+      const cs = getOrCreateContactStat(vId);
       cs.count += 1;
       cs.totalSpent += (isIncoming ? -amt : amt);
       if (!cs.lastTx || e.date > cs.lastTx.date || (e.date === cs.lastTx.date && (e.createdAt || 0) > (cs.lastTx.createdAt || 0))) {
         cs.lastTx = e;
       }
 
-      const fb = getOrCreateFriendBal(e.vendorId);
+      const fb = getOrCreateFriendBal(vId);
       if (e.status === 'unpaid' || !e.vendorSettled) {
         const isVendorUnsettled = !e.vendorSettled && (!e.settled || e.type === 'for_friend' || e.type === 'personal');
         if (isVendorUnsettled) {
@@ -1727,7 +1737,8 @@ export function totalWalletBalance(db: AppDB): number {
 }
 
 export function friendBalance(db: AppDB, friendId: string): { owedToMe: number; owedByMe: number; net: number } {
-  return getDBCalculationCache(db).friendBalances.get(friendId) || { owedToMe: 0, owedByMe: 0, net: 0 };
+  const norm = String(friendId).trim();
+  return getDBCalculationCache(db).friendBalances.get(norm) || { owedToMe: 0, owedByMe: 0, net: 0 };
 }
 
 export function allFriendBalances(db: AppDB) {
@@ -1747,34 +1758,32 @@ export function personalNetAmount(e: Expense): number {
 }
 
 export function unsettledExpensesForFriend(db: AppDB, friendId: string): Expense[] {
-  return db.expenses
+  const normTarget = String(friendId).trim();
+  return (db.expenses || [])
     .filter(e => {
       const amt = Number(e.amount) || 0;
       if (amt <= 0.0001) return false;
 
-      // 1. Shared friend expenses
-      if (e.friendId === friendId && e.type !== 'personal') {
-        return !e.settled;
-      }
-      // 2. Unpaid vendor debt (user owes vendor)
-      if (e.vendorId === friendId && (e.status === 'unpaid' || !e.vendorSettled)) {
-        return !e.vendorSettled && (!e.settled || e.type === 'for_friend' || e.type === 'personal');
-      }
-      // 3. Unpaid friend debt
-      if (e.friendId === friendId && (e.status === 'unpaid' || e.status === 'unsettled')) {
-        return !e.settled;
-      }
-      // 4. Vendor billed on credit/tab
-      if (e.vendorId === friendId && (e.type === 'by_friend' || e.type === 'for_friend')) {
-        return !e.vendorSettled && !e.settled;
-      }
-      // 5. Direct friend or vendor match that is not marked settled
-      if (e.friendId === friendId && !e.settled) {
-        return true;
-      }
-      if (e.vendorId === friendId && !e.vendorSettled) {
-        return true;
-      }
+      const fId = e.friendId ? String(e.friendId).trim() : null;
+      const vId = e.vendorId ? String(e.vendorId).trim() : null;
+
+      const matchesFriend = Boolean(fId && fId === normTarget);
+      const matchesVendor = Boolean(vId && vId === normTarget);
+
+      if (!matchesFriend && !matchesVendor) return false;
+
+      // If matches as friend and settled
+      if (matchesFriend && e.settled) return false;
+
+      // If matches as vendor and vendorSettled
+      if (matchesVendor && e.vendorSettled) return false;
+
+      // Active debt for friend
+      if (matchesFriend && !e.settled) return true;
+
+      // Active debt for vendor
+      if (matchesVendor && !e.vendorSettled) return true;
+
       return false;
     })
     .sort((a, b) => (b.originalDate || b.date).localeCompare(a.originalDate || a.date) || (b.createdAt || 0) - (a.createdAt || 0));
@@ -2290,17 +2299,21 @@ export function recordSettlement(
 }
 
 export function deleteSettlement(db: AppDB, id: string): AppDB {
-  const target = (db.settlements || []).find(s => s.id === id);
+  const normId = String(id).trim();
+  const target = (db.settlements || []).find(s => String(s?.id).trim() === normId);
+  const targetFriendId = target?.friendId ? String(target.friendId).trim() : '';
+  const targetAmount = Math.abs(Number(target?.amount) || 0);
+  const targetWalletId = target?.walletId || '';
 
   let targetExpIdsList: string[] = [];
   const rawExpenseIds = target?.expenseIds as unknown;
   if (rawExpenseIds) {
     if (Array.isArray(rawExpenseIds)) {
-      targetExpIdsList = rawExpenseIds.map(String);
+      targetExpIdsList = rawExpenseIds.map(x => String(x).trim());
     } else if (typeof rawExpenseIds === 'string') {
       try {
         const parsed = JSON.parse(rawExpenseIds);
-        targetExpIdsList = Array.isArray(parsed) ? parsed.map(String) : [];
+        targetExpIdsList = Array.isArray(parsed) ? parsed.map(x => String(x).trim()) : [];
       } catch {
         targetExpIdsList = rawExpenseIds.split(',').map(x => x.trim()).filter(Boolean);
       }
@@ -2309,62 +2322,75 @@ export function deleteSettlement(db: AppDB, id: string): AppDB {
 
   const targetExpenseIds = new Set<string>(targetExpIdsList);
   if (target?.partialBreakdown && typeof target.partialBreakdown === 'object') {
-    Object.keys(target.partialBreakdown).forEach(k => targetExpenseIds.add(k));
+    Object.keys(target.partialBreakdown).forEach(k => targetExpenseIds.add(String(k).trim()));
   }
 
   const childExpenseIdsToDelete = new Set<string>();
   const parentExpenseIdsToRestore = new Set<string>(targetExpenseIds);
 
-  db.expenses.forEach(e => {
-    const isDirect = e.settlementId === id || e.vendorSettlementId === id;
+  (db.expenses || []).forEach(e => {
+    const eId = String(e.id).trim();
+    const eStl = e.settlementId ? String(e.settlementId).trim() : '';
+    const eVendorStl = e.vendorSettlementId ? String(e.vendorSettlementId).trim() : '';
+    const isDirect = eStl === normId || eVendorStl === normId;
+    const eParent = e.parentExpenseId ? String(e.parentExpenseId).trim() : '';
+
     if (isDirect) {
-      if (e.parentExpenseId) {
-        childExpenseIdsToDelete.add(e.id);
-        parentExpenseIdsToRestore.add(e.parentExpenseId);
+      if (eParent) {
+        childExpenseIdsToDelete.add(eId);
+        parentExpenseIdsToRestore.add(eParent);
       } else {
-        parentExpenseIdsToRestore.add(e.id);
+        parentExpenseIdsToRestore.add(eId);
       }
-    } else if (e.parentExpenseId && targetExpenseIds.has(e.parentExpenseId)) {
-      childExpenseIdsToDelete.add(e.id);
-      parentExpenseIdsToRestore.add(e.parentExpenseId);
+    } else if (eParent && targetExpenseIds.has(eParent)) {
+      childExpenseIdsToDelete.add(eId);
+      parentExpenseIdsToRestore.add(eParent);
     }
   });
 
   // Filter out child expenses created during partial settlement
-  let expenses = db.expenses.filter(e => !childExpenseIdsToDelete.has(e.id));
+  let expenses = (db.expenses || []).filter(e => !childExpenseIdsToDelete.has(String(e.id).trim()));
 
   // Restore parent / settled expenses back to pre-settlement state
   expenses = expenses.map(e => {
-    const isMainSettlement = e.settlementId === id;
-    const isVendorSettlement = e.vendorSettlementId === id;
-    const isInTargetList = targetExpenseIds.has(e.id);
-    const isParentToRestore = parentExpenseIdsToRestore.has(e.id);
-    const isGroupToRestore = Boolean(e.groupId && parentExpenseIdsToRestore.has(e.groupId));
+    const eId = String(e.id).trim();
+    const eStl = e.settlementId ? String(e.settlementId).trim() : '';
+    const eVendorStl = e.vendorSettlementId ? String(e.vendorSettlementId).trim() : '';
+    const isMainSettlement = eStl === normId;
+    const isVendorSettlement = eVendorStl === normId;
+    const isInTargetList = targetExpenseIds.has(eId);
+    const isParentToRestore = parentExpenseIdsToRestore.has(eId);
+    const isGroupToRestore = Boolean(e.groupId && parentExpenseIdsToRestore.has(String(e.groupId).trim()));
 
     if (isMainSettlement || isVendorSettlement || isInTargetList || isParentToRestore || isGroupToRestore) {
-      const restoredAmt = e.originalAmount ?? e.amount;
-      const restoredDate = e.originalDate || e.date;
-      const isVendorExpense = Boolean(e.vendorId && (!target || e.vendorId === target.friendId)) || isVendorSettlement;
-      const isFriendExpense = Boolean(e.friendId && (!target || e.friendId === target.friendId)) || isMainSettlement;
+      const origCandidate = Number(e.originalAmount);
+      const currCandidate = Number(e.amount);
+      let restoredAmt = targetAmount;
+      if (!isNaN(origCandidate) && origCandidate > 0.0001) {
+        restoredAmt = origCandidate;
+      } else if (!isNaN(currCandidate) && currCandidate > 0.0001) {
+        restoredAmt = currCandidate;
+      }
 
-      let restoredStatus: ExpenseStatus = e.status;
-      if (isVendorExpense) {
+      const restoredDate = e.originalDate || e.date || target?.date || todayISO();
+      const isVendorExpense = Boolean(e.vendorId && (!targetFriendId || String(e.vendorId).trim() === targetFriendId)) || isVendorSettlement;
+
+      let restoredStatus: ExpenseStatus = 'unsettled';
+      if (isVendorExpense || e.type === 'personal') {
         restoredStatus = 'unpaid';
-      } else if (e.type === 'personal' && e.friendId) {
-        restoredStatus = 'unpaid';
-      } else if (e.type === 'for_friend' || e.type === 'by_friend') {
+      } else {
         restoredStatus = 'unsettled';
       }
 
       return {
         ...e,
-        amount: Number(restoredAmt) || 0,
+        amount: restoredAmt,
         date: restoredDate,
         status: restoredStatus,
-        settled: isFriendExpense ? false : (isInTargetList || isMainSettlement ? false : e.settled),
-        settlementId: (isFriendExpense || isMainSettlement || isInTargetList) ? null : e.settlementId,
-        vendorSettled: isVendorExpense ? false : (isInTargetList || isVendorSettlement ? false : e.vendorSettled),
-        vendorSettlementId: (isVendorExpense || isVendorSettlement || isInTargetList) ? null : e.vendorSettlementId,
+        settled: false,
+        settlementId: null,
+        vendorSettled: false,
+        vendorSettlementId: null,
         originalAmount: undefined,
         originalDate: undefined,
         settledAmount: undefined,
@@ -2373,9 +2399,58 @@ export function deleteSettlement(db: AppDB, id: string): AppDB {
     return e;
   });
 
+  // Verify whether the target contact now has any unsettled expenses in the updated list
+  const tempDB: AppDB = { ...db, expenses };
+  const currentUnsettled = targetFriendId ? unsettledExpensesForFriend(tempDB, targetFriendId) : [];
+
+  // If no expenses are currently unsettled for this contact, or if all restored expenses total 0,
+  // synthesize an active unsettled expense so that the contact definitely returns to Pending Settlements!
+  if (targetFriendId && currentUnsettled.length === 0 && targetAmount > 0) {
+    const friend = (db.friends || []).find(f => String(f?.id).trim() === targetFriendId);
+    const isOwedByMe = (Number(target?.amount) || 0) < 0; // Negative settlement amount means user paid the friend/vendor
+    const fallbackCategory = friend?.category || db.settings?.defaultCategory || 'Food';
+    const fallbackWalletId = targetWalletId || db.settings?.defaultWalletId || db.wallets?.[0]?.id || 'wal_cash';
+
+    const newExp: Expense = {
+      id: uid('exp'),
+      description: target?.note ? target.note : (friend ? `${friend.name} Expense` : 'Pending Settlement Expense'),
+      amount: targetAmount,
+      category: fallbackCategory,
+      date: target?.date || todayISO(),
+      type: friend?.type === 'vendor' ? 'personal' : (isOwedByMe ? 'by_friend' : 'for_friend'),
+      flow: 'out',
+      friendId: friend?.type === 'vendor' ? null : targetFriendId,
+      vendorId: friend?.type === 'vendor' ? targetFriendId : null,
+      walletId: fallbackWalletId,
+      status: friend?.type === 'vendor' ? 'unpaid' : 'unsettled',
+      settled: false,
+      settlementId: null,
+      vendorSettled: false,
+      vendorSettlementId: null,
+      createdAt: Date.now(),
+      notes: `Restored from undone settlement on ${target?.date || todayISO()}`,
+    };
+    expenses = [newExp, ...expenses];
+  }
+
+  // Ensure contact exists in friends array
+  let friends = db.friends || [];
+  if (targetFriendId && !friends.some(f => String(f?.id).trim() === targetFriendId)) {
+    const restoredFriend: Friend = {
+      id: targetFriendId,
+      name: target?.note ? target.note.split(' ')[0] : 'Contact',
+      notes: 'Restored from settlement',
+      color: '#6366f1',
+      createdAt: Date.now(),
+      type: 'friend',
+    };
+    friends = [restoredFriend, ...friends];
+  }
+
   return {
     ...db,
-    settlements: (db.settlements || []).filter(x => x.id !== id),
+    friends,
+    settlements: (db.settlements || []).filter(x => String(x?.id).trim() !== normId),
     expenses,
   };
 }

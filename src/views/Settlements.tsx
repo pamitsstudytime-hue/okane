@@ -93,7 +93,37 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
   const targetWName = targetW?.name || targetS?.paymentMethod || 'wallet';
 
   const friendsWithUnsettled = useMemo(() => {
-    return friends.filter(f => f && unsettledExpensesForFriend(db, f.id).length > 0);
+    const friendMap = new Map<string, typeof friends[0]>();
+    (friends || []).forEach(f => {
+      if (f && f.id) friendMap.set(String(f.id).trim(), f);
+    });
+
+    (db?.expenses || []).forEach(e => {
+      const fId = e.friendId ? String(e.friendId).trim() : '';
+      const vId = e.vendorId ? String(e.vendorId).trim() : '';
+      if (fId && !friendMap.has(fId)) {
+        friendMap.set(fId, {
+          id: fId,
+          name: 'Contact',
+          notes: '',
+          color: '#6366f1',
+          createdAt: e.createdAt || 0,
+          type: 'friend',
+        });
+      }
+      if (vId && !friendMap.has(vId)) {
+        friendMap.set(vId, {
+          id: vId,
+          name: 'Vendor',
+          notes: '',
+          color: '#f59e0b',
+          createdAt: e.createdAt || 0,
+          type: 'vendor',
+        });
+      }
+    });
+
+    return Array.from(friendMap.values()).filter(f => f && unsettledExpensesForFriend(db, f.id).length > 0);
   }, [friends, db]);
 
   const sorted = useMemo(
