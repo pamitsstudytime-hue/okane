@@ -164,7 +164,7 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
     sorted.forEach(s => {
       if (!s) return;
       const idsSet = new Set(Array.isArray(s.expenseIds) ? s.expenseIds : []);
-      const matched = expenses.filter(e => e && (idsSet.has(e.id) || (e.settlementId && e.settlementId === s.id)));
+      const matched = expenses.filter(e => e && (idsSet.has(e.id) || (e.settlementId && e.settlementId === s.id) || (e.vendorSettlementId && e.vendorSettlementId === s.id)));
       
       // Fallback: if ids match from expById directly
       if (matched.length === 0 && Array.isArray(s.expenseIds)) {

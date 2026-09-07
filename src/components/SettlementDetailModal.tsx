@@ -34,7 +34,7 @@ export default function SettlementDetailModal({ settlement, onClose, onUndo }: S
   // Find all expenses associated with this settlement
   const expIdsSet = new Set(Array.isArray(settlement?.expenseIds) ? settlement.expenseIds : []);
   const settledExpenses: Expense[] = expenses.filter(
-    e => e && (expIdsSet.has(e.id) || (e.settlementId && e.settlementId === settlement?.id))
+    e => e && (expIdsSet.has(e.id) || (e.settlementId && e.settlementId === settlement?.id) || (e.vendorSettlementId && e.vendorSettlementId === settlement?.id))
   );
 
   return createPortal(

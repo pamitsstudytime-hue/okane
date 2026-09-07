@@ -675,30 +675,68 @@ export default function Settings({
     const { content, contentType, fileName } = getExportContent();
     try {
       let savedToDevice = false;
+      let savedFolderLocation = 'Downloads/Okane';
 
       // Native Mobile (Capacitor)
       if (Capacitor.isNativePlatform()) {
         try {
           await Filesystem.requestPermissions();
         } catch {
-          // ignore
+          // ignore permission errors if already granted or unsupported
         }
 
+        // Method A: Try ExternalStorage Download/Okane (Standard Android Downloads folder)
         if (Capacitor.getPlatform() === 'android') {
           try {
+            // First ensure Okane folder exists
+            try {
+              await Filesystem.mkdir({
+                path: 'Download/Okane',
+                directory: Directory.ExternalStorage,
+                recursive: true,
+              });
+            } catch { /* directory may already exist */ }
+
             await Filesystem.writeFile({
-              path: `Download/${fileName}`,
+              path: `Download/Okane/${fileName}`,
               data: content,
               directory: Directory.ExternalStorage,
               encoding: Encoding.UTF8,
               recursive: true,
             });
             savedToDevice = true;
+            savedFolderLocation = 'Downloads/Okane';
           } catch (e) {
-            console.warn('Direct ExternalStorage Download write failed, attempting Documents:', e);
+            console.warn('Direct Download/Okane write failed, trying Documents/Okane:', e);
           }
         }
 
+        // Method B: Try Documents/Okane directory
+        if (!savedToDevice) {
+          try {
+            try {
+              await Filesystem.mkdir({
+                path: 'Okane',
+                directory: Directory.Documents,
+                recursive: true,
+              });
+            } catch { /* directory may already exist */ }
+
+            await Filesystem.writeFile({
+              path: `Okane/${fileName}`,
+              data: content,
+              directory: Directory.Documents,
+              encoding: Encoding.UTF8,
+              recursive: true,
+            });
+            savedToDevice = true;
+            savedFolderLocation = 'Documents/Okane';
+          } catch (e) {
+            console.warn('Documents/Okane write failed, trying direct Documents:', e);
+          }
+        }
+
+        // Method C: Root of Documents or Data directory
         if (!savedToDevice) {
           try {
             await Filesystem.writeFile({
@@ -709,19 +747,68 @@ export default function Settings({
               recursive: true,
             });
             savedToDevice = true;
+            savedFolderLocation = 'Documents';
           } catch (e) {
-            console.warn('Documents write failed:', e);
+            console.warn('Documents root write failed:', e);
           }
         }
       }
 
-      // Universal browser blob download
+      // Desktop File System Access API (lets user pick/save directly into their desired folder, defaulting to an Okane backup filename)
+      if (typeof window !== 'undefined' && 'showSaveFilePicker' in window && !Capacitor.isNativePlatform()) {
+        try {
+          const fileHandle = await (window as unknown as {
+            showSaveFilePicker: (options?: {
+              suggestedName?: string;
+              types?: Array<{
+                description: string;
+                accept: Record<string, string[]>;
+              }>;
+            }) => Promise<{
+              createWritable: () => Promise<{
+                write: (data: string | Blob) => Promise<void>;
+                close: () => Promise<void>;
+              }>;
+              name?: string;
+            }>;
+          }).showSaveFilePicker({
+            suggestedName: fileName,
+            types: [
+              {
+                description: 'Okane Database Backup (.db)',
+                accept: { 'text/plain': ['.db', '.sql'] },
+              },
+            ],
+          });
+
+          if (fileHandle) {
+            const writable = await fileHandle.createWritable();
+            await writable.write(content);
+            await writable.close();
+            setExportModalOpen(false);
+            showToast(`Backup saved to ${fileHandle.name || fileName}!`);
+            return;
+          }
+        } catch (pickerErr) {
+          // If the user cancelled the dialog, just exit cleanly
+          if ((pickerErr as Error).name === 'AbortError') {
+            setExportModalOpen(false);
+            return;
+          }
+          console.warn('showSaveFilePicker failed or was rejected, falling back to browser download:', pickerErr);
+        }
+      }
+
+      // Universal browser blob download (triggers browser download manager on Web/PWA/Android Chrome)
       const downloaded = downloadFile(content, fileName, contentType);
       setExportModalOpen(false);
-      if (downloaded) {
-        showToast(`Saved ${fileName} to Downloads!`);
+
+      if (savedToDevice) {
+        showToast(`Backup saved to ${savedFolderLocation}/${fileName}!`);
+      } else if (downloaded) {
+        showToast(`Saved ${fileName} to Downloads/Okane!`);
       } else {
-        showToast('Backup downloaded successfully.');
+        showToast('Backup exported successfully.');
       }
     } catch (err) {
       console.error('Save to storage error:', err);
@@ -4039,7 +4126,7 @@ export default function Settings({
                       Export to Storage
                     </div>
                     <div style={{ fontSize: '11.5px', color: 'var(--text-3)', marginTop: '2px' }}>
-                      Save file directly to Downloads folder
+                      Save file to Downloads/Okane folder
                     </div>
                   </div>
                 </div>

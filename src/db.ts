@@ -1639,7 +1639,7 @@ export function getDBCalculationCache(db: AppDB): DBCalculationCache {
             else fb.owedByMe += amt;
           }
         }
-      } else if (e.status === 'unpaid' && !e.settled) {
+      } else if ((e.status === 'unpaid' || e.status === 'unsettled') && !e.settled) {
         if (isIncoming) fb.owedToMe += amt;
         else fb.owedByMe += amt;
       }
@@ -1654,8 +1654,8 @@ export function getDBCalculationCache(db: AppDB): DBCalculationCache {
       }
 
       const fb = getOrCreateFriendBal(e.vendorId);
-      if (e.status === 'unpaid') {
-        const isVendorUnsettled = !e.vendorSettled && (!e.settled || e.type === 'for_friend');
+      if (e.status === 'unpaid' || !e.vendorSettled) {
+        const isVendorUnsettled = !e.vendorSettled && (!e.settled || e.type === 'for_friend' || e.type === 'personal');
         if (isVendorUnsettled) {
           if (isIncoming) fb.owedToMe += amt;
           else fb.owedByMe += amt;
@@ -1757,16 +1757,23 @@ export function unsettledExpensesForFriend(db: AppDB, friendId: string): Expense
         return !e.settled;
       }
       // 2. Unpaid vendor debt (user owes vendor)
-      if (e.vendorId === friendId && e.status === 'unpaid') {
-        return !e.vendorSettled && (!e.settled || e.type === 'for_friend');
+      if (e.vendorId === friendId && (e.status === 'unpaid' || !e.vendorSettled)) {
+        return !e.vendorSettled && (!e.settled || e.type === 'for_friend' || e.type === 'personal');
       }
       // 3. Unpaid friend debt
-      if (e.friendId === friendId && e.status === 'unpaid') {
+      if (e.friendId === friendId && (e.status === 'unpaid' || e.status === 'unsettled')) {
         return !e.settled;
       }
       // 4. Vendor billed on credit/tab
-      if (e.vendorId === friendId && e.type === 'by_friend') {
+      if (e.vendorId === friendId && (e.type === 'by_friend' || e.type === 'for_friend')) {
         return !e.vendorSettled && !e.settled;
+      }
+      // 5. Direct friend or vendor match that is not marked settled
+      if (e.friendId === friendId && !e.settled) {
+        return true;
+      }
+      if (e.vendorId === friendId && !e.vendorSettled) {
+        return true;
       }
       return false;
     })
@@ -2284,13 +2291,33 @@ export function recordSettlement(
 
 export function deleteSettlement(db: AppDB, id: string): AppDB {
   const target = (db.settlements || []).find(s => s.id === id);
-  const targetExpenseIds = new Set(target?.expenseIds || []);
+
+  let targetExpIdsList: string[] = [];
+  const rawExpenseIds = target?.expenseIds as unknown;
+  if (rawExpenseIds) {
+    if (Array.isArray(rawExpenseIds)) {
+      targetExpIdsList = rawExpenseIds.map(String);
+    } else if (typeof rawExpenseIds === 'string') {
+      try {
+        const parsed = JSON.parse(rawExpenseIds);
+        targetExpIdsList = Array.isArray(parsed) ? parsed.map(String) : [];
+      } catch {
+        targetExpIdsList = rawExpenseIds.split(',').map(x => x.trim()).filter(Boolean);
+      }
+    }
+  }
+
+  const targetExpenseIds = new Set<string>(targetExpIdsList);
+  if (target?.partialBreakdown && typeof target.partialBreakdown === 'object') {
+    Object.keys(target.partialBreakdown).forEach(k => targetExpenseIds.add(k));
+  }
 
   const childExpenseIdsToDelete = new Set<string>();
   const parentExpenseIdsToRestore = new Set<string>(targetExpenseIds);
 
   db.expenses.forEach(e => {
-    if (e.settlementId === id || e.vendorSettlementId === id) {
+    const isDirect = e.settlementId === id || e.vendorSettlementId === id;
+    if (isDirect) {
       if (e.parentExpenseId) {
         childExpenseIdsToDelete.add(e.id);
         parentExpenseIdsToRestore.add(e.parentExpenseId);
@@ -2310,19 +2337,34 @@ export function deleteSettlement(db: AppDB, id: string): AppDB {
   expenses = expenses.map(e => {
     const isMainSettlement = e.settlementId === id;
     const isVendorSettlement = e.vendorSettlementId === id;
+    const isInTargetList = targetExpenseIds.has(e.id);
+    const isParentToRestore = parentExpenseIdsToRestore.has(e.id);
+    const isGroupToRestore = Boolean(e.groupId && parentExpenseIdsToRestore.has(e.groupId));
 
-    if (isMainSettlement || isVendorSettlement || parentExpenseIdsToRestore.has(e.id) || (e.groupId && parentExpenseIdsToRestore.has(e.groupId))) {
+    if (isMainSettlement || isVendorSettlement || isInTargetList || isParentToRestore || isGroupToRestore) {
       const restoredAmt = e.originalAmount ?? e.amount;
       const restoredDate = e.originalDate || e.date;
+      const isVendorExpense = Boolean(e.vendorId && (!target || e.vendorId === target.friendId)) || isVendorSettlement;
+      const isFriendExpense = Boolean(e.friendId && (!target || e.friendId === target.friendId)) || isMainSettlement;
+
+      let restoredStatus: ExpenseStatus = e.status;
+      if (isVendorExpense) {
+        restoredStatus = 'unpaid';
+      } else if (e.type === 'personal' && e.friendId) {
+        restoredStatus = 'unpaid';
+      } else if (e.type === 'for_friend' || e.type === 'by_friend') {
+        restoredStatus = 'unsettled';
+      }
+
       return {
         ...e,
-        amount: restoredAmt,
+        amount: Number(restoredAmt) || 0,
         date: restoredDate,
-        status: (e.vendorId && (!e.vendorSettled || isVendorSettlement)) ? 'unpaid' : e.status,
-        settled: isMainSettlement ? false : e.settled,
-        settlementId: isMainSettlement ? null : e.settlementId,
-        vendorSettled: isVendorSettlement ? false : e.vendorSettled,
-        vendorSettlementId: isVendorSettlement ? null : e.vendorSettlementId,
+        status: restoredStatus,
+        settled: isFriendExpense ? false : (isInTargetList || isMainSettlement ? false : e.settled),
+        settlementId: (isFriendExpense || isMainSettlement || isInTargetList) ? null : e.settlementId,
+        vendorSettled: isVendorExpense ? false : (isInTargetList || isVendorSettlement ? false : e.vendorSettled),
+        vendorSettlementId: (isVendorExpense || isVendorSettlement || isInTargetList) ? null : e.vendorSettlementId,
         originalAmount: undefined,
         originalDate: undefined,
         settledAmount: undefined,
@@ -2348,7 +2390,7 @@ export function unsettleExpense(db: AppDB, expenseId: string): AppDB {
     const groupExps = db.expenses.filter(e => e.groupId === expenseId);
     if (groupExps.length > 0) {
       const stl = (db.settlements || []).find(s =>
-        groupExps.some(ge => (s.expenseIds || []).includes(ge.id) || (ge.settlementId === s.id))
+        groupExps.some(ge => (s.expenseIds || []).includes(ge.id) || (ge.settlementId === s.id) || (ge.vendorSettlementId === s.id))
       );
       if (stl) return deleteSettlement(db, stl.id);
 
@@ -2361,6 +2403,9 @@ export function unsettleExpense(db: AppDB, expenseId: string): AppDB {
             date: e.originalDate || e.date,
             settled: false,
             settlementId: null,
+            vendorSettled: false,
+            vendorSettlementId: null,
+            status: e.vendorId ? 'unpaid' : e.status,
             originalAmount: undefined,
             originalDate: undefined,
             settledAmount: undefined,
@@ -2373,9 +2418,12 @@ export function unsettleExpense(db: AppDB, expenseId: string): AppDB {
     return db;
   }
 
-  // 1. Direct settlementId
+  // 1. Direct settlementId or vendorSettlementId
   if (exp.settlementId) {
     return deleteSettlement(db, exp.settlementId);
+  }
+  if (exp.vendorSettlementId) {
+    return deleteSettlement(db, exp.vendorSettlementId);
   }
 
   // 2. Parent expense check
@@ -2384,6 +2432,9 @@ export function unsettleExpense(db: AppDB, expenseId: string): AppDB {
     const parentExp = db.expenses.find(e => e.id === parentId);
     if (parentExp?.settlementId) {
       return deleteSettlement(db, parentExp.settlementId);
+    }
+    if (parentExp?.vendorSettlementId) {
+      return deleteSettlement(db, parentExp.vendorSettlementId);
     }
   }
 
@@ -2402,6 +2453,9 @@ export function unsettleExpense(db: AppDB, expenseId: string): AppDB {
     for (const ge of groupExpenses) {
       if (ge.settlementId) {
         return deleteSettlement(db, ge.settlementId);
+      }
+      if (ge.vendorSettlementId) {
+        return deleteSettlement(db, ge.vendorSettlementId);
       }
       const groupStl = (db.settlements || []).find(s =>
         (s.expenseIds || []).includes(ge.id) ||
@@ -2425,12 +2479,24 @@ export function unsettleExpense(db: AppDB, expenseId: string): AppDB {
       if (e.id === parentIdToRestore || e.id === expenseId || (exp.groupId && e.groupId === exp.groupId)) {
         const restoredAmt = e.originalAmount ?? e.amount;
         const restoredDate = e.originalDate || e.date;
+        let restoredStatus: ExpenseStatus = e.status;
+        if (e.vendorId) {
+          restoredStatus = 'unpaid';
+        } else if (e.type === 'personal' && e.friendId) {
+          restoredStatus = 'unpaid';
+        } else if (e.type === 'for_friend' || e.type === 'by_friend') {
+          restoredStatus = 'unsettled';
+        }
+
         return {
           ...e,
-          amount: restoredAmt,
+          amount: Number(restoredAmt) || 0,
           date: restoredDate,
           settled: false,
           settlementId: null,
+          vendorSettled: false,
+          vendorSettlementId: null,
+          status: restoredStatus,
           originalAmount: undefined,
           originalDate: undefined,
           settledAmount: undefined,
