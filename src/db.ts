@@ -26,10 +26,10 @@ export function initSQLTables() {
   if (isSQLInitialized) return;
   try {
     alasql('CREATE TABLE IF NOT EXISTS friends (id STRING PRIMARY KEY, name STRING, notes STRING, color STRING, createdAt INT, type STRING, category STRING, billingCycle STRING, defaultAmount NUMBER, website STRING, avatarNumber STRING)');
-    alasql('CREATE TABLE IF NOT EXISTS wallets (id STRING PRIMARY KEY, name STRING, openingBalance NUMBER, currentBalance NUMBER, color STRING)');
-    alasql('CREATE TABLE IF NOT EXISTS expenses (id STRING PRIMARY KEY, groupId STRING, description STRING, amount NUMBER, category STRING, date STRING, type STRING, flow STRING, friendId STRING, walletId STRING, status STRING, settled INT, settlementId STRING, notes STRING, createdAt INT, originalAmount NUMBER, settledAmount NUMBER, parentExpenseId STRING, vendorId STRING)');
-    alasql('CREATE TABLE IF NOT EXISTS settlements (id STRING PRIMARY KEY, friendId STRING, amount NUMBER, date STRING, note STRING, walletId STRING, createdAt INT, expenseIds STRING, originalTotal NUMBER, remainingAmount NUMBER, partialBreakdown STRING)');
-    alasql('CREATE TABLE IF NOT EXISTS recurring_rules (id STRING PRIMARY KEY, title STRING, kind STRING, amount NUMBER, category STRING, walletId STRING, friendId STRING, type STRING, flow STRING, frequency STRING, intervalValue INT, startDate STRING, nextDueDate STRING, autoDeduct INT, status STRING, notes STRING, createdAt INT)');
+    alasql('CREATE TABLE IF NOT EXISTS wallets (id STRING PRIMARY KEY, name STRING, openingBalance NUMBER, currentBalance NUMBER, color STRING, icon STRING, minBalanceAlert NUMBER, monthlySpendLimit NUMBER, isDefault INT, isHidden INT, rulesNotes STRING)');
+    alasql('CREATE TABLE IF NOT EXISTS expenses (id STRING PRIMARY KEY, groupId STRING, description STRING, amount NUMBER, category STRING, date STRING, type STRING, flow STRING, friendId STRING, walletId STRING, status STRING, settled INT, settlementId STRING, notes STRING, createdAt INT, originalAmount NUMBER, originalDate STRING, settledAmount NUMBER, parentExpenseId STRING, vendorId STRING, vendorSettled INT, vendorSettlementId STRING, vendorSettledAmount NUMBER)');
+    alasql('CREATE TABLE IF NOT EXISTS settlements (id STRING PRIMARY KEY, friendId STRING, amount NUMBER, date STRING, note STRING, walletId STRING, paymentMethod STRING, createdAt INT, expenseIds STRING, originalTotal NUMBER, remainingAmount NUMBER, partialBreakdown STRING)');
+    alasql('CREATE TABLE IF NOT EXISTS recurring_rules (id STRING PRIMARY KEY, title STRING, kind STRING, amount NUMBER, category STRING, walletId STRING, friendId STRING, type STRING, flow STRING, frequency STRING, intervalValue INT, startDate STRING, nextDueDate STRING, autoDeduct INT, lastDeductedDate STRING, lastLoggedDate STRING, status STRING, notes STRING, createdAt INT)');
     alasql('CREATE TABLE IF NOT EXISTS categories (name STRING PRIMARY KEY, color STRING, icon STRING)');
     alasql('CREATE TABLE IF NOT EXISTS settings (st_key STRING PRIMARY KEY, st_val STRING)');
     isSQLInitialized = true;
@@ -45,6 +45,7 @@ export function splitSQLStatements(sqlText: string): string[] {
   let inDoubleQuote = false;
   let inLineComment = false;
   let inBlockComment = false;
+  let isEscaped = false;
 
   for (let i = 0; i < sqlText.length; i++) {
     const char = sqlText[i];
@@ -76,6 +77,18 @@ export function splitSQLStatements(sqlText: string): string[] {
         i++;
         continue;
       }
+    }
+
+    if (isEscaped) {
+      current += char;
+      isEscaped = false;
+      continue;
+    }
+
+    if (char === '\\' && (inSingleQuote || inDoubleQuote)) {
+      current += char;
+      isEscaped = true;
+      continue;
     }
 
     if (char === "'" && !inDoubleQuote) {
@@ -137,24 +150,66 @@ export function executeRawSQL(sqlQuery: string): unknown {
   return res;
 }
 
-export function generateSQLDumpString(): string {
+export function downloadFile(content: string, fileName: string, mimeType = 'text/plain;charset=utf-8'): boolean {
+  try {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      try {
+        if (a.parentNode) {
+          document.body.removeChild(a);
+        }
+        URL.revokeObjectURL(url);
+      } catch { /* ignore */ }
+    }, 1500);
+    return true;
+  } catch (err) {
+    console.error('File download failed:', err);
+    return false;
+  }
+}
+
+export function generateSQLDumpString(providedDB?: AppDB): string {
+  // Ensure SQL tables are completely synchronized with the latest application state before dumping
+  try {
+    const currentAppDB = providedDB || cachedAppDB || loadDB();
+    if (currentAppDB) {
+      syncDBToSQLTables(currentAppDB);
+    }
+  } catch (e) {
+    console.warn('[SQL Dump] Pre-sync error:', e);
+  }
+
   initSQLTables();
 
-  const activeTripRaw = localStorage.getItem('okane_active_trip_v1');
-  const tripHistoryRaw = localStorage.getItem('okane_trip_history_v1');
-  const presetGroupsRaw = localStorage.getItem('okane_preset_groups_v1');
+  const getLocal = (k: string) => (typeof localStorage !== 'undefined' ? (localStorage.getItem(k) || '') : '');
+  const activeTripRaw = getLocal('okane_active_trip_v1');
+  const tripHistoryRaw = getLocal('okane_trip_history_v1');
+  const presetGroupsRaw = getLocal('okane_preset_groups_v1');
 
-  if (activeTripRaw !== null) {
-    alasql('DELETE FROM settings WHERE st_key = "_active_trip"');
-    alasql('INSERT INTO settings VALUES ("_active_trip", ?)', [activeTripRaw]);
+  if (activeTripRaw) {
+    try {
+      alasql('DELETE FROM settings WHERE st_key = "_active_trip"');
+      alasql('INSERT INTO settings VALUES ("_active_trip", ?)', [activeTripRaw]);
+    } catch { /* ignore */ }
   }
-  if (tripHistoryRaw !== null) {
-    alasql('DELETE FROM settings WHERE st_key = "_trip_history"');
-    alasql('INSERT INTO settings VALUES ("_trip_history", ?)', [tripHistoryRaw]);
+  if (tripHistoryRaw) {
+    try {
+      alasql('DELETE FROM settings WHERE st_key = "_trip_history"');
+      alasql('INSERT INTO settings VALUES ("_trip_history", ?)', [tripHistoryRaw]);
+    } catch { /* ignore */ }
   }
-  if (presetGroupsRaw !== null) {
-    alasql('DELETE FROM settings WHERE st_key = "_preset_groups"');
-    alasql('INSERT INTO settings VALUES ("_preset_groups", ?)', [presetGroupsRaw]);
+  if (presetGroupsRaw) {
+    try {
+      alasql('DELETE FROM settings WHERE st_key = "_preset_groups"');
+      alasql('INSERT INTO settings VALUES ("_preset_groups", ?)', [presetGroupsRaw]);
+    } catch { /* ignore */ }
   }
 
   const dump = {
@@ -171,10 +226,10 @@ export function generateSQLDumpString(): string {
 -- Generated: ${new Date().toISOString()}
 
 CREATE TABLE IF NOT EXISTS friends (id TEXT PRIMARY KEY, name TEXT, notes TEXT, color TEXT, createdAt INTEGER, type TEXT, category TEXT, billingCycle TEXT, defaultAmount REAL, website TEXT, avatarNumber TEXT);
-CREATE TABLE IF NOT EXISTS wallets (id TEXT PRIMARY KEY, name TEXT, openingBalance REAL, currentBalance REAL, color TEXT);
-CREATE TABLE IF NOT EXISTS expenses (id TEXT PRIMARY KEY, groupId TEXT, description TEXT, amount REAL, category TEXT, date TEXT, type TEXT, flow TEXT, friendId TEXT, walletId TEXT, status TEXT, settled INTEGER, settlementId TEXT, notes TEXT, createdAt INTEGER, originalAmount REAL, settledAmount REAL, parentExpenseId TEXT, vendorId TEXT);
-CREATE TABLE IF NOT EXISTS settlements (id TEXT PRIMARY KEY, friendId TEXT, amount REAL, date TEXT, note TEXT, walletId TEXT, createdAt INTEGER, expenseIds TEXT, originalTotal REAL, remainingAmount REAL, partialBreakdown TEXT);
-CREATE TABLE IF NOT EXISTS recurring_rules (id TEXT PRIMARY KEY, title TEXT, kind TEXT, amount REAL, category TEXT, walletId TEXT, friendId TEXT, type TEXT, flow TEXT, frequency TEXT, intervalValue INTEGER, startDate TEXT, nextDueDate TEXT, autoDeduct INTEGER, status TEXT, notes TEXT, createdAt INTEGER);
+CREATE TABLE IF NOT EXISTS wallets (id TEXT PRIMARY KEY, name TEXT, openingBalance REAL, currentBalance REAL, color TEXT, icon TEXT, minBalanceAlert REAL, monthlySpendLimit REAL, isDefault INTEGER, isHidden INTEGER, rulesNotes TEXT);
+CREATE TABLE IF NOT EXISTS expenses (id TEXT PRIMARY KEY, groupId TEXT, description TEXT, amount REAL, category TEXT, date TEXT, type TEXT, flow TEXT, friendId TEXT, walletId TEXT, status TEXT, settled INTEGER, settlementId TEXT, notes TEXT, createdAt INTEGER, originalAmount REAL, originalDate TEXT, settledAmount REAL, parentExpenseId TEXT, vendorId TEXT, vendorSettled INTEGER, vendorSettlementId TEXT, vendorSettledAmount REAL);
+CREATE TABLE IF NOT EXISTS settlements (id TEXT PRIMARY KEY, friendId TEXT, amount REAL, date TEXT, note TEXT, walletId TEXT, paymentMethod TEXT, createdAt INTEGER, expenseIds TEXT, originalTotal REAL, remainingAmount REAL, partialBreakdown TEXT);
+CREATE TABLE IF NOT EXISTS recurring_rules (id TEXT PRIMARY KEY, title TEXT, kind TEXT, amount REAL, category TEXT, walletId TEXT, friendId TEXT, type TEXT, flow TEXT, frequency TEXT, intervalValue INTEGER, startDate TEXT, nextDueDate TEXT, autoDeduct INTEGER, lastDeductedDate TEXT, lastLoggedDate TEXT, status TEXT, notes TEXT, createdAt INTEGER);
 CREATE TABLE IF NOT EXISTS categories (name TEXT PRIMARY KEY, color TEXT, icon TEXT);
 CREATE TABLE IF NOT EXISTS settings (st_key TEXT PRIMARY KEY, st_val TEXT);
 
@@ -182,7 +237,7 @@ CREATE TABLE IF NOT EXISTS settings (st_key TEXT PRIMARY KEY, st_val TEXT);
 
   const escapeVal = (v: unknown): string => {
     if (v === null || v === undefined) return 'NULL';
-    if (typeof v === 'number') return String(v);
+    if (typeof v === 'number') return Number.isFinite(v) ? String(v) : '0';
     if (typeof v === 'boolean') return v ? '1' : '0';
     if (typeof v === 'object') {
       return `'${JSON.stringify(v).replace(/'/g, "''")}'`;
@@ -197,22 +252,22 @@ CREATE TABLE IF NOT EXISTS settings (st_key TEXT PRIMARY KEY, st_val TEXT);
 
   sql += `\nDELETE FROM wallets;\n`;
   dump.wallets.forEach(w => {
-    sql += `INSERT INTO wallets (id, name, openingBalance, currentBalance, color) VALUES (${escapeVal(w.id)}, ${escapeVal(w.name)}, ${escapeVal(w.openingBalance)}, ${escapeVal(w.currentBalance ?? w.openingBalance)}, ${escapeVal(w.color)});\n`;
+    sql += `INSERT INTO wallets (id, name, openingBalance, currentBalance, color, icon, minBalanceAlert, monthlySpendLimit, isDefault, isHidden, rulesNotes) VALUES (${escapeVal(w.id)}, ${escapeVal(w.name)}, ${escapeVal(w.openingBalance)}, ${escapeVal(w.currentBalance ?? w.openingBalance)}, ${escapeVal(w.color)}, ${escapeVal(w.icon)}, ${escapeVal(w.minBalanceAlert)}, ${escapeVal(w.monthlySpendLimit)}, ${escapeVal(w.isDefault)}, ${escapeVal(w.isHidden)}, ${escapeVal(w.rulesNotes)});\n`;
   });
 
   sql += `\nDELETE FROM expenses;\n`;
   dump.expenses.forEach(e => {
-    sql += `INSERT INTO expenses (id, groupId, description, amount, category, date, type, flow, friendId, walletId, status, settled, settlementId, notes, createdAt, originalAmount, settledAmount, parentExpenseId, vendorId) VALUES (${escapeVal(e.id)}, ${escapeVal(e.groupId)}, ${escapeVal(e.description)}, ${escapeVal(e.amount)}, ${escapeVal(e.category)}, ${escapeVal(e.date)}, ${escapeVal(e.type)}, ${escapeVal(e.flow)}, ${escapeVal(e.friendId)}, ${escapeVal(e.walletId)}, ${escapeVal(e.status)}, ${escapeVal(e.settled)}, ${escapeVal(e.settlementId)}, ${escapeVal(e.notes)}, ${escapeVal(e.createdAt)}, ${escapeVal(e.originalAmount)}, ${escapeVal(e.settledAmount)}, ${escapeVal(e.parentExpenseId)}, ${escapeVal(e.vendorId)});\n`;
+    sql += `INSERT INTO expenses (id, groupId, description, amount, category, date, type, flow, friendId, walletId, status, settled, settlementId, notes, createdAt, originalAmount, originalDate, settledAmount, parentExpenseId, vendorId, vendorSettled, vendorSettlementId, vendorSettledAmount) VALUES (${escapeVal(e.id)}, ${escapeVal(e.groupId)}, ${escapeVal(e.description)}, ${escapeVal(e.amount)}, ${escapeVal(e.category)}, ${escapeVal(e.date)}, ${escapeVal(e.type)}, ${escapeVal(e.flow)}, ${escapeVal(e.friendId)}, ${escapeVal(e.walletId)}, ${escapeVal(e.status)}, ${escapeVal(e.settled)}, ${escapeVal(e.settlementId)}, ${escapeVal(e.notes)}, ${escapeVal(e.createdAt)}, ${escapeVal(e.originalAmount)}, ${escapeVal(e.originalDate)}, ${escapeVal(e.settledAmount)}, ${escapeVal(e.parentExpenseId)}, ${escapeVal(e.vendorId)}, ${escapeVal(e.vendorSettled)}, ${escapeVal(e.vendorSettlementId)}, ${escapeVal(e.vendorSettledAmount)});\n`;
   });
 
   sql += `\nDELETE FROM settlements;\n`;
   dump.settlements.forEach(s => {
-    sql += `INSERT INTO settlements (id, friendId, amount, date, note, walletId, createdAt, expenseIds, originalTotal, remainingAmount, partialBreakdown) VALUES (${escapeVal(s.id)}, ${escapeVal(s.friendId)}, ${escapeVal(s.amount)}, ${escapeVal(s.date)}, ${escapeVal(s.note)}, ${escapeVal(s.walletId)}, ${escapeVal(s.createdAt)}, ${escapeVal(s.expenseIds)}, ${escapeVal(s.originalTotal)}, ${escapeVal(s.remainingAmount)}, ${escapeVal(s.partialBreakdown)});\n`;
+    sql += `INSERT INTO settlements (id, friendId, amount, date, note, walletId, paymentMethod, createdAt, expenseIds, originalTotal, remainingAmount, partialBreakdown) VALUES (${escapeVal(s.id)}, ${escapeVal(s.friendId)}, ${escapeVal(s.amount)}, ${escapeVal(s.date)}, ${escapeVal(s.note)}, ${escapeVal(s.walletId)}, ${escapeVal(s.paymentMethod)}, ${escapeVal(s.createdAt)}, ${escapeVal(s.expenseIds)}, ${escapeVal(s.originalTotal)}, ${escapeVal(s.remainingAmount)}, ${escapeVal(s.partialBreakdown)});\n`;
   });
 
   sql += `\nDELETE FROM recurring_rules;\n`;
   dump.recurring_rules.forEach(r => {
-    sql += `INSERT INTO recurring_rules (id, title, kind, amount, category, walletId, friendId, type, flow, frequency, intervalValue, startDate, nextDueDate, autoDeduct, status, notes, createdAt) VALUES (${escapeVal(r.id)}, ${escapeVal(r.title)}, ${escapeVal(r.kind)}, ${escapeVal(r.amount)}, ${escapeVal(r.category)}, ${escapeVal(r.walletId)}, ${escapeVal(r.friendId)}, ${escapeVal(r.type)}, ${escapeVal(r.flow)}, ${escapeVal(r.frequency)}, ${escapeVal(r.intervalValue)}, ${escapeVal(r.startDate)}, ${escapeVal(r.nextDueDate)}, ${escapeVal(r.autoDeduct)}, ${escapeVal(r.status)}, ${escapeVal(r.notes)}, ${escapeVal(r.createdAt)});\n`;
+    sql += `INSERT INTO recurring_rules (id, title, kind, amount, category, walletId, friendId, type, flow, frequency, intervalValue, startDate, nextDueDate, autoDeduct, lastDeductedDate, lastLoggedDate, status, notes, createdAt) VALUES (${escapeVal(r.id)}, ${escapeVal(r.title)}, ${escapeVal(r.kind)}, ${escapeVal(r.amount)}, ${escapeVal(r.category)}, ${escapeVal(r.walletId)}, ${escapeVal(r.friendId)}, ${escapeVal(r.type)}, ${escapeVal(r.flow)}, ${escapeVal(r.frequency)}, ${escapeVal(r.intervalValue)}, ${escapeVal(r.startDate)}, ${escapeVal(r.nextDueDate)}, ${escapeVal(r.autoDeduct)}, ${escapeVal(r.lastDeductedDate)}, ${escapeVal(r.lastLoggedDate)}, ${escapeVal(r.status)}, ${escapeVal(r.notes)}, ${escapeVal(r.createdAt)});\n`;
   });
 
   sql += `\nDELETE FROM categories;\n`;
@@ -230,6 +285,46 @@ CREATE TABLE IF NOT EXISTS settings (st_key TEXT PRIMARY KEY, st_val TEXT);
   });
 
   return sql;
+}
+
+export function generateJSONBackupString(providedDB?: AppDB): string {
+  const currentDB = providedDB || cachedAppDB || loadDB();
+  return JSON.stringify(currentDB, null, 2);
+}
+
+export function generateCSVExportString(providedDB?: AppDB): string {
+  const currentDB = providedDB || cachedAppDB || loadDB();
+  const walletsMap = new Map((currentDB.wallets || []).map(w => [w.id, w.name]));
+  const friendsMap = new Map((currentDB.friends || []).map(f => [f.id, f.name]));
+  const currency = currentDB.settings?.currency || 'INR';
+
+  const headers = ['Date', 'Description', 'Amount', 'Currency', 'Category', 'Type', 'Flow', 'Contact/Friend', 'Wallet', 'Status', 'Settled', 'Notes'];
+
+  const escapeCSV = (val: unknown): string => {
+    if (val === null || val === undefined) return '';
+    const str = String(val);
+    if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  };
+
+  const rows = (currentDB.expenses || []).map(e => [
+    escapeCSV(e.date),
+    escapeCSV(e.description),
+    escapeCSV(e.amount),
+    escapeCSV(currency),
+    escapeCSV(e.category),
+    escapeCSV(e.type),
+    escapeCSV(e.flow),
+    escapeCSV(e.friendId ? friendsMap.get(e.friendId) || e.friendId : ''),
+    escapeCSV(e.walletId ? walletsMap.get(e.walletId) || e.walletId : ''),
+    escapeCSV(e.status),
+    escapeCSV(e.settled ? 'Yes' : 'No'),
+    escapeCSV(e.notes || '')
+  ].join(','));
+
+  return [headers.join(','), ...rows].join('\r\n');
 }
 
 export function splitSqlValues(valuesStr: string): string[] {
@@ -274,22 +369,27 @@ export function importSQLDumpString(sqlText: string): AppDB {
   const statements = splitSQLStatements(sqlText);
 
   statements.forEach(stmt => {
-    const q = stmt.trim();
+    let q = stmt.trim();
     if (!q) return;
+
+    // Normalize any non-standard SQLite syntax to standard AlaSQL statements
+    q = q.replace(/^INSERT\s+OR\s+(?:REPLACE|IGNORE)\s+INTO\s+/i, 'INSERT INTO ');
+
     try {
       alasql(q);
     } catch (err) {
       let handled = false;
-      const positionalMatch = q.match(/^INSERT\s+INTO\s+([a-zA-Z0-9_]+)\s+VALUES\s*\(([\s\S]*)\);?$/i);
+      const positionalMatch = q.match(/^INSERT\s+INTO\s+([a-zA-Z0-9_]+)(?:\s*\(([\s\S]*?)\))?\s+VALUES\s*\(([\s\S]*)\);?$/i);
       if (positionalMatch) {
         const rawTbl = positionalMatch[1].toLowerCase();
         const targetTable = rawTbl === 'contacts' ? 'friends' : rawTbl;
         try {
           const tableObj = (alasql.tables as Record<string, { columns?: { columnid: string }[] }>)[targetTable];
-          const valuesStr = positionalMatch[2];
+          const explicitCols = positionalMatch[2] ? positionalMatch[2].split(',').map(s => s.trim()) : null;
+          const valuesStr = positionalMatch[3];
           const parsedVals = splitSqlValues(valuesStr);
           if (tableObj && tableObj.columns && tableObj.columns.length > 0) {
-            const colNames = tableObj.columns.map(c => c.columnid);
+            const colNames = explicitCols || tableObj.columns.map(c => c.columnid);
             const valCount = parsedVals.length;
             if (valCount <= colNames.length) {
               const colList = colNames.slice(0, valCount).join(', ');
@@ -530,21 +630,21 @@ export function defaultDB(): AppDB {
       enableDevSQLConsole: false,
       enableSplitTrips: true,
       enableUserGuide: false,
-      colorMode: (localStorage.getItem('color-mode') as 'light' | 'dark') || 'dark',
-      accent: localStorage.getItem('accent-color') || 'monochrome',
-      customAccentColor: localStorage.getItem('custom-accent-color') || '#6366f1',
-      sidebarCollapsed: localStorage.getItem('sidebar_collapsed') === 'true',
+      colorMode: (typeof localStorage !== 'undefined' ? (localStorage.getItem('color-mode') as 'light' | 'dark') : 'dark') || 'dark',
+      accent: (typeof localStorage !== 'undefined' ? localStorage.getItem('accent-color') : 'monochrome') || 'monochrome',
+      customAccentColor: (typeof localStorage !== 'undefined' ? localStorage.getItem('custom-accent-color') : '#6366f1') || '#6366f1',
+      sidebarCollapsed: typeof localStorage !== 'undefined' ? localStorage.getItem('sidebar_collapsed') === 'true' : false,
       enableAnimations: true,
       performanceMode: false,
       enableBiometricLock: false,
       securityPin: '',
       requireBiometricOnResume: true,
       autoUnlockOnFace: false,
-      hideScrollbar: localStorage.getItem('hide_scrollbar') !== null ? localStorage.getItem('hide_scrollbar') === 'true' : true,
-      searchLocation: (localStorage.getItem('search_location') as 'floating' | 'topbar') || 'topbar',
-      autoOpenKeyboard: localStorage.getItem('auto_open_keyboard') !== null ? localStorage.getItem('auto_open_keyboard') === 'true' : true,
-      floatingSidebar: localStorage.getItem('sidebar_floating') === 'true',
-      hideAmounts: localStorage.getItem('hide_amounts') === 'true',
+      hideScrollbar: typeof localStorage !== 'undefined' ? (localStorage.getItem('hide_scrollbar') !== null ? localStorage.getItem('hide_scrollbar') === 'true' : true) : true,
+      searchLocation: (typeof localStorage !== 'undefined' ? (localStorage.getItem('search_location') as 'floating' | 'topbar') : 'topbar') || 'topbar',
+      autoOpenKeyboard: typeof localStorage !== 'undefined' ? (localStorage.getItem('auto_open_keyboard') !== null ? localStorage.getItem('auto_open_keyboard') === 'true' : true) : true,
+      floatingSidebar: typeof localStorage !== 'undefined' ? localStorage.getItem('sidebar_floating') === 'true' : false,
+      hideAmounts: typeof localStorage !== 'undefined' ? localStorage.getItem('hide_amounts') === 'true' : false,
     },
     recurringRules: [],
   };
@@ -561,9 +661,10 @@ export function sanitizeLoadedDB(rawDB: unknown): AppDB {
     ? parsed.wallets.filter(w => w && typeof w === 'object' && w.id && w.name)
     : d.wallets;
   const safeWallets = (rawWallets.length > 0 ? rawWallets : d.wallets).map(w => {
-    if (!w.icon || w.icon === 'wallet') {
+    let icon = w.icon;
+    if (!icon || icon === 'wallet') {
       const n = (w.name || '').toLowerCase();
-      let icon = 'card';
+      icon = 'card';
       if (n.includes('cash') || w.id === 'wal_cash') icon = 'cash';
       else if (n.includes('upi') || n.includes('bhim') || w.id === 'wal_upi') icon = 'other_upi';
       else if (n.includes('gpay') || n.includes('google')) icon = 'gpay';
@@ -574,9 +675,13 @@ export function sanitizeLoadedDB(rawDB: unknown): AppDB {
       else if (n.includes('card') || n.includes('debit') || n.includes('credit')) icon = 'card';
       else if (n.includes('apple')) icon = 'applepay';
       else if (n.includes('cred')) icon = 'cred';
-      return { ...w, icon };
     }
-    return w;
+    return {
+      ...w,
+      icon,
+      isDefault: Boolean(w.isDefault),
+      isHidden: Boolean(w.isHidden),
+    };
   });
 
   const rawCategories = parsed.settings?.categories;
@@ -817,6 +922,10 @@ export function syncDBToSQLTables(db: AppDB): void {
       }
     };
 
+    const getLocal = (k: string) => (typeof localStorage !== 'undefined' ? (localStorage.getItem(k) || '') : '');
+    const setLocal = (k: string, v: string) => { if (typeof localStorage !== 'undefined') localStorage.setItem(k, v); };
+    const removeLocal = (k: string) => { if (typeof localStorage !== 'undefined') localStorage.removeItem(k); };
+
     const seenFriends = new Set<string>();
     (db.friends || []).forEach(f => {
       if (!f.id || seenFriends.has(f.id)) return;
@@ -824,7 +933,7 @@ export function syncDBToSQLTables(db: AppDB): void {
       safeInsert('INSERT INTO friends (id, name, notes, color, createdAt, type, category, billingCycle, defaultAmount, website, avatarNumber) VALUES (?,?,?,?,?,?,?,?,?,?,?)', [
         f.id, f.name, f.notes || '', f.color || '',
         f.createdAt || Date.now(), f.type || 'friend', f.category || null, f.billingCycle || null,
-        f.defaultAmount !== undefined ? Number(f.defaultAmount) : null, f.website || '', f.avatarNumber || null
+        f.defaultAmount !== undefined && f.defaultAmount !== null ? Number(f.defaultAmount) : null, f.website || '', f.avatarNumber || null
       ]);
     });
 
@@ -832,8 +941,14 @@ export function syncDBToSQLTables(db: AppDB): void {
     (db.wallets || []).forEach(w => {
       if (!w.id || seenWallets.has(w.id)) return;
       seenWallets.add(w.id);
-      safeInsert('INSERT INTO wallets VALUES (?,?,?,?,?)', [
-        w.id, w.name, Number(w.openingBalance) || 0, walletBalance(db, w.id), w.color || ''
+      safeInsert('INSERT INTO wallets (id, name, openingBalance, currentBalance, color, icon, minBalanceAlert, monthlySpendLimit, isDefault, isHidden, rulesNotes) VALUES (?,?,?,?,?,?,?,?,?,?,?)', [
+        w.id, w.name, Number(w.openingBalance) || 0, walletBalance(db, w.id), w.color || '',
+        w.icon || null,
+        w.minBalanceAlert != null ? Number(w.minBalanceAlert) : null,
+        w.monthlySpendLimit != null ? Number(w.monthlySpendLimit) : null,
+        w.isDefault ? 1 : 0,
+        w.isHidden ? 1 : 0,
+        w.rulesNotes || null
       ]);
     });
 
@@ -841,14 +956,18 @@ export function syncDBToSQLTables(db: AppDB): void {
     (db.expenses || []).forEach(e => {
       if (!e.id || seenExpenses.has(e.id)) return;
       seenExpenses.add(e.id);
-      safeInsert('INSERT INTO expenses VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [
+      safeInsert('INSERT INTO expenses (id, groupId, description, amount, category, date, type, flow, friendId, walletId, status, settled, settlementId, notes, createdAt, originalAmount, originalDate, settledAmount, parentExpenseId, vendorId, vendorSettled, vendorSettlementId, vendorSettledAmount) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [
         e.id, e.groupId || null, e.description, Number(e.amount) || 0, e.category, e.date,
         e.type, e.flow, e.friendId || null, e.walletId || null, e.status, e.settled ? 1 : 0,
         e.settlementId || null, e.notes || '', e.createdAt || Date.now(),
         e.originalAmount != null ? Number(e.originalAmount) : null,
+        e.originalDate || null,
         e.settledAmount != null ? Number(e.settledAmount) : null,
         e.parentExpenseId || null,
-        e.vendorId || null
+        e.vendorId || null,
+        e.vendorSettled ? 1 : 0,
+        e.vendorSettlementId || null,
+        e.vendorSettledAmount != null ? Number(e.vendorSettledAmount) : null
       ]);
     });
 
@@ -856,8 +975,9 @@ export function syncDBToSQLTables(db: AppDB): void {
     (db.settlements || []).forEach(s => {
       if (!s.id || seenSettlements.has(s.id)) return;
       seenSettlements.add(s.id);
-      safeInsert('INSERT INTO settlements VALUES (?,?,?,?,?,?,?,?,?,?,?)', [
+      safeInsert('INSERT INTO settlements (id, friendId, amount, date, note, walletId, paymentMethod, createdAt, expenseIds, originalTotal, remainingAmount, partialBreakdown) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', [
         s.id, s.friendId, Number(s.amount) || 0, s.date, s.note || '', s.walletId || null,
+        s.paymentMethod || null,
         s.createdAt || Date.now(), JSON.stringify(s.expenseIds || []),
         s.originalTotal != null ? Number(s.originalTotal) : null,
         s.remainingAmount != null ? Number(s.remainingAmount) : null,
@@ -869,10 +989,13 @@ export function syncDBToSQLTables(db: AppDB): void {
     (db.recurringRules || []).forEach(r => {
       if (!r.id || seenRules.has(r.id)) return;
       seenRules.add(r.id);
-      safeInsert('INSERT INTO recurring_rules VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [
+      safeInsert('INSERT INTO recurring_rules (id, title, kind, amount, category, walletId, friendId, type, flow, frequency, intervalValue, startDate, nextDueDate, autoDeduct, lastDeductedDate, lastLoggedDate, status, notes, createdAt) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [
         r.id, r.title, r.kind, Number(r.amount) || 0, r.category, r.walletId, r.friendId || null,
         r.type, r.flow, r.frequency, r.intervalValue, r.startDate, r.nextDueDate || r.startDate,
-        r.autoDeduct ? 1 : 0, r.status, r.notes || '', r.createdAt || Date.now()
+        r.autoDeduct ? 1 : 0,
+        r.lastDeductedDate || null,
+        r.lastLoggedDate || null,
+        r.status, r.notes || '', r.createdAt || Date.now()
       ]);
     });
 
@@ -886,64 +1009,68 @@ export function syncDBToSQLTables(db: AppDB): void {
     if (db.settings) {
       const seenSettingsKeys = new Set<string>();
       Object.entries(db.settings).forEach(([k, v]) => {
-        if (!seenSettingsKeys.has(k)) {
+        if (!seenSettingsKeys.has(k) && !k.startsWith('_')) {
           seenSettingsKeys.add(k);
           safeInsert('INSERT INTO settings VALUES (?,?)', [k, typeof v === 'object' ? JSON.stringify(v) : String(v)]);
         }
       });
-      if (db.settings.colorMode) localStorage.setItem('color-mode', db.settings.colorMode);
-      if (db.settings.accent) localStorage.setItem('accent-color', db.settings.accent);
-      if (db.settings.customAccentColor) localStorage.setItem('custom-accent-color', db.settings.customAccentColor);
-      if (db.settings.sidebarCollapsed !== undefined) localStorage.setItem('sidebar_collapsed', String(db.settings.sidebarCollapsed));
-      if (db.settings.floatingSidebar !== undefined) localStorage.setItem('sidebar_floating', String(db.settings.floatingSidebar));
-      if (db.settings.hideScrollbar !== undefined) localStorage.setItem('hide_scrollbar', String(db.settings.hideScrollbar));
-      if (db.settings.hideAmounts !== undefined) localStorage.setItem('hide_amounts', String(db.settings.hideAmounts));
+      if (typeof localStorage !== 'undefined') {
+        if (db.settings.colorMode) localStorage.setItem('color-mode', db.settings.colorMode);
+        if (db.settings.accent) localStorage.setItem('accent-color', db.settings.accent);
+        if (db.settings.customAccentColor) localStorage.setItem('custom-accent-color', db.settings.customAccentColor);
+        if (db.settings.sidebarCollapsed !== undefined) localStorage.setItem('sidebar_collapsed', String(db.settings.sidebarCollapsed));
+        if (db.settings.floatingSidebar !== undefined) localStorage.setItem('sidebar_floating', String(db.settings.floatingSidebar));
+        if (db.settings.hideScrollbar !== undefined) localStorage.setItem('hide_scrollbar', String(db.settings.hideScrollbar));
+        if (db.settings.hideAmounts !== undefined) localStorage.setItem('hide_amounts', String(db.settings.hideAmounts));
+      }
     }
 
     // Sync Trip and Split data into settings table and localStorage
     const activeTripStr = db.activeTrip !== undefined
       ? (db.activeTrip ? JSON.stringify(db.activeTrip) : '')
-      : (localStorage.getItem('okane_active_trip_v1') || '');
+      : getLocal('okane_active_trip_v1');
     const tripHistoryStr = db.tripHistory !== undefined
       ? (db.tripHistory ? JSON.stringify(db.tripHistory) : '')
-      : (localStorage.getItem('okane_trip_history_v1') || '');
+      : getLocal('okane_trip_history_v1');
     const presetGroupsStr = db.presetGroups !== undefined
       ? (db.presetGroups ? JSON.stringify(db.presetGroups) : '')
-      : (localStorage.getItem('okane_preset_groups_v1') || '');
+      : getLocal('okane_preset_groups_v1');
 
     if (activeTripStr) {
       safeInsert('INSERT INTO settings VALUES (?,?)', ['_active_trip', activeTripStr]);
-      localStorage.setItem('okane_active_trip_v1', activeTripStr);
+      setLocal('okane_active_trip_v1', activeTripStr);
     } else {
       try { alasql('DELETE FROM settings WHERE st_key = "_active_trip"'); } catch { /* ignore */ }
-      localStorage.removeItem('okane_active_trip_v1');
+      removeLocal('okane_active_trip_v1');
     }
     if (tripHistoryStr) {
       safeInsert('INSERT INTO settings VALUES (?,?)', ['_trip_history', tripHistoryStr]);
-      localStorage.setItem('okane_trip_history_v1', tripHistoryStr);
+      setLocal('okane_trip_history_v1', tripHistoryStr);
     } else {
       try { alasql('DELETE FROM settings WHERE st_key = "_trip_history"'); } catch { /* ignore */ }
-      localStorage.removeItem('okane_trip_history_v1');
+      removeLocal('okane_trip_history_v1');
     }
     if (presetGroupsStr) {
       safeInsert('INSERT INTO settings VALUES (?,?)', ['_preset_groups', presetGroupsStr]);
-      localStorage.setItem('okane_preset_groups_v1', presetGroupsStr);
+      setLocal('okane_preset_groups_v1', presetGroupsStr);
     } else {
       try { alasql('DELETE FROM settings WHERE st_key = "_preset_groups"'); } catch { /* ignore */ }
-      localStorage.removeItem('okane_preset_groups_v1');
+      removeLocal('okane_preset_groups_v1');
     }
 
-    const sqlDump = {
-      friends: alasql('SELECT * FROM friends'),
-      wallets: alasql('SELECT * FROM wallets'),
-      expenses: alasql('SELECT * FROM expenses'),
-      settlements: alasql('SELECT * FROM settlements'),
-      recurring_rules: alasql('SELECT * FROM recurring_rules'),
-      categories: alasql('SELECT * FROM categories'),
-      settings: alasql('SELECT * FROM settings'),
-    };
-    localStorage.setItem(SQL_STORAGE_KEY, JSON.stringify(sqlDump));
-    localStorage.setItem(LEGACY_JSON_KEY, JSON.stringify(db));
+    if (typeof localStorage !== 'undefined') {
+      const sqlDump = {
+        friends: alasql('SELECT * FROM friends'),
+        wallets: alasql('SELECT * FROM wallets'),
+        expenses: alasql('SELECT * FROM expenses'),
+        settlements: alasql('SELECT * FROM settlements'),
+        recurring_rules: alasql('SELECT * FROM recurring_rules'),
+        categories: alasql('SELECT * FROM categories'),
+        settings: alasql('SELECT * FROM settings'),
+      };
+      localStorage.setItem(SQL_STORAGE_KEY, JSON.stringify(sqlDump));
+      localStorage.setItem(LEGACY_JSON_KEY, JSON.stringify(db));
+    }
   } catch (err) {
     console.error('Error syncing DB to SQL tables:', err);
   }
@@ -952,6 +1079,10 @@ export function syncDBToSQLTables(db: AppDB): void {
 export function loadDBFromSQLTables(): AppDB {
   initSQLTables();
   try {
+    const getLocal = (k: string) => (typeof localStorage !== 'undefined' ? localStorage.getItem(k) : null);
+    const setLocal = (k: string, v: string) => { if (typeof localStorage !== 'undefined') localStorage.setItem(k, v); };
+    const removeLocal = (k: string) => { if (typeof localStorage !== 'undefined') localStorage.removeItem(k); };
+
     const sqlFriends = (alasql('SELECT * FROM friends') as Record<string, unknown>[]) || [];
     const sqlWallets = (alasql('SELECT * FROM wallets') as Record<string, unknown>[]) || [];
     const sqlExpenses = (alasql('SELECT * FROM expenses') as Record<string, unknown>[]) || [];
@@ -980,6 +1111,12 @@ export function loadDBFromSQLTables(): AppDB {
       openingBalance: Number(w.openingBalance) || 0,
       currentBalance: w.currentBalance != null ? Number(w.currentBalance) : undefined,
       color: String(w.color || '#38BDF8'),
+      icon: w.icon ? String(w.icon) : undefined,
+      minBalanceAlert: w.minBalanceAlert != null ? Number(w.minBalanceAlert) : undefined,
+      monthlySpendLimit: w.monthlySpendLimit != null ? Number(w.monthlySpendLimit) : undefined,
+      isDefault: w.isDefault != null ? Boolean(w.isDefault) : undefined,
+      isHidden: w.isHidden != null ? Boolean(w.isHidden) : undefined,
+      rulesNotes: w.rulesNotes ? String(w.rulesNotes) : undefined,
     }));
 
     const expenses: Expense[] = sqlExpenses.map(e => ({
@@ -999,9 +1136,13 @@ export function loadDBFromSQLTables(): AppDB {
       notes: String(e.notes || ''),
       createdAt: Number(e.createdAt) || Date.now(),
       originalAmount: e.originalAmount != null ? Number(e.originalAmount) : undefined,
+      originalDate: e.originalDate ? String(e.originalDate) : undefined,
       settledAmount: e.settledAmount != null ? Number(e.settledAmount) : undefined,
       parentExpenseId: e.parentExpenseId ? String(e.parentExpenseId) : undefined,
       vendorId: e.vendorId ? String(e.vendorId) : null,
+      vendorSettled: e.vendorSettled != null ? Boolean(e.vendorSettled) : undefined,
+      vendorSettlementId: e.vendorSettlementId ? String(e.vendorSettlementId) : null,
+      vendorSettledAmount: e.vendorSettledAmount != null ? Number(e.vendorSettledAmount) : undefined,
     }));
 
     const settlements: Settlement[] = sqlSettlements.map(s => {
@@ -1026,6 +1167,7 @@ export function loadDBFromSQLTables(): AppDB {
         date: String(s.date),
         note: String(s.note || ''),
         walletId: s.walletId ? String(s.walletId) : undefined,
+        paymentMethod: s.paymentMethod ? String(s.paymentMethod) : undefined,
         createdAt: Number(s.createdAt) || Date.now(),
         expenseIds: expIds,
         originalTotal: s.originalTotal != null ? Number(s.originalTotal) : undefined,
@@ -1049,6 +1191,8 @@ export function loadDBFromSQLTables(): AppDB {
       startDate: String(r.startDate),
       nextDueDate: String(r.nextDueDate || r.startDate),
       autoDeduct: Boolean(r.autoDeduct),
+      lastDeductedDate: r.lastDeductedDate ? String(r.lastDeductedDate) : null,
+      lastLoggedDate: r.lastLoggedDate ? String(r.lastLoggedDate) : null,
       status: (r.status as 'active' | 'paused') || 'active',
       notes: String(r.notes || ''),
       createdAt: Number(r.createdAt) || Date.now(),
@@ -1070,21 +1214,40 @@ export function loadDBFromSQLTables(): AppDB {
       enableDevSQLConsole: true,
       enableSplitTrips: true,
       enableUserGuide: false,
-      colorMode: (localStorage.getItem('color-mode') as 'light' | 'dark') || 'light',
-      accent: localStorage.getItem('accent-color') || 'blue',
-      customAccentColor: localStorage.getItem('custom-accent-color') || '#6366f1',
-      sidebarCollapsed: localStorage.getItem('sidebar_collapsed') === 'true',
+      colorMode: (getLocal('color-mode') as 'light' | 'dark') || 'light',
+      accent: getLocal('accent-color') || 'blue',
+      customAccentColor: getLocal('custom-accent-color') || '#6366f1',
+      sidebarCollapsed: getLocal('sidebar_collapsed') === 'true',
       enableAnimations: true,
       performanceMode: false,
-      hideScrollbar: localStorage.getItem('hide_scrollbar') !== null ? localStorage.getItem('hide_scrollbar') === 'true' : true,
-      floatingSidebar: localStorage.getItem('sidebar_floating') === 'true',
-      hideAmounts: localStorage.getItem('hide_amounts') === 'true',
+      hideScrollbar: getLocal('hide_scrollbar') !== null ? getLocal('hide_scrollbar') === 'true' : true,
+      floatingSidebar: getLocal('sidebar_floating') === 'true',
+      hideAmounts: getLocal('hide_amounts') === 'true',
     };
+
+    let sqlActiveTripRaw: string | null = null;
+    let sqlTripHistoryRaw: string | null = null;
+    let sqlPresetGroupsRaw: string | null = null;
 
     sqlSettings.forEach(st => {
       const keyStr = String(st.st_key ?? st.key ?? '');
       const valStr = String(st.st_val ?? st.value ?? '');
       if (!keyStr) return;
+      if (keyStr === '_active_trip') {
+        sqlActiveTripRaw = valStr;
+        return;
+      }
+      if (keyStr === '_trip_history') {
+        sqlTripHistoryRaw = valStr;
+        return;
+      }
+      if (keyStr === '_preset_groups') {
+        sqlPresetGroupsRaw = valStr;
+        return;
+      }
+      if (keyStr.startsWith('_')) {
+        return;
+      }
       try {
         settingsObj[keyStr] = JSON.parse(valStr);
       } catch {
@@ -1093,41 +1256,38 @@ export function loadDBFromSQLTables(): AppDB {
     });
 
     if (settingsObj.hideAmounts !== undefined) {
-      localStorage.setItem('hide_amounts', String(Boolean(settingsObj.hideAmounts)));
+      setLocal('hide_amounts', String(Boolean(settingsObj.hideAmounts)));
     }
 
-    if (settingsObj._active_trip !== undefined) {
-      const val = typeof settingsObj._active_trip === 'string' ? settingsObj._active_trip : JSON.stringify(settingsObj._active_trip);
-      if (val) localStorage.setItem('okane_active_trip_v1', val);
-      else localStorage.removeItem('okane_active_trip_v1');
+    if (sqlActiveTripRaw !== null) {
+      if (sqlActiveTripRaw) setLocal('okane_active_trip_v1', sqlActiveTripRaw);
+      else removeLocal('okane_active_trip_v1');
     }
-    if (settingsObj._trip_history !== undefined) {
-      const val = typeof settingsObj._trip_history === 'string' ? settingsObj._trip_history : JSON.stringify(settingsObj._trip_history);
-      if (val) localStorage.setItem('okane_trip_history_v1', val);
+    if (sqlTripHistoryRaw !== null && sqlTripHistoryRaw) {
+      setLocal('okane_trip_history_v1', sqlTripHistoryRaw);
     }
-    if (settingsObj._preset_groups !== undefined) {
-      const val = typeof settingsObj._preset_groups === 'string' ? settingsObj._preset_groups : JSON.stringify(settingsObj._preset_groups);
-      if (val) localStorage.setItem('okane_preset_groups_v1', val);
+    if (sqlPresetGroupsRaw !== null && sqlPresetGroupsRaw) {
+      setLocal('okane_preset_groups_v1', sqlPresetGroupsRaw);
     }
 
     settingsObj.categories = categories;
 
     let parsedActiveTrip = null;
     try {
-      const raw = localStorage.getItem('okane_active_trip_v1');
-      if (raw) parsedActiveTrip = JSON.parse(raw);
+      const raw = sqlActiveTripRaw || getLocal('okane_active_trip_v1');
+      if (raw) parsedActiveTrip = typeof raw === 'string' ? JSON.parse(raw) : raw;
     } catch { /* ignore */ }
 
     let parsedTripHistory = [];
     try {
-      const raw = localStorage.getItem('okane_trip_history_v1');
-      if (raw) parsedTripHistory = JSON.parse(raw);
+      const raw = sqlTripHistoryRaw || getLocal('okane_trip_history_v1');
+      if (raw) parsedTripHistory = typeof raw === 'string' ? JSON.parse(raw) : raw;
     } catch { /* ignore */ }
 
     let parsedPresetGroups = [];
     try {
-      const raw = localStorage.getItem('okane_preset_groups_v1');
-      if (raw) parsedPresetGroups = JSON.parse(raw);
+      const raw = sqlPresetGroupsRaw || getLocal('okane_preset_groups_v1');
+      if (raw) parsedPresetGroups = typeof raw === 'string' ? JSON.parse(raw) : raw;
     } catch { /* ignore */ }
 
     const db: AppDB = {
@@ -1217,7 +1377,10 @@ export function loadDB(): AppDB {
             const id = String(row.id ?? '');
             if (!id || seenWallets.has(id)) return;
             seenWallets.add(id);
-            insertSafe('INSERT INTO wallets VALUES (?,?,?,?,?)', [row.id, row.name, row.openingBalance, row.currentBalance ?? row.openingBalance, row.color]);
+            insertSafe('INSERT INTO wallets (id, name, openingBalance, currentBalance, color, icon, minBalanceAlert, monthlySpendLimit, isDefault, isHidden, rulesNotes) VALUES (?,?,?,?,?,?,?,?,?,?,?)', [
+              row.id, row.name, row.openingBalance, row.currentBalance ?? row.openingBalance, row.color ?? '#38BDF8',
+              row.icon ?? null, row.minBalanceAlert ?? null, row.monthlySpendLimit ?? null, row.isDefault ? 1 : 0, row.isHidden ? 1 : 0, row.rulesNotes ?? null
+            ]);
           });
         }
 
@@ -1227,14 +1390,18 @@ export function loadDB(): AppDB {
             const id = String(row.id ?? '');
             if (!id || seenExpenses.has(id)) return;
             seenExpenses.add(id);
-            insertSafe('INSERT INTO expenses VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [
+            insertSafe('INSERT INTO expenses (id, groupId, description, amount, category, date, type, flow, friendId, walletId, status, settled, settlementId, notes, createdAt, originalAmount, originalDate, settledAmount, parentExpenseId, vendorId, vendorSettled, vendorSettlementId, vendorSettledAmount) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [
               row.id, row.groupId || null, row.description, Number(row.amount) || 0, row.category, row.date,
               row.type, row.flow, row.friendId || null, row.walletId || null, row.status, row.settled ? 1 : 0,
               row.settlementId || null, row.notes || '', row.createdAt || Date.now(),
               row.originalAmount != null ? Number(row.originalAmount) : null,
+              row.originalDate || null,
               row.settledAmount != null ? Number(row.settledAmount) : null,
               row.parentExpenseId || null,
-              row.vendorId || null
+              row.vendorId || null,
+              row.vendorSettled ? 1 : 0,
+              row.vendorSettlementId || null,
+              row.vendorSettledAmount != null ? Number(row.vendorSettledAmount) : null
             ]);
           });
         }
@@ -1245,8 +1412,9 @@ export function loadDB(): AppDB {
             const id = String(row.id ?? '');
             if (!id || seenSettlements.has(id)) return;
             seenSettlements.add(id);
-            insertSafe('INSERT INTO settlements VALUES (?,?,?,?,?,?,?,?,?,?,?)', [
+            insertSafe('INSERT INTO settlements (id, friendId, amount, date, note, walletId, paymentMethod, createdAt, expenseIds, originalTotal, remainingAmount, partialBreakdown) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', [
               row.id, row.friendId, Number(row.amount) || 0, row.date, row.note || '', row.walletId || null,
+              row.paymentMethod || null,
               row.createdAt || Date.now(),
               typeof row.expenseIds === 'string' ? row.expenseIds : JSON.stringify(row.expenseIds ?? []),
               row.originalTotal != null ? Number(row.originalTotal) : null,
@@ -1262,7 +1430,13 @@ export function loadDB(): AppDB {
             const id = String(row.id ?? '');
             if (!id || seenRules.has(id)) return;
             seenRules.add(id);
-            insertSafe('INSERT INTO recurring_rules VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [row.id, row.title, row.kind, row.amount, row.category, row.walletId, row.friendId, row.type, row.flow, row.frequency, row.intervalValue, row.startDate, row.nextDueDate, row.autoDeduct, row.status, row.notes, row.createdAt]);
+            insertSafe('INSERT INTO recurring_rules (id, title, kind, amount, category, walletId, friendId, type, flow, frequency, intervalValue, startDate, nextDueDate, autoDeduct, lastDeductedDate, lastLoggedDate, status, notes, createdAt) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [
+              row.id, row.title, row.kind, row.amount, row.category, row.walletId, row.friendId, row.type, row.flow, row.frequency, row.intervalValue, row.startDate, row.nextDueDate,
+              row.autoDeduct ? 1 : 0,
+              row.lastDeductedDate ?? null,
+              row.lastLoggedDate ?? null,
+              row.status, row.notes, row.createdAt
+            ]);
           });
         }
 
@@ -1388,6 +1562,15 @@ export function getDBCalculationCache(db: AppDB): DBCalculationCache {
     }
   });
 
+  const vendorSettlementExpenseIds = new Set<string>();
+  (db.settlements || []).forEach(s => {
+    if (s.walletId && Array.isArray(s.expenseIds)) {
+      if (Number(s.amount) < 0) {
+        s.expenseIds.forEach(id => vendorSettlementExpenseIds.add(id));
+      }
+    }
+  });
+
   const walletBalances = new Map<string, number>();
   (db.wallets || []).forEach(w => {
     walletBalances.set(w.id, Number(w.openingBalance) || 0);
@@ -1426,7 +1609,10 @@ export function getDBCalculationCache(db: AppDB): DBCalculationCache {
     // Wallet balance calculation
     if (e.walletId && e.status !== 'unpaid' && e.type !== 'by_friend') {
       const skipGroup = e.groupId ? groupHasByFriend.has(e.groupId) : false;
-      const skipVendorSettled = e.vendorId && e.vendorSettlementId;
+      const skipVendorSettled = Boolean(
+        e.vendorSettlementId ||
+        (e.vendorId && (e.vendorSettled || vendorSettlementExpenseIds.has(e.id)))
+      );
       if (!skipGroup && !skipVendorSettled) {
         const delta = isIncoming ? amt : -amt;
         walletBalances.set(e.walletId, (walletBalances.get(e.walletId) || 0) + delta);

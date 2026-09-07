@@ -545,7 +545,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     // Restore trip data to localStorage
     const settingsRec = (data.settings || {}) as unknown as Record<string, unknown>;
     const activeTrip = data.activeTrip ?? settingsRec._active_trip;
+    const tripHistory = data.tripHistory ?? settingsRec._trip_history;
+    const presetGroups = data.presetGroups ?? settingsRec._preset_groups;
+
+    let parsedActiveTrip: Trip | null = null;
     if (activeTrip !== undefined && activeTrip !== null) {
+      parsedActiveTrip = typeof activeTrip === 'string' ? JSON.parse(activeTrip) : (activeTrip as Trip);
       const str = typeof activeTrip === 'string' ? activeTrip : JSON.stringify(activeTrip);
       if (str) localStorage.setItem('okane_active_trip_v1', str);
       else localStorage.removeItem('okane_active_trip_v1');
@@ -553,14 +558,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('okane_active_trip_v1');
     }
 
-    const tripHistory = data.tripHistory ?? settingsRec._trip_history;
+    let parsedTripHistory: Trip[] = [];
     if (tripHistory !== undefined && tripHistory !== null) {
+      parsedTripHistory = typeof tripHistory === 'string' ? JSON.parse(tripHistory) : (tripHistory as Trip[]);
       const str = typeof tripHistory === 'string' ? tripHistory : JSON.stringify(tripHistory);
       localStorage.setItem('okane_trip_history_v1', str);
     }
 
-    const presetGroups = data.presetGroups ?? settingsRec._preset_groups;
+    let parsedPresetGroups: TripGroup[] = [];
     if (presetGroups !== undefined && presetGroups !== null) {
+      parsedPresetGroups = typeof presetGroups === 'string' ? JSON.parse(presetGroups) : (presetGroups as TripGroup[]);
       const str = typeof presetGroups === 'string' ? presetGroups : JSON.stringify(presetGroups);
       localStorage.setItem('okane_preset_groups_v1', str);
     }
@@ -588,6 +595,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         data.settings || {}
       ),
       recurringRules: Array.isArray(data.recurringRules) ? data.recurringRules : [],
+      activeTrip: parsedActiveTrip,
+      tripHistory: Array.isArray(parsedTripHistory) ? parsedTripHistory : [],
+      presetGroups: Array.isArray(parsedPresetGroups) ? parsedPresetGroups : [],
     };
     persist(normalized);
   }, [persist]);

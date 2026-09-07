@@ -4,7 +4,7 @@ import { useColorMode, ACCENT_PRESETS } from '../theme';
 import Switch from '@mui/material/Switch';
 import { Plus, X, RotateCcw, Tag, Upload, FlaskConical, Trash2, ChevronRight, ChevronDown, Edit2, Palette, ExternalLink, Sparkles, Zap, FileCode, Check, Database, Terminal, Download, RefreshCw, ArrowUpCircle, CheckCircle2, History, GitCommit, Plane, Send, HelpCircle, MessageSquarePlus, Bug, Lightbulb, GitPullRequest, Sliders, Moon, Sun, Compass, ShieldCheck, Fingerprint, Lock, KeyRound, Smartphone, EyeOff, Eye, ArrowLeft, Search, ScanFace, Keyboard as KeyboardIcon, Coins, Wallet, Layout } from 'lucide-react';
 import { useStore } from '../store';
-import { CURRENCIES, DEFAULT_CATEGORIES, FRIEND_PALETTE, generateSQLDumpString, importSQLDumpString } from '../db';
+import { CURRENCIES, DEFAULT_CATEGORIES, FRIEND_PALETTE, generateSQLDumpString, downloadFile, importSQLDumpString } from '../db';
 import type { Category, AppDB, ViewName } from '../types';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { Capacitor } from "@capacitor/core";
@@ -656,8 +656,8 @@ export default function Settings({
 
   const getExportContent = () => {
     return {
-      content: generateSQLDumpString(),
-      contentType: 'application/octet-stream',
+      content: generateSQLDumpString(db),
+      contentType: 'text/plain;charset=utf-8',
       fileName: `okane-backup-${new Date().toISOString().slice(0, 10)}.db`,
     };
   };
@@ -715,19 +715,14 @@ export default function Settings({
         }
       }
 
-      // Always trigger browser blob download link so file lands in browser download manager
-      const blob = new Blob([content], { type: contentType });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
+      // Universal browser blob download
+      const downloaded = downloadFile(content, fileName, contentType);
       setExportModalOpen(false);
-      showToast(`Backup saved to Downloads!`);
+      if (downloaded) {
+        showToast(`Saved ${fileName} to Downloads!`);
+      } else {
+        showToast('Backup downloaded successfully.');
+      }
     } catch (err) {
       console.error('Save to storage error:', err);
       showToast('Failed to save backup file.');
@@ -791,18 +786,9 @@ export default function Settings({
       }
 
       // Download fallback for desktop browsers
-      const blob = new Blob([content], { type: contentType });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
+      downloadFile(content, fileName, contentType);
       setExportModalOpen(false);
-      showToast('Backup saved to Downloads! Attach it to share on WhatsApp or Telegram.');
+      showToast(`Backup saved to Downloads (${fileName})!`);
     } catch (err) {
       console.error('Share to apps failed:', err);
       showToast('Failed to share backup file.');
@@ -855,6 +841,7 @@ export default function Settings({
     const isSqlSyntax =
       text.includes('CREATE TABLE') ||
       text.includes('INSERT INTO') ||
+      text.includes('INSERT OR REPLACE') ||
       text.includes('DELETE FROM') ||
       text.startsWith('--');
 
@@ -3980,7 +3967,8 @@ export default function Settings({
                   background: 'var(--accent-soft)',
                   color: 'var(--accent)',
                   display: 'grid',
-                  placeItems: 'center'
+                  placeItems: 'center',
+                  flexShrink: 0
                 }}>
                   <Download size={20} />
                 </div>
@@ -3989,7 +3977,7 @@ export default function Settings({
                     Export Backup
                   </h3>
                   <div style={{ fontSize: '12px', color: 'var(--text-3)' }}>
-                    Save or share your backup file
+                    Save or share your backup file (.db)
                   </div>
                 </div>
               </div>
