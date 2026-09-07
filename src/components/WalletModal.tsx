@@ -22,7 +22,20 @@ export default function WalletModal({ wallet, onClose }: Props) {
     ? (wallet.isDefault ?? (db.settings.defaultWalletId === wallet.id))
     : db.wallets.length === 0;
 
-  const [selectedPresetId, setSelectedPresetId] = useState<string>(() => wallet?.icon ?? 'gpay');
+  const [selectedPresetId, setSelectedPresetId] = useState<string>(() => {
+    if (wallet?.icon && wallet.icon !== 'wallet') return wallet.icon;
+    if (wallet?.name) {
+      const n = wallet.name.toLowerCase();
+      if (n.includes('cash') || wallet.id === 'wal_cash') return 'cash';
+      if (n.includes('upi') || n.includes('bhim') || wallet.id === 'wal_upi') return 'other_upi';
+      if (n.includes('phonepe') || n.includes('phone')) return 'phonepe';
+      if (n.includes('paytm')) return 'paytm';
+      if (n.includes('amazon')) return 'amazonpay';
+      if (n.includes('bank') || n.includes('account')) return 'bank';
+      if (n.includes('card') || n.includes('debit') || n.includes('credit')) return 'card';
+    }
+    return wallet?.icon ?? 'gpay';
+  });
   const [name, setName] = useState(wallet?.name ?? 'Google Pay');
   const [openingBalance, setOpeningBalance] = useState(wallet ? String(wallet.openingBalance) : '0');
   const [isDefault, setIsDefault] = useState<boolean>(isCurrentlyDefault);

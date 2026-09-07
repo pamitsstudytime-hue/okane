@@ -322,13 +322,7 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
               </div>
 
               <div
-                className={`dashboard-mini-stat ${
-                  netFriends > 0
-                    ? 'dashboard-mini-stat-income'
-                    : netFriends < 0
-                    ? 'dashboard-mini-stat-spend'
-                    : 'dashboard-mini-stat-friends'
-                }`}
+                className="dashboard-mini-stat dashboard-mini-stat-friends"
                 onClick={() => onNavigate('friends')}
                 title={netFriends > 0 ? 'Friends owe you in total (Click to view)' : netFriends < 0 ? 'You owe friends in total (Click to view)' : 'All balances settled (Click to view)'}
               >

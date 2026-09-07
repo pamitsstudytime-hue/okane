@@ -772,41 +772,20 @@ input, textarea, [contenteditable="true"], .selectable-text {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
 }
 
-/* Stat Card Theme Variants */
-.dashboard-mini-stat-spend {
-  background: var(--debit-surface-gradient);
-  border-color: var(--debit-border);
-}
-.dashboard-mini-stat-spend:hover {
-  border-color: var(--debit);
-  box-shadow: 0 4px 14px var(--debit-bg), 0 2px 4px rgba(0, 0, 0, 0.04);
-}
-
-.dashboard-mini-stat-income {
-  background: var(--credit-surface-gradient);
-  border-color: var(--credit-border);
-}
-.dashboard-mini-stat-income:hover {
-  border-color: var(--credit);
-  box-shadow: 0 4px 14px var(--credit-bg), 0 2px 4px rgba(0, 0, 0, 0.04);
-}
-
-.dashboard-mini-stat-friends {
+/* Stat Card Theme Variants - clean uniform card background matching friends net card; colors reserved for logo/icon and text */
+.dashboard-mini-stat-spend,
+.dashboard-mini-stat-income,
+.dashboard-mini-stat-friends,
+.dashboard-mini-stat-highest {
   background: var(--accent-surface-gradient);
   border-color: var(--accent-border-soft);
 }
-.dashboard-mini-stat-friends:hover {
+.dashboard-mini-stat-spend:hover,
+.dashboard-mini-stat-income:hover,
+.dashboard-mini-stat-friends:hover,
+.dashboard-mini-stat-highest:hover {
   border-color: var(--accent);
   box-shadow: 0 4px 14px var(--accent-soft), 0 2px 4px rgba(0, 0, 0, 0.04);
-}
-
-.dashboard-mini-stat-highest {
-  background: var(--amber-surface-gradient);
-  border-color: var(--amber-border);
-}
-.dashboard-mini-stat-highest:hover {
-  border-color: var(--amber);
-  box-shadow: 0 4px 14px var(--amber-bg), 0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
 .dashboard-mini-stat-header {

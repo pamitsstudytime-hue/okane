@@ -295,7 +295,7 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                         flexShrink: 0,
                       }}
                     >
-                      {renderWalletIcon(w.icon || 'wallet', 44, w.color || 'var(--accent)')}
+                      {renderWalletIcon(w.icon || w.name, 44, w.color || 'var(--accent)')}
                     </div>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
@@ -558,7 +558,7 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                       flexShrink: 0,
                     }}
                   >
-                    {renderWalletIcon(activeWallet.icon, 40, activeWallet.color)}
+                    {renderWalletIcon(activeWallet.icon || activeWallet.name, 40, activeWallet.color)}
                   </div>
                   <div>
                     <div style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>

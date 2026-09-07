@@ -346,7 +346,7 @@ export default function TransferModal({ isOpen, onClose, defaultFromWalletId, de
                       flexShrink: 0,
                     }}
                   >
-                    {fromWallet ? renderWalletIcon(fromWallet.icon || 'wallet', 32, fromWallet.color) : <WalletIcon size={18} />}
+                    {fromWallet ? renderWalletIcon(fromWallet.icon || fromWallet.name, 32, fromWallet.color) : <WalletIcon size={18} />}
                   </div>
 
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -453,7 +453,7 @@ export default function TransferModal({ isOpen, onClose, defaultFromWalletId, de
                       flexShrink: 0,
                     }}
                   >
-                    {toWallet ? renderWalletIcon(toWallet.icon || 'wallet', 32, toWallet.color) : <WalletIcon size={18} />}
+                    {toWallet ? renderWalletIcon(toWallet.icon || toWallet.name, 32, toWallet.color) : <WalletIcon size={18} />}
                   </div>
 
                   <div style={{ flex: 1, minWidth: 0 }}>

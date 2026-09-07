@@ -422,8 +422,8 @@ export const DEFAULT_CATEGORIES = [
 ];
 
 export const DEFAULT_WALLETS: Wallet[] = [
-  { id: 'wal_cash', name: 'Cash', openingBalance: 0, color: '#FBBF24' },
-  { id: 'wal_upi', name: 'UPI', openingBalance: 0, color: '#34D399' },
+  { id: 'wal_cash', name: 'Cash', openingBalance: 0, color: '#FBBF24', icon: 'cash' },
+  { id: 'wal_upi', name: 'UPI', openingBalance: 0, color: '#34D399', icon: 'card' },
 ];
 
 export const FRIEND_PALETTE = [
@@ -557,10 +557,27 @@ export function sanitizeLoadedDB(rawDB: unknown): AppDB {
   }
   const parsed = rawDB as Partial<AppDB>;
 
-  const wallets = Array.isArray(parsed.wallets) && parsed.wallets.length > 0
+  const rawWallets = Array.isArray(parsed.wallets) && parsed.wallets.length > 0
     ? parsed.wallets.filter(w => w && typeof w === 'object' && w.id && w.name)
     : d.wallets;
-  const safeWallets = wallets.length > 0 ? wallets : d.wallets;
+  const safeWallets = (rawWallets.length > 0 ? rawWallets : d.wallets).map(w => {
+    if (!w.icon || w.icon === 'wallet') {
+      const n = (w.name || '').toLowerCase();
+      let icon = 'card';
+      if (n.includes('cash') || w.id === 'wal_cash') icon = 'cash';
+      else if (n.includes('upi') || n.includes('bhim') || w.id === 'wal_upi') icon = 'other_upi';
+      else if (n.includes('gpay') || n.includes('google')) icon = 'gpay';
+      else if (n.includes('phonepe') || n.includes('phone')) icon = 'phonepe';
+      else if (n.includes('paytm')) icon = 'paytm';
+      else if (n.includes('amazon')) icon = 'amazonpay';
+      else if (n.includes('bank') || n.includes('account') || n.includes('hdfc') || n.includes('sbi') || n.includes('icici')) icon = 'bank';
+      else if (n.includes('card') || n.includes('debit') || n.includes('credit')) icon = 'card';
+      else if (n.includes('apple')) icon = 'applepay';
+      else if (n.includes('cred')) icon = 'cred';
+      return { ...w, icon };
+    }
+    return w;
+  });
 
   const rawCategories = parsed.settings?.categories;
   const categories = Array.isArray(rawCategories) && rawCategories.length > 0
@@ -1834,7 +1851,7 @@ export function addWallet(db: AppDB, data: Partial<Wallet>): { db: AppDB; wallet
     isHidden: isDefault ? false : Boolean(data.isHidden),
     rulesNotes: data.rulesNotes || '',
   };
-  
+
   let nextWallets = [...db.wallets];
   const nextSettings = { ...db.settings };
 
@@ -1906,7 +1923,7 @@ export function recordSettlement(
 ): AppDB {
   const settlementDate = date || todayISO();
   const selectedExpenses = db.expenses.filter(e => expenseIds.includes(e.id));
-  
+
   let owedToMe = 0, owedByMe = 0;
   selectedExpenses.forEach(e => {
     const amt = Number(e.amount) || 0;
@@ -1938,7 +1955,7 @@ export function recordSettlement(
       else owedByMe += amt;
     }
   });
-  
+
   const fullNet = owedToMe - owedByMe;
   const originalTotal = Math.abs(fullNet);
   const isFullSettlement = customAmount === undefined || customAmount === null || customAmount >= originalTotal;
