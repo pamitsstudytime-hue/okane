@@ -263,6 +263,16 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
 
   const hasActiveFilters = Boolean(search || catFilter || typeFilter || statusFilter || walletFilter);
 
+  const flowCounts = useMemo(() => {
+    let spent = 0;
+    let received = 0;
+    grouped.forEach((ge) => {
+      if (ge.flow === 'in') received++;
+      else spent++;
+    });
+    return { all: grouped.length, spent, received };
+  }, [grouped]);
+
   const toggleAllDateCollapse = useCallback(() => {
     if (allCollapsed) {
       setCollapsedDates({});
@@ -286,8 +296,8 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
 
       {/* Merged Clean Filter & Actions Bar */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
-        {/* Unified Single-Row Flow & Filter Control Bar */}
-        <div className="expense-flow-switch">
+        {/* Unified Single-Row Flow & Filter Control Bar (Takes Full Horizontal Space) */}
+        <div className="expense-flow-switch" style={{ width: '100%' }}>
           <button
             type="button"
             className={`flow-btn ${flowFilter === '' ? 'active' : ''}`}
@@ -295,7 +305,7 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
             title="All Transactions"
             aria-label="All Transactions"
           >
-            <Layers size={14} style={{ opacity: flowFilter === '' ? 1 : 0.7 }} />
+            <Layers size={16} style={{ flexShrink: 0, opacity: flowFilter === '' ? 1 : 0.7 }} />
             <span>All</span>
           </button>
 
@@ -306,7 +316,7 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
             title="Spent (Money Out)"
             aria-label="Spent"
           >
-            <ArrowUpRight size={14} style={{ color: 'var(--debit, #ef4444)' }} />
+            <ArrowUpRight size={16} style={{ flexShrink: 0, color: flowFilter === 'out' ? 'inherit' : 'var(--debit, #ef4444)' }} />
             <span>Spent</span>
           </button>
 
@@ -317,7 +327,7 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
             title="Received (Money In)"
             aria-label="Received"
           >
-            <ArrowDownLeft size={14} style={{ color: 'var(--credit, #22c55e)' }} />
+            <ArrowDownLeft size={16} style={{ flexShrink: 0, color: flowFilter === 'in' ? 'inherit' : 'var(--credit, #22c55e)' }} />
             <span>Received</span>
           </button>
         </div>

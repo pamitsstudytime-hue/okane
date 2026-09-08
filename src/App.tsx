@@ -28,7 +28,6 @@ import {
   PanelLeft,
   Sparkles,
   Database,
-  ChevronDown,
   Plane,
   ArrowLeft,
   X,
@@ -499,35 +498,82 @@ function AppInner() {
       {!isMobile && (
         <nav className={`sidebar ${floatingSidebar ? 'floating' : ''} ${sidebarCollapsed ? 'collapsed' : ''}`}>
           <div className="sidebar-logo">
-            {!sidebarCollapsed && (
-              <div>
-                <div className="sidebar-logo-text">Okane</div>
-                <div className="sidebar-logo-sub">おかね</div>
+            {!sidebarCollapsed ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: '50%',
+                    background: '#18191e',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    fontSize: 16,
+                    flexShrink: 0,
+                  }}
+                >
+                  O
+                </div>
+                <div>
+                  <div className="sidebar-logo-text" style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.3px', color: 'var(--text)' }}>Okane</div>
+                  <div className="sidebar-logo-sub" style={{ fontSize: 11, color: 'var(--text-3)' }}>minimal finance</div>
+                </div>
               </div>
+            ) : null}
+            {sidebarCollapsed ? (
+              <IconButton
+                size="small"
+                onClick={toggleSidebar}
+                sx={{ 
+                  width: 36,
+                  height: 36,
+                  borderRadius: '50%',
+                  background: '#18191e',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  color: '#ffffff',
+                  margin: '0 auto',
+                  transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease',
+                  '&:hover': {
+                    transform: 'scale(1.08)',
+                    bgcolor: '#22242c',
+                  },
+                  '&:active': {
+                    transform: 'scale(0.92)',
+                  }
+                }}
+                title="Expand sidebar"
+              >
+                <PanelLeft size={18} />
+              </IconButton>
+            ) : (
+              <IconButton
+                size="small"
+                onClick={toggleSidebar}
+                sx={{ 
+                  color: '#6e7284', 
+                  p: 0.8, 
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  bgcolor: 'transparent',
+                  transition: 'all 0.15s ease',
+                  '&:hover': {
+                    color: '#ffffff',
+                    bgcolor: '#141519',
+                    borderColor: 'rgba(255, 255, 255, 0.14)',
+                  },
+                  '&:active': {
+                    transform: 'scale(0.95)',
+                  }
+                }}
+                title="Collapse sidebar"
+              >
+                <PanelLeftClose size={17} />
+              </IconButton>
             )}
-            <IconButton
-              size="small"
-              onClick={toggleSidebar}
-              sx={{ 
-                color: 'text.secondary', 
-                p: 0.8, 
-                borderRadius: '10px',
-                border: '1px solid var(--border)',
-                bgcolor: 'var(--surface2)',
-                transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease',
-                '&:hover': {
-                  transform: 'scale(1.1) rotate(-4deg)',
-                  bgcolor: 'action.hover',
-                  borderColor: 'var(--border2)',
-                },
-                '&:active': {
-                  transform: 'scale(0.92)',
-                }
-              }}
-              title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            >
-              {sidebarCollapsed ? <PanelLeft size={18} /> : <PanelLeftClose size={18} />}
-            </IconButton>
           </div>
 
           <div className="sidebar-nav">
@@ -556,9 +602,6 @@ function AppInner() {
                           </span>
                         )}
                       </div>
-                      <span className="nav-section-chevron">
-                        <ChevronDown size={12} />
-                      </span>
                     </button>
                   ) : (
                     <div className="nav-section-divider" title={section.title} />
@@ -597,59 +640,89 @@ function AppInner() {
             })}
             <div style={{ flex: 1 }} />
             <button
-              className="btn btn-primary btn-sm"
+              className="btn btn-primary"
               style={{
-                margin: sidebarCollapsed ? '8px auto 4px' : '8px 0 4px',
-                width: sidebarCollapsed ? 36 : '100%',
-                height: 38,
-                padding: sidebarCollapsed ? 0 : '8px 12px',
-                borderRadius: 10,
+                margin: sidebarCollapsed ? '10px auto 4px' : '10px 10px 4px',
+                width: sidebarCollapsed ? 38 : 'calc(100% - 20px)',
+                height: 44,
+                padding: sidebarCollapsed ? 0 : '8px 16px',
+                borderRadius: 9999,
+                background: '#ffffff',
+                color: '#000000',
+                border: 'none',
+                fontWeight: 600,
+                fontSize: 14.5,
+                boxShadow: 'none',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: sidebarCollapsed ? 0 : 6,
+                gap: sidebarCollapsed ? 0 : 8,
                 flexShrink: 0,
+                cursor: 'pointer',
+                transition: 'transform 0.15s ease, opacity 0.15s ease',
               }}
               onClick={() => setShowAddExpense(true)}
               title={sidebarCollapsed ? "Add Expense" : undefined}
             >
-              <Plus size={18} />
-              <span className="nav-item-label">Add Expense</span>
+              <Plus size={18} strokeWidth={2.5} style={{ color: '#000000' }} />
+              {!sidebarCollapsed && <span style={{ fontWeight: 600 }}>Add</span>}
             </button>
           </div>
 
-          <div className="nav-section-divider" style={{ margin: sidebarCollapsed ? '4px 6px 4px 6px' : '4px 10px 4px 10px' }} />
-
-          <div className="sidebar-footer">
-            <div className="sidebar-footer-actions" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: sidebarCollapsed ? 'center' : 'space-between', gap: 6 }}>
-              <NotificationBell onNavigate={navigate} placement="top-left" />
-              <IconButton
-                size="small"
-                onClick={handleToggleDark}
-                sx={{ 
-                  width: 36,
-                  height: 36,
-                  color: 'text.secondary',
-                  borderRadius: '10px',
-                  border: '1px solid var(--border)',
-                  bgcolor: 'var(--surface2)',
-                  transition: 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.25s ease, border-color 0.2s ease',
-                  '&:hover': {
-                    transform: 'rotate(20deg) scale(1.1)',
-                    color: 'text.primary',
-                    borderColor: 'var(--border2)',
-                  },
-                  '&:active': {
-                    transform: 'scale(0.9)',
-                  }
-                }}
-                title={mode === 'dark' ? 'Switch to light' : 'Switch to dark'}
-              >
-                {mode === 'dark'
-                  ? <Sun size={18} />
-                  : <Moon size={18} />}
-              </IconButton>
-            </div>
+          <div className="sidebar-footer" style={{ padding: sidebarCollapsed ? '8px 4px 14px' : '10px 14px 14px', borderTop: 'none', background: 'transparent' }}>
+            {!sidebarCollapsed ? (
+              <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                <span style={{ fontSize: 13, color: '#5e6273', fontWeight: 500, whiteSpace: 'nowrap' }}>
+                  Theme: <strong style={{ color: mode === 'dark' ? '#ffffff' : '#111111', fontWeight: 600 }}>{mode === 'dark' ? 'Dark Mode' : 'Light Mode'}</strong>
+                </span>
+                <button
+                  type="button"
+                  className="sidebar-theme-btn"
+                  onClick={handleToggleDark}
+                  title={`Switch to ${mode === 'dark' ? 'Light' : 'Dark'} mode`}
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 10,
+                    background: mode === 'dark' ? '#ffffff' : '#16171b',
+                    color: mode === 'dark' ? '#000000' : '#ffffff',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                    boxShadow: '0 1px 4px rgba(0, 0, 0, 0.25)',
+                  }}
+                >
+                  {mode === 'dark' ? <Moon size={16} strokeWidth={2.2} /> : <Sun size={16} strokeWidth={2.2} />}
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <button
+                  type="button"
+                  className="sidebar-theme-btn"
+                  onClick={handleToggleDark}
+                  title={`Switch to ${mode === 'dark' ? 'Light' : 'Dark'} mode`}
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 10,
+                    background: mode === 'dark' ? '#ffffff' : '#16171b',
+                    color: mode === 'dark' ? '#000000' : '#ffffff',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    boxShadow: '0 1px 4px rgba(0, 0, 0, 0.25)',
+                  }}
+                >
+                  {mode === 'dark' ? <Moon size={16} strokeWidth={2.2} /> : <Sun size={16} strokeWidth={2.2} />}
+                </button>
+              </div>
+            )}
           </div>
         </nav>
       )}
@@ -745,6 +818,69 @@ function AppInner() {
                 </Typography>
               </Box>
             </Box>
+
+            {/* Desktop Header Search Bar */}
+            {!isMobile && (
+              <Box
+                component="button"
+                type="button"
+                onClick={() => setShowSearchModal(true)}
+                id="desktop-header-search-bar"
+                sx={{
+                  display: { xs: 'none', md: 'flex' },
+                  alignItems: 'center',
+                  gap: 1.25,
+                  height: 38,
+                  width: { md: 280, lg: 380 },
+                  maxWidth: '100%',
+                  px: 1.8,
+                  borderRadius: '9999px',
+                  bgcolor: mode === 'dark' ? '#141519' : 'var(--surface2)',
+                  border: mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid var(--border)',
+                  color: 'var(--text-3)',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.18s ease',
+                  ml: { md: 2.5, lg: 3.5 },
+                  mr: 'auto',
+                  '&:hover': {
+                    bgcolor: mode === 'dark' ? '#191b22' : 'var(--surface3)',
+                    borderColor: mode === 'dark' ? 'rgba(255, 255, 255, 0.16)' : 'var(--border2)',
+                    color: 'var(--text-2)',
+                  },
+                }}
+              >
+                <Search size={15} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
+                <Typography
+                  sx={{
+                    fontSize: '0.84rem',
+                    color: 'var(--text-3)',
+                    flex: 1,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    fontWeight: 450,
+                  }}
+                >
+                  Search expenses, contacts, wallets...
+                </Typography>
+                <Box
+                  sx={{
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    px: 0.8,
+                    py: 0.2,
+                    borderRadius: '6px',
+                    bgcolor: mode === 'dark' ? '#21232c' : 'var(--border)',
+                    color: 'var(--text-3)',
+                    lineHeight: 1.2,
+                    flexShrink: 0,
+                  }}
+                >
+                  Ctrl K
+                </Box>
+              </Box>
+            )}
 
             {/* Right side controls */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6, flexShrink: 0 }}>
@@ -959,7 +1095,7 @@ function AppInner() {
       {/* Mobile bottom navigation */}
       {isMobile && (
         <Paper
-          elevation={3}
+          elevation={0}
           sx={{
             position: 'fixed',
             bottom: 0,
@@ -967,7 +1103,11 @@ function AppInner() {
             right: 0,
             zIndex: 1100,
             pb: 'env(safe-area-inset-bottom, 0px)',
-            bgcolor: 'background.paper',
+            bgcolor: 'var(--bg)',
+            backgroundImage: 'none',
+            border: 'none',
+            borderTop: 'none',
+            boxShadow: 'none',
           }}
         >
           <BottomNavigation
@@ -981,70 +1121,92 @@ function AppInner() {
                 navigate(newValue as ViewName);
               }
             }}
-            showLabels
+            showLabels={false}
             sx={{
-              height: 62,
+              height: 64,
+              bgcolor: 'var(--bg)',
+              border: 'none',
+              borderTop: 'none',
+              boxShadow: 'none',
+              px: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-around',
               '& .MuiBottomNavigationAction-root': {
                 minWidth: 'auto',
-                padding: '6px 0',
-                transition: 'color 0.25s ease, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                '& .MuiBottomNavigationAction-label': {
-                  fontSize: '0.72rem',
-                  transition: 'transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease, font-weight 0.2s ease, color 0.25s ease',
-                  fontWeight: 400,
-                  mt: 0.2,
-                },
-                '& .MuiSvgIcon-root, & svg': {
-                  transition: 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.25s ease, opacity 0.2s ease',
-                },
-                '&:hover .MuiSvgIcon-root, &:hover svg': {
-                  transform: 'translateY(-2px) scale(1.14)',
-                },
-                '&.Mui-selected': {
-                  color: 'primary.main',
-                  '& .MuiBottomNavigationAction-label': {
-                    fontSize: '0.74rem',
-                    fontWeight: 600,
-                    transform: 'translateY(-1px)',
-                  },
-                  '& .MuiSvgIcon-root, & svg': {
-                    transform: 'translateY(-3px) scale(1.18)',
-                    filter: 'drop-shadow(0 3px 6px var(--accent-soft))',
-                  },
-                },
-                '&:active .MuiSvgIcon-root, &:active svg': {
+                flex: 1,
+                padding: '0',
+                transition: 'all 0.2s ease',
+                '&:active': {
                   transform: 'scale(0.92)',
                 },
               },
             }}
           >
-            <BottomNavigationAction label="Dashboard" icon={<LayoutDashboard size={20} />} value="dashboard" />
-            <BottomNavigationAction label="Expenses" icon={<ReceiptText size={20} />} value="expenses" />
+            <BottomNavigationAction
+              value="dashboard"
+              icon={
+                <Box
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: bottomNavValue === 'dashboard' ? 56 : 40,
+                    height: 32,
+                    borderRadius: '999px',
+                    bgcolor: bottomNavValue === 'dashboard' ? (mode === 'dark' ? '#1f2127' : '#e4e4e7') : 'transparent',
+                    color: bottomNavValue === 'dashboard' ? (mode === 'dark' ? '#ffffff' : '#111111') : (mode === 'dark' ? '#71717a' : '#8e8e93'),
+                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                >
+                  <LayoutDashboard size={20} />
+                </Box>
+              }
+            />
+            <BottomNavigationAction
+              value="expenses"
+              icon={
+                <Box
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: bottomNavValue === 'expenses' ? 56 : 40,
+                    height: 32,
+                    borderRadius: '999px',
+                    bgcolor: bottomNavValue === 'expenses' ? (mode === 'dark' ? '#1f2127' : '#e4e4e7') : 'transparent',
+                    color: bottomNavValue === 'expenses' ? (mode === 'dark' ? '#ffffff' : '#111111') : (mode === 'dark' ? '#71717a' : '#8e8e93'),
+                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                >
+                  <ReceiptText size={20} />
+                </Box>
+              }
+            />
             <BottomNavigationAction
               value="add"
               icon={
                 <Box
                   sx={{
-                    width: 44,
-                    height: 44,
+                    width: 48,
+                    height: 48,
                     borderRadius: '50%',
-                    bgcolor: 'primary.main',
-                    color: 'primary.contrastText',
+                    bgcolor: mode === 'dark' ? '#ffffff' : '#111111',
+                    color: mode === 'dark' ? '#000000' : '#ffffff',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 4px 14px var(--accent-soft)',
-                    transition: 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, background-color 0.2s ease',
+                    boxShadow: mode === 'dark' ? '0 4px 16px rgba(255, 255, 255, 0.18)' : '0 4px 14px rgba(0, 0, 0, 0.16)',
+                    transition: 'transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease',
                     '&:hover': {
-                      transform: 'translateY(-3px) scale(1.1) rotate(90deg)',
-                      boxShadow: '0 6px 20px var(--accent-soft)',
+                      transform: 'scale(1.08)',
                     },
                     '&:active': {
-                      transform: 'scale(0.92) rotate(90deg)',
+                      transform: 'scale(0.92)',
                     },
                   }}
                 >
-                  <Plus size={22} strokeWidth={2.5} />
+                  <Plus size={24} strokeWidth={2.6} />
                 </Box>
               }
               sx={{
@@ -1054,36 +1216,60 @@ function AppInner() {
               }}
             />
             <BottomNavigationAction
-              label="Contacts"
+              value="friends"
               icon={
-                <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+                <Box
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'relative',
+                    width: bottomNavValue === 'friends' ? 56 : 40,
+                    height: 32,
+                    borderRadius: '999px',
+                    bgcolor: bottomNavValue === 'friends' ? (mode === 'dark' ? '#1f2127' : '#e4e4e7') : 'transparent',
+                    color: bottomNavValue === 'friends' ? (mode === 'dark' ? '#ffffff' : '#111111') : (mode === 'dark' ? '#71717a' : '#8e8e93'),
+                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                >
                   <Users size={20} />
                   {pendingSettlements > 0 && (
                     <Box sx={{
-                      position: 'absolute', top: -2, right: -4,
-                      width: 8, height: 8, borderRadius: '50%',
-                      bgcolor: 'primary.main'
+                      position: 'absolute', top: 4, right: 6,
+                      width: 7, height: 7, borderRadius: '50%',
+                      bgcolor: 'error.main'
                     }} />
                   )}
                 </Box>
               }
-              value="friends"
             />
             <BottomNavigationAction
-              label="More"
+              value="more"
               icon={
-                <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+                <Box
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'relative',
+                    width: bottomNavValue === 'more' ? 56 : 40,
+                    height: 32,
+                    borderRadius: '999px',
+                    bgcolor: bottomNavValue === 'more' ? (mode === 'dark' ? '#1f2127' : '#e4e4e7') : 'transparent',
+                    color: bottomNavValue === 'more' ? (mode === 'dark' ? '#ffffff' : '#111111') : (mode === 'dark' ? '#71717a' : '#8e8e93'),
+                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                >
                   <MoreHorizontal size={20} />
                   {(dueAutopaysCount > 0 || pendingSettlements > 0) && (
                     <Box sx={{
-                      position: 'absolute', top: -2, right: -4,
-                      width: 8, height: 8, borderRadius: '50%',
+                      position: 'absolute', top: 4, right: 6,
+                      width: 7, height: 7, borderRadius: '50%',
                       bgcolor: dueAutopaysCount > 0 ? 'error.main' : 'primary.main'
                     }} />
                   )}
                 </Box>
               }
-              value="more"
             />
           </BottomNavigation>
         </Paper>
@@ -1098,18 +1284,19 @@ function AppInner() {
         disableRestoreFocus
         PaperProps={{
           sx: {
-            borderTopLeftRadius: 16,
-            borderTopRightRadius: 16,
-            bgcolor: 'background.paper',
+            borderTopLeftRadius: 28,
+            borderTopRightRadius: 28,
+            bgcolor: 'var(--drawer-bg, #131418)',
             backgroundImage: 'none',
             p: 2.5,
             pb: 'calc(24px + env(safe-area-inset-bottom, 0px))',
             maxHeight: '85vh',
-            borderTop: '1px solid var(--border)',
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+            boxShadow: '0 -10px 40px rgba(0, 0, 0, 0.7)',
           }
         }}
       >
-        <Box sx={{ width: 36, height: 4, bgcolor: 'divider', borderRadius: '2px', mx: 'auto', mb: 2 }} />
+        <Box sx={{ width: 38, height: 4, bgcolor: '#323540', borderRadius: '9999px', mx: 'auto', mb: 2 }} />
 
         {/* Header close button: hidden on mobile drawer, shown on desktop */}
         <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', justifyContent: 'flex-end', mb: 1 }}>
@@ -1273,7 +1460,7 @@ function AppInner() {
         onClick={() => setShowSearchModal(true)}
         hasAIAssistant={enableAIAssistant}
         onAIClick={() => setShowAIAssistant(true)}
-        hideSearchButton={isMobile && searchLocation === 'topbar'}
+        hideSearchButton={true}
       />
 
       {/* Contextual & Universal Search Modal */}

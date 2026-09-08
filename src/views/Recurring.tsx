@@ -256,12 +256,7 @@ export default function Recurring({ onNavigate, initialArg }: Props) {
             className="contact-type-switch"
             style={{
               flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              backgroundColor: 'var(--surface2)',
-              borderRadius: '12px',
-              padding: '3px',
-              border: '1px solid var(--border)',
+              width: '100%',
             }}
           >
             <button
@@ -271,9 +266,8 @@ export default function Recurring({ onNavigate, initialArg }: Props) {
               title="Subscriptions"
               aria-label="Subscriptions"
             >
-              <RefreshCw size={13} style={{ flexShrink: 0, color: kindFilter === 'autopay' ? 'var(--accent)' : 'inherit' }} />
+              <RefreshCw size={15} style={{ flexShrink: 0, color: 'inherit' }} />
               <span className="type-label">Subscriptions</span>
-              <span className="type-badge">{autopayRules.length}</span>
             </button>
 
             <button
@@ -283,9 +277,8 @@ export default function Recurring({ onNavigate, initialArg }: Props) {
               title="Custom Quick Log"
               aria-label="Custom Quick Log"
             >
-              <Zap size={13} style={{ flexShrink: 0, color: kindFilter === 'quick_log' ? 'var(--accent)' : 'inherit' }} />
+              <Zap size={15} style={{ flexShrink: 0, color: 'inherit' }} />
               <span className="type-label">Custom</span>
-              <span className="type-badge">{quickLogRules.length}</span>
             </button>
           </div>
 

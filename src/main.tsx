@@ -90,7 +90,7 @@ function Root() {
     }
 
     // Update HTML meta theme-color
-    const themeBg = mode === 'dark' ? '#0f0f11' : '#fafafa';
+    const themeBg = mode === 'dark' ? '#000000' : '#fafafa';
     let metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (!metaThemeColor) {
       metaThemeColor = document.createElement('meta');

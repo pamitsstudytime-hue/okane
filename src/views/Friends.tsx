@@ -284,8 +284,8 @@ export default function Friends({ onNavigate }: Props) {
 
       {/* Clean Tab Segmented Switch & Filter Bar */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
-        {/* Contact Type Segmented Switch + Filter (Single Unified Capsule) */}
-        <div className="contact-type-switch" style={{ width: '100%', minWidth: 0 }}>
+        {/* Contact Type Segmented Switch + Filter (Takes Full Horizontal Space) */}
+        <div className="contact-type-switch" style={{ width: '100%' }}>
           <button
             type="button"
             className={`type-btn ${typeFilter === 'friend' ? 'active' : ''}`}
@@ -293,10 +293,7 @@ export default function Friends({ onNavigate }: Props) {
             title="Friends"
             aria-label="Friends"
           >
-            <div className="type-btn-top">
-              <User size={15} style={{ flexShrink: 0, color: typeFilter === 'friend' ? 'var(--accent)' : 'inherit' }} />
-              <span className="type-badge">{counts.friend}</span>
-            </div>
+            <User size={16} style={{ flexShrink: 0, color: 'inherit' }} />
             <span className="type-label">Friends</span>
           </button>
 
@@ -307,10 +304,7 @@ export default function Friends({ onNavigate }: Props) {
             title="Vendors"
             aria-label="Vendors"
           >
-            <div className="type-btn-top">
-              <Store size={15} style={{ flexShrink: 0, color: typeFilter === 'vendor' ? 'var(--accent)' : 'inherit' }} />
-              <span className="type-badge">{counts.vendor}</span>
-            </div>
+            <Store size={16} style={{ flexShrink: 0, color: 'inherit' }} />
             <span className="type-label">Vendors</span>
           </button>
 
@@ -321,10 +315,7 @@ export default function Friends({ onNavigate }: Props) {
             title="Subscriptions"
             aria-label="Subscriptions"
           >
-            <div className="type-btn-top">
-              <Tv size={15} style={{ flexShrink: 0, color: typeFilter === 'subscription' ? 'var(--accent)' : 'inherit' }} />
-              <span className="type-badge">{counts.subscription}</span>
-            </div>
+            <Tv size={16} style={{ flexShrink: 0, color: 'inherit' }} />
             <span className="type-label">Subscriptions</span>
           </button>
         </div>

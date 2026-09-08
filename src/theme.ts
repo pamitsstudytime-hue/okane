@@ -214,35 +214,59 @@ export function buildTheme(mode: 'light' | 'dark', accent: AccentPreset = 'monoc
         contrastText: colors.contrast || '#ffffff',
       },
       background: mode === 'dark' ? {
-        default: '#0f0f11', // bg-dark-soft
-        paper: '#18181b',   // bg-zinc-900
+        default: '#000000', // true black OLED matching requested theme
+        paper: '#121316',   // pitch dark obsidian matching reference image
       } : {
         default: '#fafafa',
         paper: '#ffffff',
       },
       text: mode === 'dark' ? {
-        primary: '#f4f4f5',   // text-zinc-100
-        secondary: '#a1a1aa', // text-zinc-400
+        primary: '#ffffff',   // crisp white
+        secondary: '#8e909a', // muted clean zinc
       } : {
         primary: '#111111',
         secondary: '#6b7280',
       },
-      divider: mode === 'dark' ? '#27272a' : '#e2e4e9', // border-zinc-800
+      divider: mode === 'dark' ? 'rgba(255, 255, 255, 0.06)' : '#e2e4e9',
     },
     typography: {
       fontFamily: "'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
     },
     shape: {
-      borderRadius: 8,
+      borderRadius: 20,
     },
     components: {
+      MuiAppBar: {
+        styleOverrides: {
+          root: {
+            boxShadow: 'none',
+            borderBottom: 'none',
+            border: 'none',
+            ...(mode === 'dark' && {
+              backgroundColor: '#000000',
+            }),
+          },
+        },
+      },
+      MuiBottomNavigation: {
+        styleOverrides: {
+          root: {
+            borderTop: 'none',
+            border: 'none',
+            boxShadow: 'none',
+            ...(mode === 'dark' && {
+              backgroundColor: '#000000',
+            }),
+          },
+        },
+      },
       MuiPaper: {
         styleOverrides: {
           root: {
             backgroundImage: 'none',
             ...(mode === 'dark' && {
-              backgroundColor: '#18181b',
-              borderColor: '#27272a',
+              backgroundColor: '#121316',
+              borderColor: 'rgba(255, 255, 255, 0.06)',
             }),
           },
         },
@@ -250,29 +274,58 @@ export function buildTheme(mode: 'light' | 'dark', accent: AccentPreset = 'monoc
       MuiDialog: {
         styleOverrides: {
           paper: {
-            borderRadius: 14,
+            borderRadius: 22,
             ...(mode === 'dark' && {
-              backgroundColor: '#18181b',
-              border: '1px solid #27272a',
-              boxShadow: '0 20px 40px -15px rgba(0, 0, 0, 0.7)',
+              backgroundColor: '#121316',
+              border: '1px solid rgba(255, 255, 255, 0.06)',
+              boxShadow: '0 20px 40px -15px rgba(0, 0, 0, 0.8)',
+            }),
+          },
+        },
+      },
+      MuiDrawer: {
+        styleOverrides: {
+          paper: {
+            borderTopLeftRadius: 28,
+            borderTopRightRadius: 28,
+            border: 'none',
+            ...(mode === 'dark' && {
+              backgroundColor: '#121316',
+              borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+              boxShadow: '0 -10px 40px rgba(0, 0, 0, 0.8)',
             }),
           },
         },
       },
       MuiButton: {
         styleOverrides: {
+          root: {
+            borderRadius: 9999,
+            textTransform: 'none',
+          },
           containedPrimary: {
-            background: colors.gradient,
-            color: colors.contrast || '#ffffff',
-            boxShadow: `0 3px 10px ${colors.soft}`,
-            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-            borderRadius: 8,
-            '&:hover': {
+            ...(mode === 'dark' ? {
+              background: '#ffffff',
+              color: '#000000',
+              fontWeight: 700,
+              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.25)',
+              borderRadius: 9999,
+              '&:hover': {
+                background: '#f0f0f2',
+                transform: 'translateY(-1px)',
+              },
+            } : {
               background: colors.gradient,
-              filter: 'brightness(1.08)',
-              boxShadow: `0 5px 16px ${colors.soft}`,
-              transform: 'translateY(-1px)',
-            },
+              color: colors.contrast || '#ffffff',
+              boxShadow: `0 3px 10px ${colors.soft}`,
+              borderRadius: 9999,
+              '&:hover': {
+                background: colors.gradient,
+                filter: 'brightness(1.08)',
+                transform: 'translateY(-1px)',
+              },
+            }),
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
             '&:active': {
               transform: 'translateY(0)',
             },
@@ -280,7 +333,7 @@ export function buildTheme(mode: 'light' | 'dark', accent: AccentPreset = 'monoc
           outlinedPrimary: {
             borderColor: safeMain,
             color: safeMain,
-            borderRadius: 8,
+            borderRadius: 9999,
             '&:hover': {
               borderColor: safeDark,
               backgroundColor: colors.soft,

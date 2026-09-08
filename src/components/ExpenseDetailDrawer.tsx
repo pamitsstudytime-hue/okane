@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  Users, User, Pencil, Trash2, X, Store, FileText, Calendar, Wallet as WalletIcon, Tag, ReceiptText, ArrowUpRight, ArrowDownLeft, Repeat, RotateCcw
+  Users, Pencil, Trash2, X, Store, FileText, Calendar, Wallet as WalletIcon, Tag, ArrowUpRight, ArrowDownLeft, Repeat, RotateCcw, Check
 } from 'lucide-react';
 import CategoryIcon, { CategoryBadge } from './CategoryIcon';
 import {
@@ -9,7 +9,6 @@ import {
   fmtDate,
   friendInitial,
   getAvatarStyle,
-  typeLabel,
   cleanExpenseDescription,
   cleanSettlementDescription,
   getGroupSettlementStatus,
@@ -87,6 +86,13 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
   const isDebit = ge.flow === 'out';
   const flowSign = isDebit ? '-' : '+';
 
+  // Compute settlement/split progress
+  const splitItems = ge.items.filter((item: Expense) => !(item.type === 'personal' && (Number(item.amount) || 0) <= 0));
+  const totalItemsCount = splitItems.length;
+  const settledItemsCount = splitItems.filter(item => item.settled || item.type === 'personal').length;
+  const settledPercent = totalItemsCount > 0 ? Math.round((settledItemsCount / totalItemsCount) * 100) : 100;
+  const hasMultipleParticipants = totalItemsCount > 1 || ge.isSplit || ge.isSettlementGroup;
+
   return createPortal(
     <div
       className="modal-backdrop"
@@ -96,66 +102,86 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
       <div
         className="modal expense-drawer-modal"
         style={{
-          maxWidth: 410,
-          maxHeight: 'min(90vh, 90dvh)',
+          maxWidth: 440,
+          maxHeight: 'min(92vh, 92dvh)',
           display: 'flex',
           flexDirection: 'column',
-          background: 'var(--surface)',
+          background: 'var(--drawer-bg, #131418)',
           border: '1px solid var(--border)',
-          borderRadius: 18,
+          borderRadius: 24,
           overflow: 'hidden',
           animation: 'slidein 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
-          boxShadow: 'var(--shadow-lg)',
+          boxShadow: '0 -10px 40px rgba(0, 0, 0, 0.7)',
           color: 'var(--text)',
         }}
       >
-        {/* Top Handle for bottom-sheet gesture visual cue */}
-        <div className="modal-handle-bar" style={{ padding: '6px 0 2px' }}>
-          <div className="modal-handle" style={{ width: 32, height: 4, background: 'var(--border)', borderRadius: 99 }} />
+        {/* Top Drag Handle */}
+        <div className="modal-handle-bar" style={{ padding: '10px 0 2px', display: 'flex', justifyContent: 'center' }}>
+          <div className="modal-handle" style={{ width: 38, height: 4, background: '#323540', borderRadius: 9999 }} />
         </div>
 
-        {/* Modal Header */}
+        {/* Drawer Header matching Image 2 reference */}
         <div
           className="modal-header"
           style={{
-            padding: '6px 14px 4px',
+            padding: '10px 16px 10px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             borderBottom: 'none',
             flexShrink: 0,
-            background: 'var(--surface)',
+            background: 'transparent',
+            gap: 12,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
+            {/* Squircle Category Icon Badge */}
             <div
               style={{
-                width: 24,
-                height: 24,
-                borderRadius: 6,
-                background: 'var(--surface2)',
-                border: '1px solid var(--border)',
+                width: 44,
+                height: 44,
+                borderRadius: 14,
+                backgroundColor: categoryObj?.color ? `${categoryObj.color}20` : 'rgba(16, 185, 129, 0.16)',
+                border: `1px solid ${categoryObj?.color ? categoryObj.color + '35' : 'rgba(16, 185, 129, 0.28)'}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'var(--text)',
+                flexShrink: 0,
+                color: categoryColor,
               }}
             >
-              <ReceiptText size={13} />
+              <CategoryIcon category={ge.category} icon={categoryObj?.icon} size={22} style={{ color: categoryColor }} />
             </div>
-            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>
-              Transaction Details
-            </span>
+
+            {/* Title and metadata */}
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ fontWeight: 750, fontSize: 17, color: 'var(--text)', lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {cleanSettlementDescription(ge.description)}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 3, color: 'var(--text-2)', fontSize: 12.5 }}>
+                <span>{ge.category}</span>
+                {friendsToShow.length > 0 && (
+                  <>
+                    <span style={{ color: 'var(--text-3)', fontSize: 10 }}>•</span>
+                    <span style={{ fontWeight: 600 }}>{friendsToShow.map(f => f.name).join(', ')}</span>
+                  </>
+                )}
+                <span style={{ color: 'var(--text-3)', fontSize: 10 }}>•</span>
+                <span>📅 {fmtDate(ge.date)}</span>
+              </div>
+            </div>
           </div>
+
+          {/* Close circular button */}
           <button
             type="button"
             className="compact-close-btn"
             onClick={onClose}
             aria-label="Close"
             style={{
-              width: 24,
-              height: 24,
-              borderRadius: 6,
+              width: 34,
+              height: 34,
+              borderRadius: '50%',
               background: 'var(--surface2)',
               border: '1px solid var(--border)',
               color: 'var(--text-2)',
@@ -163,121 +189,123 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
+              flexShrink: 0,
             }}
           >
-            <X size={14} />
+            <X size={16} />
           </button>
         </div>
+
+        {/* Settlement / Multi-Item Progress Block (Image 2 style) */}
+        {hasMultipleParticipants && (
+          <div
+            style={{
+              padding: '12px 14px',
+              margin: '0 14px 6px',
+              background: 'var(--surface2)',
+              border: '1px solid var(--border)',
+              borderRadius: 16,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 7,
+              flexShrink: 0,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12.5 }}>
+              <span style={{ color: 'var(--text-2)', fontWeight: 500 }}>Progress</span>
+              <span style={{ color: 'var(--text)', fontWeight: 750 }}>{settledPercent}%</span>
+            </div>
+            {/* White progress bar on dark track */}
+            <div style={{ height: 6, background: '#232530', borderRadius: 9999, overflow: 'hidden' }}>
+              <div
+                style={{
+                  height: '100%',
+                  width: `${settledPercent}%`,
+                  background: '#ffffff',
+                  borderRadius: 9999,
+                  transition: 'width 0.3s ease',
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11.5, color: 'var(--text-2)', paddingTop: 1 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: settledPercent === 100 ? '#10b981' : 'var(--text-2)', fontWeight: 600 }}>
+                {settledPercent === 100 ? '✓ All completed' : (ge.isSplit ? 'Split tracking' : 'In progress')}
+              </span>
+              <span>{settledItemsCount}/{totalItemsCount} completed</span>
+            </div>
+          </div>
+        )}
 
         {/* Scrollable Content */}
         <div
           className="modal-body"
           style={{
-            padding: '2px 12px 10px',
+            padding: '2px 14px 10px',
             overflowY: 'auto',
             minHeight: 0,
             flex: 1,
             display: 'flex',
             flexDirection: 'column',
-            gap: 8,
-            background: 'var(--surface)',
+            gap: 10,
+            background: 'transparent',
           }}
         >
-          {/* Main Hero Card: Icon, Title & Amount */}
+          {/* Main Hero Card: Total Amount & Status Badges */}
           <div
             style={{
-              padding: '12px 14px',
+              padding: '14px 16px',
               background: 'var(--surface2)',
               border: '1px solid var(--border)',
-              borderRadius: 14,
+              borderRadius: 18,
               display: 'flex',
-              flexDirection: 'column',
-              gap: 8,
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 10,
               flexShrink: 0,
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
-                <div
-                  style={{
-                    width: 38,
-                    height: 38,
-                    borderRadius: 10,
-                    backgroundColor: categoryObj?.color ? `${categoryObj.color}18` : 'var(--surface3)',
-                    border: `1px solid ${categoryObj?.color ? categoryObj.color + '30' : 'var(--border)'}`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    color: categoryColor,
-                  }}
-                >
-                  <CategoryIcon category={ge.category} icon={categoryObj?.icon} size={18} style={{ color: categoryColor }} />
-                </div>
-
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--text)', lineHeight: 1.2, wordBreak: 'break-word' }}>
-                    {cleanSettlementDescription(ge.description)}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2, flexWrap: 'wrap' }}>
-                    {!ge.isSettlementGroup && (
-                      <span style={{ fontSize: 11.5, color: 'var(--text-2)', fontWeight: 500 }}>
-                        {ge.category}
-                      </span>
-                    )}
-                    {!ge.isSettlementGroup && friendsToShow.length > 0 && (
-                      <span style={{ color: 'var(--text-3)', fontSize: 9 }}>•</span>
-                    )}
-                    {friendsToShow.length > 0 && (
-                      <span style={{ fontSize: 11.5, color: 'var(--text-2)', fontWeight: 600 }}>
-                        {friendsToShow.map(f => f.name).join(', ')}
-                      </span>
-                    )}
-                  </div>
-                </div>
+            <div>
+              <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+                Total Amount
+              </span>
+              <div
+                style={{
+                  fontWeight: 800,
+                  fontSize: 22,
+                  color: isDebit ? 'var(--debit, #ef4444)' : 'var(--credit, #10b981)',
+                  fontVariantNumeric: 'tabular-nums',
+                  letterSpacing: '-0.4px',
+                  marginTop: 2,
+                }}
+              >
+                {flowSign}{fmtMoney(ge.totalAmount, currency)}
               </div>
-
-              {/* Total Amount Display */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flexShrink: 0 }}>
-                <span
-                  style={{
-                    fontWeight: 800,
-                    fontSize: 17.5,
-                    color: isDebit ? 'var(--debit, #dc2626)' : 'var(--credit, #16a34a)',
-                    fontVariantNumeric: 'tabular-nums',
-                    letterSpacing: '-0.3px',
-                    lineHeight: 1.15,
-                  }}
-                >
-                  {flowSign}{fmtMoney(ge.totalAmount, currency)}
-                </span>
-                {ge.isSplit && ge.personalShare > 0 && (
-                  <span style={{ fontSize: 11, color: 'var(--text-2)', fontWeight: 500, marginTop: 2 }}>
-                    You: {fmtMoney(ge.personalShare, currency)}
-                  </span>
-                )}
-              </div>
+              {ge.isSplit && ge.personalShare > 0 && (
+                <div style={{ fontSize: 11.5, color: 'var(--text-2)', fontWeight: 500, marginTop: 2 }}>
+                  Your share: {fmtMoney(ge.personalShare, currency)}
+                </div>
+              )}
             </div>
 
-            {/* Badges & Status Row */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', paddingTop: 2 }}>
+            {/* Badges & Status */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5 }}>
               {/* Flow Pill */}
               <span
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 3,
-                  padding: '3px 8px',
-                  borderRadius: 99,
-                  fontSize: 10.5,
-                  fontWeight: 600,
+                  gap: 4,
+                  padding: '4px 10px',
+                  borderRadius: 9999,
+                  fontSize: 11,
+                  fontWeight: 650,
                   whiteSpace: 'nowrap',
                   background: isTransfer ? 'var(--accent-soft)' : (isDebit ? 'var(--debit-bg)' : 'var(--credit-bg)'),
                   border: `1px solid ${isTransfer ? 'var(--accent-border-soft, var(--border))' : (isDebit ? 'var(--debit-border)' : 'var(--credit-border)')}`,
                   color: isTransfer ? 'var(--accent)' : (isDebit ? 'var(--debit)' : 'var(--credit)'),
                 }}
               >
-                {isTransfer ? <Repeat size={10} /> : (isDebit ? <ArrowUpRight size={10} /> : <ArrowDownLeft size={10} />)}
+                {isTransfer ? <Repeat size={11} /> : (isDebit ? <ArrowUpRight size={11} /> : <ArrowDownLeft size={11} />)}
                 <span>{isTransfer ? 'Transfer' : (isDebit ? 'Expense' : 'Income')}</span>
               </span>
 
@@ -285,13 +313,13 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
               {groupStatus.statusKey !== 'none' && groupStatus.statusLabel && (
                 <span
                   style={{
-                    padding: '3px 8px',
-                    fontSize: 10.5,
+                    padding: '3px 9px',
+                    fontSize: 11,
                     fontWeight: 600,
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: 4,
-                    borderRadius: 99,
+                    borderRadius: 9999,
                     background: groupStatus.statusKey === 'settled' ? 'var(--credit-bg)' : 'var(--debit-bg)',
                     border: `1px solid ${groupStatus.statusKey === 'settled' ? 'var(--credit-border)' : 'var(--debit-border)'}`,
                     color: groupStatus.statusKey === 'settled' ? 'var(--credit)' : 'var(--debit)',
@@ -302,22 +330,6 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
                   <span>{groupStatus.statusLabel}</span>
                 </span>
               )}
-
-              {/* Type pill */}
-              <span
-                style={{
-                  fontSize: 10.5,
-                  fontWeight: 600,
-                  color: 'var(--text-2)',
-                  background: 'var(--surface3)',
-                  border: '1px solid var(--border)',
-                  padding: '3px 8px',
-                  borderRadius: 99,
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {ge.isSplit ? 'Split Transaction' : typeLabel(primaryItem.type, undefined, primaryItem.category)}
-              </span>
             </div>
           </div>
 
@@ -327,10 +339,10 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
               display: 'grid',
               gridTemplateColumns: 'repeat(2, 1fr)',
               gap: 10,
-              padding: '12px 14px',
+              padding: '14px 16px',
               background: 'var(--surface2)',
               border: '1px solid var(--border)',
-              borderRadius: 14,
+              borderRadius: 18,
             }}
           >
             {/* Wallet */}
@@ -408,32 +420,32 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
             )}
           </div>
 
-          {/* Split / Settlement Breakdown */}
+          {/* Split / Settlement Breakdown with Image 2 Circular Checkboxes */}
           {!isTransfer && (ge.isSplit || ge.isSettlementGroup || (ge.items.length > 1 && ge.friendIds.length > 0)) && (
             <div
               style={{
                 background: 'var(--surface2)',
                 border: '1px solid var(--border)',
-                borderRadius: 14,
-                padding: '12px 14px',
+                borderRadius: 18,
+                padding: '14px 16px',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 8,
+                gap: 10,
               }}
             >
               {/* Header */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  <Users size={12} style={{ color: 'var(--text-2)' }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 700, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  <Users size={13} style={{ color: 'var(--text-2)' }} />
                   <span>{ge.isSettlementGroup ? 'Settlement Breakdown' : 'Split Breakdown'}</span>
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-2)', background: 'var(--surface3)', border: '1px solid var(--border)', padding: '3px 8px', borderRadius: 8 }}>
+                <span style={{ fontSize: 11.5, fontWeight: 650, color: 'var(--text-2)', background: 'var(--surface3)', border: '1px solid var(--border)', padding: '3px 9px', borderRadius: 9999 }}>
                   Total {fmtMoney(ge.totalAmount, currency)}
                 </span>
               </div>
 
-              {/* Participants Rows */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {/* Participants Checklist Rows (matching Image 2 checklist items) */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {ge.items
                   .filter((item: Expense) => !(item.type === 'personal' && (Number(item.amount) || 0) <= 0))
                   .map((item: Expense, idx: number) => {
@@ -443,54 +455,22 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
 
                     let primaryName = name;
                     let actionSubtitle = 'Split share';
-                    let statusPill = (
-                      <span style={{ fontSize: 9.5, fontWeight: 600, padding: '1px 6px', borderRadius: 99, background: 'var(--credit-bg)', color: 'var(--credit)', border: '1px solid var(--credit-border)', whiteSpace: 'nowrap' }}>
-                        Settled ✓
-                      </span>
-                    );
+                    const isSettled = item.settled || isMine || ge.isSettlementGroup;
 
                     if (ge.isSettlementGroup) {
                       const itemDesc = cleanExpenseDescription(item.description);
                       const itemDateStr = fmtDate(item.originalDate || item.date);
                       primaryName = itemDesc;
                       actionSubtitle = `Date: ${itemDateStr}`;
-                      statusPill = (
-                        <span style={{ fontSize: 9.5, fontWeight: 600, padding: '1px 6px', borderRadius: 99, background: 'var(--credit-bg)', color: 'var(--credit)', border: '1px solid var(--credit-border)', whiteSpace: 'nowrap' }}>
-                          Settled ✓
-                        </span>
-                      );
                     } else if (isMine) {
                       primaryName = 'You';
                       actionSubtitle = 'Your personal share';
-                      statusPill = (
-                        <span style={{ fontSize: 9.5, fontWeight: 600, padding: '1px 6px', borderRadius: 99, background: 'var(--surface3)', color: 'var(--text-2)', border: '1px solid var(--border)', whiteSpace: 'nowrap' }}>
-                          Personal
-                        </span>
-                      );
                     } else if (item.type === 'for_friend') {
                       primaryName = name;
                       actionSubtitle = item.settled ? 'Paid their share to you' : 'Owes you their share';
-                      statusPill = item.settled ? (
-                        <span style={{ fontSize: 9.5, fontWeight: 600, padding: '1px 6px', borderRadius: 99, background: 'var(--credit-bg)', color: 'var(--credit)', border: '1px solid var(--credit-border)', whiteSpace: 'nowrap' }}>
-                          Settled ✓
-                        </span>
-                      ) : (
-                        <span style={{ fontSize: 9.5, fontWeight: 600, padding: '1px 6px', borderRadius: 99, background: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.25)', whiteSpace: 'nowrap' }}>
-                          Owes You
-                        </span>
-                      );
                     } else if (item.type === 'by_friend') {
                       primaryName = name;
                       actionSubtitle = item.settled ? 'Paid bill' : (vendor ? 'Vendor bill' : 'You owe them');
-                      statusPill = item.settled ? (
-                        <span style={{ fontSize: 9.5, fontWeight: 600, padding: '1px 6px', borderRadius: 99, background: 'var(--credit-bg)', color: 'var(--credit)', border: '1px solid var(--credit-border)', whiteSpace: 'nowrap' }}>
-                          Settled ✓
-                        </span>
-                      ) : (
-                        <span style={{ fontSize: 9.5, fontWeight: 600, padding: '1px 6px', borderRadius: 99, background: 'var(--debit-bg)', color: 'var(--debit)', border: '1px solid var(--debit-border)', whiteSpace: 'nowrap' }}>
-                          Unpaid
-                        </span>
-                      );
                     }
 
                     const isSubDebit = item.type === 'by_friend' || item.type === 'personal';
@@ -504,31 +484,35 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
-                          padding: '8px 10px',
-                          borderRadius: 10,
+                          padding: '10px 12px',
+                          borderRadius: 14,
                           background: 'var(--surface)',
                           border: '1px solid var(--border)',
+                          gap: 10,
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                          {isMine ? (
-                            <div
-                              style={{
-                                width: 26,
-                                height: 26,
-                                borderRadius: '50%',
-                                background: 'var(--surface2)',
-                                border: '1px solid var(--border)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: 'var(--text-2)',
-                                flexShrink: 0,
-                              }}
-                            >
-                              <User size={12} />
-                            </div>
-                          ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                          {/* Circular Checkbox (Image 2 design) */}
+                          <div
+                            style={{
+                              width: 22,
+                              height: 22,
+                              borderRadius: '50%',
+                              backgroundColor: isSettled ? '#10b981' : 'transparent',
+                              border: isSettled ? '2px solid #10b981' : '2px solid #525562',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0,
+                              color: '#ffffff',
+                              transition: 'all 0.15s ease',
+                            }}
+                          >
+                            {isSettled && <Check size={13} strokeWidth={3} />}
+                          </div>
+
+                          {/* Avatar if contact */}
+                          {!isMine && itemFriend && (
                             <span
                               className="avatar avatar-sm"
                               style={{
@@ -544,13 +528,20 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
                             </span>
                           )}
 
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                              <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {primaryName}
-                              </span>
-                              {statusPill}
-                            </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                            <span
+                              style={{
+                                fontWeight: 700,
+                                fontSize: 13.5,
+                                color: isSettled ? 'var(--text)' : 'var(--text)',
+                                textDecoration: isSettled && !isMine ? 'none' : 'none',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {primaryName}
+                            </span>
                             <span style={{ fontSize: 11, color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {actionSubtitle}
                             </span>
@@ -559,8 +550,8 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
 
                         <span
                           style={{
-                            fontWeight: 700,
-                            fontSize: 13,
+                            fontWeight: 750,
+                            fontSize: 13.5,
                             marginLeft: 8,
                             color: subColor,
                             fontVariantNumeric: 'tabular-nums',
@@ -578,32 +569,32 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
           )}
         </div>
 
-        {/* Modal Footer with Clean Action Buttons */}
+        {/* Modal Footer with Clean Capsule Action Buttons */}
         <div
           className="modal-footer"
           style={{
-            padding: '8px 12px calc(8px + env(safe-area-inset-bottom, 0px))',
-            background: 'var(--surface)',
+            padding: '10px 16px calc(10px + env(safe-area-inset-bottom, 0px))',
+            background: 'transparent',
             borderTop: 'none',
             display: 'flex',
-            gap: 8,
+            gap: 10,
             flexShrink: 0,
           }}
         >
           {onUndo && (ge.isSettlementGroup || ge.settlementId || ge.items.some(i => i.settled || i.settlementId || i.vendorSettled)) && (
             <button
               type="button"
-              className="btn btn-secondary"
+              className="btn"
               style={{
                 flex: 1,
-                height: 38,
+                height: 42,
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 6,
-                fontSize: 13,
+                fontSize: 13.5,
                 fontWeight: 700,
-                borderRadius: 10,
+                borderRadius: 9999,
                 background: 'var(--surface2)',
                 border: '1px solid var(--border)',
                 color: 'var(--accent)',
@@ -615,24 +606,24 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
                 onUndo(ge.settlementId || ge.id);
               }}
             >
-              <RotateCcw size={14} style={{ color: 'var(--accent)' }} />
+              <RotateCcw size={15} style={{ color: 'var(--accent)' }} />
               <span>Undo</span>
             </button>
           )}
           {!ge.isSettlementGroup && (
             <button
               type="button"
-              className="btn btn-secondary"
+              className="btn"
               style={{
                 flex: 1,
-                height: 38,
+                height: 42,
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 6,
-                fontSize: 13,
+                fontSize: 13.5,
                 fontWeight: 700,
-                borderRadius: 10,
+                borderRadius: 9999,
                 background: 'var(--surface2)',
                 border: '1px solid var(--border)',
                 color: 'var(--text)',
@@ -644,7 +635,7 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
                 onEdit(primaryItem);
               }}
             >
-              <Pencil size={14} style={{ color: 'var(--text)' }} />
+              <Pencil size={15} style={{ color: 'var(--text)' }} />
               <span>Edit</span>
             </button>
           )}
@@ -653,14 +644,14 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
             className="btn"
             style={{
               flex: 1,
-              height: 38,
+              height: 42,
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: 6,
-              fontSize: 13,
+              fontSize: 13.5,
               fontWeight: 700,
-              borderRadius: 10,
+              borderRadius: 9999,
               background: 'var(--debit-bg)',
               border: '1px solid var(--debit-border)',
               color: 'var(--debit)',
@@ -672,7 +663,7 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
               onDelete(ge.id);
             }}
           >
-            <Trash2 size={14} style={{ color: 'var(--debit)' }} />
+            <Trash2 size={15} style={{ color: 'var(--debit)' }} />
             <span>Delete</span>
           </button>
         </div>
@@ -683,3 +674,4 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
 };
 
 export default ExpenseDetailDrawer;
+

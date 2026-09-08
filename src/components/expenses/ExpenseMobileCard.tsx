@@ -67,9 +67,9 @@ export const ExpenseMobileCard: React.FC<Props> = React.memo(({
           {/* Category Icon Tile */}
           <div
             style={{
-              width: 40,
-              height: 40,
-              borderRadius: 12,
+              width: 44,
+              height: 44,
+              borderRadius: 14,
               backgroundColor: catMeta.bg,
               border: `1px solid ${catMeta.border}`,
               display: 'flex',
@@ -79,7 +79,7 @@ export const ExpenseMobileCard: React.FC<Props> = React.memo(({
               color: catMeta.color,
             }}
           >
-            <CategoryIcon category={catMeta.name} icon={catMeta.icon} size={20} style={{ color: catMeta.color }} />
+            <CategoryIcon category={catMeta.name} icon={catMeta.icon} size={22} style={{ color: catMeta.color }} />
           </div>
 
           {/* Middle Info Column */}
