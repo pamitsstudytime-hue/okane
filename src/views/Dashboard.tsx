@@ -120,7 +120,7 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
     return { allBalances: balances, netFriends: credit - debt };
   }, [db]);
 
-  const recentExpenses = useMemo(() => groupExpenses(expenses, db.wallets, db.friends).slice(0, 5), [expenses, db.wallets, db.friends]);
+  const recentExpenses = useMemo(() => groupExpenses(expenses, db.wallets, db.friends, db.settlements).slice(0, 5), [expenses, db.wallets, db.friends, db.settlements]);
 
   const balancedFriends = useMemo(() =>
     allBalances

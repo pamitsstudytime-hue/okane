@@ -1,5 +1,5 @@
 import { CURRENCIES } from './db';
-import type { Expense, ExpenseFlow, ExpenseType, Wallet, Friend, Category } from './types';
+import type { Expense, ExpenseFlow, ExpenseType, Wallet, Friend, Category, Settlement } from './types';
 import { expenseFlow, personalNetAmount } from './db';
 
 export function currencySymbol(currency: string): string {
@@ -145,25 +145,17 @@ export interface GroupedExpense {
   toWalletName?: string;
 }
 
-export function groupExpenses(expenses: Expense[], wallets?: Wallet[], friends?: Friend[]): GroupedExpense[] {
-  const settlementCounts = new Map<string, number>();
-  for (const e of expenses) {
-    if (e.settlementId) {
-      settlementCounts.set(e.settlementId, (settlementCounts.get(e.settlementId) || 0) + 1);
-    }
-  }
-
+export function groupExpenses(
+  expenses: Expense[],
+  wallets?: Wallet[],
+  friends?: Friend[],
+  settlements?: Settlement[]
+): GroupedExpense[] {
   const groupedMap = new Map<string, Expense[]>();
   const singles: Expense[] = [];
 
   for (const e of expenses) {
-    if (e.settlementId && (settlementCounts.get(e.settlementId) || 0) > 1) {
-      const stlKey = `stl_${e.settlementId}`;
-      if (!groupedMap.has(stlKey)) {
-        groupedMap.set(stlKey, []);
-      }
-      groupedMap.get(stlKey)!.push(e);
-    } else if (e.groupId) {
+    if (e.groupId) {
       if (!groupedMap.has(e.groupId)) {
         groupedMap.set(e.groupId, []);
       }
@@ -176,75 +168,7 @@ export function groupExpenses(expenses: Expense[], wallets?: Wallet[], friends?:
   const result: GroupedExpense[] = [];
 
   groupedMap.forEach((items, gId) => {
-    if (gId.startsWith('stl_')) {
-      const maxCreatedAt = Math.max(...items.map(i => i.createdAt || 0));
-      const first = items[0];
-      const friendIds = Array.from(new Set(items.map(i => i.friendId).filter(Boolean) as string[]));
-
-      let net = 0;
-      items.forEach(i => {
-        const amt = Number(i.settledAmount) || Number(i.amount) || 0;
-        if (i.type === 'for_friend') {
-          net += amt;
-        } else if (i.type === 'by_friend') {
-          net -= amt;
-        } else {
-          net += (i.flow === 'in' ? amt : -amt);
-        }
-      });
-
-      const totalAmount = Math.abs(net);
-      const flow: ExpenseFlow = net >= 0 ? 'in' : 'out';
-
-      const cleanDescs = items.map(i => cleanExpenseDescription(i.description)).filter(Boolean);
-      const firstDesc = cleanDescs[0];
-      const allSameDesc = cleanDescs.length > 0 && cleanDescs.every(d => d === firstDesc);
-
-      const rawDates = items.map(i => i.originalDate || i.date).filter(Boolean);
-      const uniqueDates = Array.from(new Set(rawDates)).sort();
-
-      let dateRangeStr = '';
-      if (uniqueDates.length === 1) {
-        dateRangeStr = fmtDate(uniqueDates[0]);
-      } else if (uniqueDates.length > 1) {
-        dateRangeStr = `${fmtDate(uniqueDates[0])} – ${fmtDate(uniqueDates[uniqueDates.length - 1])}`;
-      }
-
-      let cleanTitle = 'Settlement';
-      if (allSameDesc && firstDesc) {
-        cleanTitle = firstDesc;
-      } else if (friends && friendIds.length === 1) {
-        const f = friends.find(fr => fr.id === friendIds[0]);
-        if (f) cleanTitle = `Settlement with ${f.name}`;
-      }
-
-      const firstCat = first.category;
-      const allSameCat = items.every(i => i.category === firstCat);
-      const category = allSameCat && firstCat !== 'Food' ? firstCat : 'Settlement';
-
-      result.push({
-        id: gId,
-        groupId: gId,
-        settlementId: first.settlementId,
-        description: cleanTitle,
-        totalAmount,
-        date: first.date,
-        category,
-        walletId: first.walletId,
-        flow,
-        createdAt: maxCreatedAt,
-        items,
-        isSplit: false,
-        isSettlementGroup: true,
-        settlementItemCount: items.length,
-        settlementDateRange: dateRangeStr,
-        personalShare: 0,
-        friendShare: totalAmount,
-        friendIds,
-        vendorId: first.vendorId || null,
-      });
-    } else {
-      const isTransferGroup = items.some(i => i.category === 'Transfer') || gId.startsWith('trf_grp');
+    const isTransferGroup = items.some(i => i.category === 'Transfer') || gId.startsWith('trf_grp');
 
       if (isTransferGroup) {
         const outItem = items.find(i => i.flow === 'out') || items[0];
@@ -410,7 +334,6 @@ export function groupExpenses(expenses: Expense[], wallets?: Wallet[], friends?:
           vendorId: groupVendorId,
         });
       }
-    }
   });
 
   for (const e of singles) {
@@ -463,6 +386,47 @@ export function groupExpenses(expenses: Expense[], wallets?: Wallet[], friends?:
         friendShare: e.type !== 'personal' ? e.amount : 0,
         friendIds,
         vendorId: e.vendorId || null,
+      });
+    }
+  }
+
+  if (settlements && settlements.length > 0) {
+    for (const s of settlements) {
+      const friend = friends?.find(f => f.id === s.friendId);
+      const friendName = friend ? friend.name : 'Contact';
+      const flow: ExpenseFlow = s.amount >= 0 ? 'in' : 'out';
+      const totalAmount = Math.abs(s.amount);
+
+      const coveredExpenses = expenses.filter(e =>
+        (s.expenseIds && s.expenseIds.includes(e.id)) ||
+        (e.settlementId && String(e.settlementId).trim() === String(s.id).trim()) ||
+        (e.vendorSettlementId && String(e.vendorSettlementId).trim() === String(s.id).trim())
+      );
+
+      const cleanDesc = s.note
+        ? `Settlement: ${s.amount >= 0 ? 'Received from' : 'Paid to'} ${friendName} (${s.note})`
+        : `Settlement: ${s.amount >= 0 ? 'Received from' : 'Paid to'} ${friendName}`;
+
+      result.push({
+        id: `stl_${s.id}`,
+        groupId: `stl_${s.id}`,
+        settlementId: s.id,
+        description: cleanDesc,
+        totalAmount,
+        date: s.date,
+        category: 'Settlement',
+        walletId: s.walletId || '',
+        flow,
+        createdAt: s.createdAt || Date.now(),
+        items: coveredExpenses,
+        isSplit: false,
+        isSettlementGroup: true,
+        settlementItemCount: coveredExpenses.length || (s.expenseIds || []).length,
+        settlementDateRange: '',
+        personalShare: 0,
+        friendShare: totalAmount,
+        friendIds: [s.friendId],
+        vendorId: friend?.type === 'vendor' ? s.friendId : null,
       });
     }
   }
@@ -745,7 +709,7 @@ export function getGroupSettlementStatus(ge: GroupedExpense): {
     if (isSettled) {
       return {
         statusKey: 'settled',
-        statusLabel: 'Settled',
+        statusLabel: 'Settled ✓',
         isAllSettled: true,
         isPartiallySettled: false,
       };
@@ -764,7 +728,7 @@ export function getGroupSettlementStatus(ge: GroupedExpense): {
     if (isVendorAllSettled) {
       return {
         statusKey: 'settled',
-        statusLabel: 'Settled',
+        statusLabel: 'Settled ✓',
         isAllSettled: true,
         isPartiallySettled: false,
       };
@@ -777,9 +741,18 @@ export function getGroupSettlementStatus(ge: GroupedExpense): {
     };
   }
 
-  // 6. Direct Personal Payment (Directly paid from wallet)
-  // "when i paid directly it should be paid"
-  const isDirectPaid = primaryItem.status === 'paid' || (!primaryItem.status && !primaryItem.settled);
+  // 6. Direct Personal Payment or Settled Personal Expense
+  const isAnySettled = realItems.some(i => i.settled || i.settlementId || i.vendorSettled);
+  if (isAnySettled) {
+    return {
+      statusKey: 'settled',
+      statusLabel: 'Settled ✓',
+      isAllSettled: true,
+      isPartiallySettled: false,
+    };
+  }
+
+  const isDirectPaid = primaryItem.status === 'paid' || (!primaryItem.status && !primaryItem.settled && !primaryItem.vendorSettled);
   if (isDirectPaid) {
     return {
       statusKey: 'paid',
@@ -792,8 +765,8 @@ export function getGroupSettlementStatus(ge: GroupedExpense): {
   const isExplicitSettled = Boolean(primaryItem.settled);
   return {
     statusKey: isExplicitSettled ? 'settled' : (primaryItem.status || 'paid'),
-    statusLabel: isExplicitSettled ? 'Settled' : (primaryItem.status === 'unpaid' ? 'Unpaid' : 'Paid'),
-    isAllSettled: isExplicitSettled,
+    statusLabel: isExplicitSettled ? 'Settled ✓' : (primaryItem.status === 'unpaid' ? 'Unpaid' : 'Paid'),
+    isAllSettled: isExplicitSettled || primaryItem.status !== 'unpaid',
     isPartiallySettled: false,
   };
 }

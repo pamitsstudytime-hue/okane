@@ -413,7 +413,7 @@ export default function DevSQLConsole({ onNavigate }: DevSQLConsoleProps) {
             }}
           >
             <Upload size={14} style={{ color: 'var(--accent)' }} /> Import
-            <input type="file" accept="*/*" onChange={handleImportFile} style={{ display: 'none' }} />
+            <input type="file" onChange={handleImportFile} style={{ display: 'none' }} />
           </label>
         </div>
       </div>

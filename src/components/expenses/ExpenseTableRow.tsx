@@ -212,31 +212,33 @@ export const ExpenseTableRow: React.FC<Props> = React.memo(({
         </td>
         <td style={{ textAlign: 'right' }}>
           <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', alignItems: 'center' }}>
-            {ge.items.some((i: Expense) => i.settled || i.settlementId) && (
+            {(ge.isSettlementGroup || ge.settlementId || ge.items.some((i: Expense) => i.settled || i.settlementId || i.vendorSettled)) && (
               <button
                 type="button"
                 className="tx-action-btn action-undo"
                 onClick={(e) => {
                   e.stopPropagation();
                   const targetItem = ge.items.find((i: Expense) => i.settlementId) || ge.items.find((i: Expense) => i.settled) || primaryItem;
-                  onUndo(targetItem.settlementId || targetItem.id || ge.id);
+                  onUndo(ge.settlementId || targetItem.settlementId || targetItem.id || ge.id);
                 }}
                 title="Undo Settlement (Restore money to wallet)"
               >
                 <RotateCcw size={14} />
               </button>
             )}
-            <button
-              type="button"
-              className="tx-action-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit(primaryItem);
-              }}
-              title="Edit"
-            >
-              <Edit2 size={14} />
-            </button>
+            {!ge.isSettlementGroup && (
+              <button
+                type="button"
+                className="tx-action-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(primaryItem);
+                }}
+                title="Edit"
+              >
+                <Edit2 size={14} />
+              </button>
+            )}
             <button
               type="button"
               className="tx-action-btn action-delete"

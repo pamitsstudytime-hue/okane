@@ -22,7 +22,7 @@ interface Props {
 export default function FriendDetail({ friendId, onNavigate }: Props) {
   useBackButtonModal(true, () => onNavigate('friends'), { priority: BackPriority.SUBVIEW });
 
-  const { db, deleteExpense, triggerAutopayDeduct, quickLogRecurringRule, showToast } = useStore();
+  const { db, deleteExpense, unsettleExpense, triggerAutopayDeduct, quickLogRecurringRule, showToast } = useStore();
   const { settings: { currency } } = db;
   const friend = db.friends.find(f => f.id === friendId);
 
@@ -31,6 +31,7 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
   const [showAddExp, setShowAddExp] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [deletingExpenseId, setDeletingExpenseId] = useState<string | null>(null);
+  const [undoExpId, setUndoExpId] = useState<string | null>(null);
   const [selectedDetailGe, setSelectedDetailGe] = useState<GroupedExpense | null>(null);
   const [showRecurringModal, setShowRecurringModal] = useState(false);
   const [tab, setTab] = useState<'active' | 'settled'>('active');
@@ -41,7 +42,7 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
     const related = e.groupId
       ? db.expenses.filter(x => x.groupId === e.groupId)
       : [e];
-    const grouped = groupExpenses(related.length > 0 ? related : [e], db.wallets, db.friends);
+    const grouped = groupExpenses(related.length > 0 ? related : [e], db.wallets, db.friends, db.settlements);
     if (grouped.length > 0) {
       setSelectedDetailGe(grouped[0]);
     }
@@ -865,6 +866,10 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
             setSelectedDetailGe(null);
             setDeletingExpenseId(id);
           }}
+          onUndo={(id) => {
+            setSelectedDetailGe(null);
+            setUndoExpId(id);
+          }}
         />
       )}
 
@@ -911,6 +916,20 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
             showToast('Expense deleted & money restored to wallet');
           }}
           onClose={() => setDeletingExpenseId(null)}
+        />
+      )}
+      {undoExpId && (
+        <ConfirmDialog
+          title="Undo Settlement"
+          message="Are you sure you want to undo this settlement? The settled money will be deducted/restored to your wallet, and this friend's debt balance will become unpaid again."
+          confirmLabel="Undo Settlement"
+          danger
+          onConfirm={() => {
+            unsettleExpense(undoExpId);
+            setUndoExpId(null);
+            showToast('Settlement undone & debt restored');
+          }}
+          onClose={() => setUndoExpId(null)}
         />
       )}
     </div>

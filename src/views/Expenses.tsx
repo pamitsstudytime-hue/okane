@@ -49,7 +49,7 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
   const [editExp, setEditExp] = useState<Expense | null>(null);
   const [selectedDetailGe, setSelectedDetailGe] = useState<GroupedExpense | null>(null);
 
-  const grouped = useMemo(() => groupExpenses(expenses, db.wallets, db.friends), [expenses, db.wallets, db.friends]);
+  const grouped = useMemo(() => groupExpenses(expenses, db.wallets, db.friends, db.settlements), [expenses, db.wallets, db.friends, db.settlements]);
 
   const handledArgRef = useRef<string | null>(null);
 
@@ -714,6 +714,10 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
           onDelete={(id) => {
             setSelectedDetailGe(null);
             setDelId(id);
+          }}
+          onUndo={(id) => {
+            setSelectedDetailGe(null);
+            setUndoExpId(id);
           }}
           currency={currency}
           friends={db.friends}

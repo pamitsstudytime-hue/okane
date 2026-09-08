@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  Users, User, Pencil, Trash2, X, Store, FileText, Calendar, Wallet as WalletIcon, Tag, ReceiptText, ArrowUpRight, ArrowDownLeft, Repeat
+  Users, User, Pencil, Trash2, X, Store, FileText, Calendar, Wallet as WalletIcon, Tag, ReceiptText, ArrowUpRight, ArrowDownLeft, Repeat, RotateCcw
 } from 'lucide-react';
 import CategoryIcon, { CategoryBadge } from './CategoryIcon';
 import {
@@ -23,6 +23,7 @@ interface ExpenseDetailDrawerProps {
   onClose: () => void;
   onEdit: (expense: Expense) => void;
   onDelete: (id: string) => void;
+  onUndo?: (id: string) => void;
   currency?: string;
   friends?: Friend[];
   wallets?: Wallet[];
@@ -35,6 +36,7 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
   onClose,
   onEdit,
   onDelete,
+  onUndo,
   currency: currencyProp,
   friends: friendsProp,
   wallets: walletsProp,
@@ -585,33 +587,64 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
             flexShrink: 0,
           }}
         >
-          <button
-            type="button"
-            className="btn btn-secondary"
-            style={{
-              flex: 1,
-              height: 38,
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6,
-              fontSize: 13,
-              fontWeight: 700,
-              borderRadius: 10,
-              background: 'var(--surface2)',
-              border: '1px solid var(--border)',
-              color: 'var(--text)',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-            }}
-            onClick={() => {
-              onClose();
-              onEdit(primaryItem);
-            }}
-          >
-            <Pencil size={14} style={{ color: 'var(--text)' }} />
-            <span>Edit</span>
-          </button>
+          {onUndo && (ge.isSettlementGroup || ge.settlementId || ge.items.some(i => i.settled || i.settlementId || i.vendorSettled)) && (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              style={{
+                flex: 1,
+                height: 38,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                fontSize: 13,
+                fontWeight: 700,
+                borderRadius: 10,
+                background: 'var(--surface2)',
+                border: '1px solid var(--border)',
+                color: 'var(--accent)',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+              onClick={() => {
+                onClose();
+                onUndo(ge.settlementId || ge.id);
+              }}
+            >
+              <RotateCcw size={14} style={{ color: 'var(--accent)' }} />
+              <span>Undo</span>
+            </button>
+          )}
+          {!ge.isSettlementGroup && (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              style={{
+                flex: 1,
+                height: 38,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                fontSize: 13,
+                fontWeight: 700,
+                borderRadius: 10,
+                background: 'var(--surface2)',
+                border: '1px solid var(--border)',
+                color: 'var(--text)',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+              onClick={() => {
+                onClose();
+                onEdit(primaryItem);
+              }}
+            >
+              <Pencil size={14} style={{ color: 'var(--text)' }} />
+              <span>Edit</span>
+            </button>
+          )}
           <button
             type="button"
             className="btn"

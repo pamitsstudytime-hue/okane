@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useColorMode, ACCENT_PRESETS } from '../theme';
 import Switch from '@mui/material/Switch';
-import { Plus, X, RotateCcw, Tag, Upload, FlaskConical, Trash2, ChevronRight, ChevronDown, Edit2, Palette, ExternalLink, Sparkles, Zap, FileCode, Check, Database, Terminal, Download, RefreshCw, ArrowUpCircle, CheckCircle2, History, GitCommit, Plane, Send, HelpCircle, MessageSquarePlus, Bug, Lightbulb, GitPullRequest, Sliders, Moon, Sun, Compass, ShieldCheck, Fingerprint, Lock, KeyRound, Smartphone, EyeOff, Eye, ArrowLeft, Search, ScanFace, Keyboard as KeyboardIcon, Coins, Wallet, Layout } from 'lucide-react';
+import { Plus, X, RotateCcw, Tag, Upload, FlaskConical, Trash2, ChevronRight, ChevronDown, Edit2, Palette, ExternalLink, Sparkles, Zap, FileCode, Check, Database, Terminal, Download, RefreshCw, ArrowUpCircle, CheckCircle2, History, GitCommit, Plane, Send, HelpCircle, MessageSquarePlus, Bug, Lightbulb, GitPullRequest, Sliders, Moon, Sun, Compass, ShieldCheck, Fingerprint, Lock, KeyRound, Smartphone, EyeOff, Eye, ArrowLeft, Search, ScanFace, Keyboard as KeyboardIcon, Coins, Wallet, Layout, FolderOpen, Clipboard } from 'lucide-react';
 import { useStore } from '../store';
 import { CURRENCIES, DEFAULT_CATEGORIES, FRIEND_PALETTE, generateSQLDumpString, downloadFile, importSQLDumpString } from '../db';
 import type { Category, AppDB, ViewName } from '../types';
@@ -375,6 +375,9 @@ export default function Settings({
   };
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [pasteBackupText, setPasteBackupText] = useState('');
+  const [showPasteSection, setShowPasteSection] = useState(false);
   const handledArgRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -668,6 +671,51 @@ export default function Settings({
       setExportModalOpen(true);
     } else {
       handleSaveToStorage();
+    }
+  };
+
+  const handleImportClick = () => {
+    setShowDataSheet(false);
+    setImportModalOpen(true);
+    setShowPasteSection(false);
+    setPasteBackupText('');
+  };
+
+  const handleBrowseFiles = () => {
+    setImportModalOpen(false);
+    setShowPasteSection(false);
+    if (fileRef.current) {
+      fileRef.current.value = '';
+      fileRef.current.click();
+    }
+  };
+
+  const handlePasteClipboard = async () => {
+    try {
+      if (navigator.clipboard?.readText) {
+        const text = await navigator.clipboard.readText();
+        if (text && text.trim()) {
+          setPasteBackupText(text.trim());
+          showToast('Pasted from clipboard!');
+          return;
+        }
+      }
+      showToast('Clipboard is empty or access denied');
+    } catch {
+      showToast('Please paste manually into the box below.');
+    }
+  };
+
+  const handleRestorePastedText = () => {
+    if (!pasteBackupText.trim()) {
+      showToast('Please paste valid backup text first.');
+      return;
+    }
+    const success = processImportText(pasteBackupText.trim());
+    if (success) {
+      setImportModalOpen(false);
+      setShowPasteSection(false);
+      setPasteBackupText('');
     }
   };
 
@@ -2796,7 +2844,7 @@ export default function Settings({
                   <span style={{ fontSize: 10, color: 'var(--text-3)' }}>Save or share backup</span>
                 </button>
 
-                <button type="button" className="data-action-card" onClick={() => { setShowDataSheet(false); fileRef.current?.click(); }}>
+                <button type="button" className="data-action-card" onClick={handleImportClick}>
                   <Upload size={24} />
                   <span className="data-action-label" style={{ fontWeight: 600 }}>Import</span>
                   <span style={{ fontSize: 10, color: 'var(--text-3)' }}>Restore from backup</span>
@@ -4191,6 +4239,254 @@ export default function Settings({
         document.body
       )}
 
+      {/* Import Options Modal */}
+      {importModalOpen && createPortal(
+        <div
+          className="modal-backdrop"
+          style={{ zIndex: 99999 }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setImportModalOpen(false);
+          }}
+        >
+          <div
+            className="modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '400px',
+              padding: '20px 22px 22px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+            }}
+          >
+            <div className="modal-handle-bar">
+              <div className="modal-handle" />
+            </div>
+
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '12px',
+                  background: 'var(--accent-soft)',
+                  color: 'var(--accent)',
+                  display: 'grid',
+                  placeItems: 'center',
+                  flexShrink: 0
+                }}>
+                  <Upload size={20} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '16.5px', fontWeight: 700, color: 'var(--text)' }}>
+                    Import Backup
+                  </h3>
+                  <div style={{ fontSize: '12px', color: 'var(--text-3)' }}>
+                    Restore from .db, .sql, or .json
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="drawer-close-btn"
+                onClick={() => setImportModalOpen(false)}
+                style={{
+                  background: 'var(--surface2)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 8,
+                  width: '32px',
+                  height: '32px',
+                  display: 'grid',
+                  placeItems: 'center',
+                  color: 'var(--text-2)',
+                  cursor: 'pointer'
+                }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Import Methods */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {/* Option 1: Select from Device Files */}
+              <button
+                type="button"
+                onClick={handleBrowseFiles}
+                style={{
+                  padding: '14px 16px',
+                  borderRadius: '14px',
+                  background: 'var(--surface2)',
+                  border: '1px solid var(--border)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '12px',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
+                  <div style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '10px',
+                    background: 'var(--accent-soft)',
+                    color: 'var(--accent)',
+                    display: 'grid',
+                    placeItems: 'center',
+                    flexShrink: 0
+                  }}>
+                    <FolderOpen size={20} />
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)' }}>
+                      Select from Files
+                    </div>
+                    <div style={{ fontSize: '11.5px', color: 'var(--text-3)', marginTop: '2px' }}>
+                      Browse phone Files, Downloads, or Drive
+                    </div>
+                  </div>
+                </div>
+                <ChevronRight size={18} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
+              </button>
+
+              {/* Option 2: Paste Backup Text */}
+              <button
+                type="button"
+                onClick={() => setShowPasteSection(!showPasteSection)}
+                style={{
+                  padding: '14px 16px',
+                  borderRadius: '14px',
+                  background: 'var(--surface2)',
+                  border: '1px solid var(--border)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '12px',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
+                  <div style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '10px',
+                    background: 'rgba(59, 130, 246, 0.12)',
+                    color: '#3b82f6',
+                    display: 'grid',
+                    placeItems: 'center',
+                    flexShrink: 0
+                  }}>
+                    <FileCode size={20} />
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)' }}>
+                      Paste Backup Text
+                    </div>
+                    <div style={{ fontSize: '11.5px', color: 'var(--text-3)', marginTop: '2px' }}>
+                      Restore from clipboard or raw SQL/JSON
+                    </div>
+                  </div>
+                </div>
+                {showPasteSection ? (
+                  <ChevronDown size={18} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+                ) : (
+                  <ChevronRight size={18} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
+                )}
+              </button>
+
+              {/* Paste Text Area Section */}
+              {showPasteSection && (
+                <div style={{
+                  padding: '12px',
+                  borderRadius: '12px',
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-2)' }}>
+                      Backup Content:
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handlePasteClipboard}
+                      className="btn btn-secondary btn-sm"
+                      style={{
+                        height: 28,
+                        padding: '4px 10px',
+                        fontSize: 11,
+                        gap: 4,
+                        borderRadius: 8
+                      }}
+                    >
+                      <Clipboard size={12} />
+                      <span>Paste from Clipboard</span>
+                    </button>
+                  </div>
+
+                  <textarea
+                    rows={4}
+                    value={pasteBackupText}
+                    onChange={(e) => setPasteBackupText(e.target.value)}
+                    placeholder="Paste your .db, .sql, or .json backup content here..."
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border)',
+                      background: 'var(--surface2)',
+                      color: 'var(--text)',
+                      fontSize: '12px',
+                      fontFamily: 'monospace',
+                      resize: 'vertical',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={handleRestorePastedText}
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      fontSize: 13,
+                      fontWeight: 700,
+                      borderRadius: 10,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 6
+                    }}
+                  >
+                    <Check size={16} />
+                    <span>Restore Data</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Cancel */}
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setImportModalOpen(false)}
+              style={{ width: '100%', marginTop: '4px' }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>,
+        document.body
+      )}
+
       {/* Release History Modal */}
       {historyModalOpen && createPortal(
         <div
@@ -4768,11 +5064,10 @@ export default function Settings({
         }}
       />
 
-      {/* Permanently mounted hidden file input (outside of any conditional portal) */}
+      {/* Permanently mounted hidden file input without restrictive accept to enable full Android system file picker */}
       <input
         ref={fileRef}
         type="file"
-        accept=".db,.sql,.json,text/plain,application/json,application/sql,application/octet-stream,*/*"
         style={{
           position: 'fixed',
           top: -10000,

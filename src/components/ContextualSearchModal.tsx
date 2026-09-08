@@ -240,8 +240,8 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
 
   // All grouped expenses for clean split representation
   const allGroupedExpenses = useMemo(() => {
-    return groupExpenses(expenses, wallets, friends);
-  }, [expenses, wallets, friends]);
+    return groupExpenses(expenses, wallets, friends, settlements);
+  }, [expenses, wallets, friends, settlements]);
 
   // Search Expenses
   const matchingExpenses = useMemo(() => {
