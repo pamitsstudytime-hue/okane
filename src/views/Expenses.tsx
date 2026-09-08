@@ -263,16 +263,6 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
 
   const hasActiveFilters = Boolean(search || catFilter || typeFilter || statusFilter || walletFilter);
 
-  const flowCounts = useMemo(() => {
-    let spent = 0;
-    let received = 0;
-    grouped.forEach((ge) => {
-      if (ge.flow === 'in') received++;
-      else spent++;
-    });
-    return { all: grouped.length, spent, received };
-  }, [grouped]);
-
   const toggleAllDateCollapse = useCallback(() => {
     if (allCollapsed) {
       setCollapsedDates({});

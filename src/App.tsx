@@ -82,6 +82,21 @@ function AppInner() {
   const [showGuideModal, setShowGuideModal] = useState(false);
   const [isExpenseTutorial, setIsExpenseTutorial] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [settingsSearchQuery, setSettingsSearchQuery] = useState('');
+  const [mobileSettingsSearchOpen, setMobileSettingsSearchOpen] = useState(false);
+
+  const handleGoBack = useCallback(() => {
+    if (viewHistory.length > 0) {
+      const prev = viewHistory[viewHistory.length - 1];
+      setViewHistory(h => h.slice(0, -1));
+      setView(prev.view);
+      setViewArg(prev.arg);
+      if (prev.friendDetailId) setFriendDetailId(prev.friendDetailId);
+    } else {
+      setView('dashboard');
+      setViewArg(undefined);
+    }
+  }, [viewHistory]);
 
   // Connect native exit confirmation toast callback
   useEffect(() => {
@@ -485,7 +500,18 @@ function AppInner() {
       case 'analytics': return <Analytics />;
       case 'settings':
         return (
-          <Settings onNavigate={navigate} onOpenGuide={() => setShowGuideModal(true)} onStartExpenseTutorial={handleStartExpenseTutorial} initialArg={viewArg} onClearViewArg={clearViewArg} onTestLock={() => setIsAppLocked(true)} />
+          <Settings
+            onNavigate={navigate}
+            onOpenGuide={() => setShowGuideModal(true)}
+            onStartExpenseTutorial={handleStartExpenseTutorial}
+            initialArg={viewArg}
+            onClearViewArg={clearViewArg}
+            onTestLock={() => setIsAppLocked(true)}
+            searchQuery={settingsSearchQuery}
+            onSearchChange={setSettingsSearchQuery}
+            mobileSearchOpen={mobileSettingsSearchOpen}
+            onToggleMobileSearch={() => setMobileSettingsSearchOpen(o => !o)}
+          />
         );
       case 'dev-sql': return <DevSQLConsole onNavigate={navigate} />;
       default: return <Dashboard onNavigate={navigate} onAddExpense={() => setShowAddExpense(true)} />;
@@ -499,29 +525,21 @@ function AppInner() {
         <nav className={`sidebar ${floatingSidebar ? 'floating' : ''} ${sidebarCollapsed ? 'collapsed' : ''}`}>
           <div className="sidebar-logo">
             {!sidebarCollapsed ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <span
+                  className="sidebar-logo-text"
                   style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: '50%',
-                    background: '#18191e',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#ffffff',
-                    fontWeight: 700,
-                    fontSize: 16,
-                    flexShrink: 0,
+                    fontSize: 26,
+                    fontWeight: 800,
+                    letterSpacing: '-0.04em',
+                    lineHeight: 1.1,
+                    color: 'var(--text)',
+                    fontFamily: 'var(--font-sans)',
+                    userSelect: 'none',
                   }}
                 >
-                  O
-                </div>
-                <div>
-                  <div className="sidebar-logo-text" style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.3px', color: 'var(--text)' }}>Okane</div>
-                  <div className="sidebar-logo-sub" style={{ fontSize: 11, color: 'var(--text-3)' }}>minimal finance</div>
-                </div>
+                  Okane
+                </span>
               </div>
             ) : null}
             {sidebarCollapsed ? (
@@ -531,18 +549,18 @@ function AppInner() {
                 sx={{ 
                   width: 36,
                   height: 36,
-                  borderRadius: '50%',
-                  background: '#18191e',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                  color: '#ffffff',
+                  borderRadius: '12px',
+                  background: 'var(--surface2)',
+                  border: '1px solid var(--border)',
+                  color: 'text.primary',
                   margin: '0 auto',
-                  transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease',
+                  transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease',
                   '&:hover': {
-                    transform: 'scale(1.08)',
-                    bgcolor: '#22242c',
+                    transform: 'scale(1.06)',
+                    bgcolor: 'var(--surface3)',
                   },
                   '&:active': {
-                    transform: 'scale(0.92)',
+                    transform: 'scale(0.94)',
                   }
                 }}
                 title="Expand sidebar"
@@ -554,16 +572,15 @@ function AppInner() {
                 size="small"
                 onClick={toggleSidebar}
                 sx={{ 
-                  color: '#6e7284', 
+                  color: 'var(--text-2)', 
                   p: 0.8, 
-                  borderRadius: '8px',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRadius: '10px',
+                  border: '1px solid var(--border)',
                   bgcolor: 'transparent',
                   transition: 'all 0.15s ease',
                   '&:hover': {
-                    color: '#ffffff',
-                    bgcolor: '#141519',
-                    borderColor: 'rgba(255, 255, 255, 0.14)',
+                    color: 'var(--text)',
+                    bgcolor: 'var(--surface2)',
                   },
                   '&:active': {
                     transform: 'scale(0.95)',
@@ -644,19 +661,20 @@ function AppInner() {
               style={{
                 margin: sidebarCollapsed ? '10px auto 4px' : '10px 10px 4px',
                 width: sidebarCollapsed ? 38 : 'calc(100% - 20px)',
-                height: 44,
+                height: 42,
                 padding: sidebarCollapsed ? 0 : '8px 16px',
-                borderRadius: 9999,
-                background: '#ffffff',
-                color: '#000000',
-                border: 'none',
-                fontWeight: 600,
-                fontSize: 14.5,
-                boxShadow: 'none',
+                borderRadius: 12,
+                background: mode === 'dark' ? '#ffffff' : '#111111',
+                color: mode === 'dark' ? '#000000' : '#ffffff',
+                border: mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid rgba(0, 0, 0, 0.1)',
+                fontWeight: 650,
+                fontSize: 14,
+                letterSpacing: '-0.2px',
+                boxShadow: mode === 'dark' ? '0 2px 10px rgba(0, 0, 0, 0.4)' : '0 2px 8px rgba(0, 0, 0, 0.12)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: sidebarCollapsed ? 0 : 8,
+                gap: sidebarCollapsed ? 0 : 7,
                 flexShrink: 0,
                 cursor: 'pointer',
                 transition: 'transform 0.15s ease, opacity 0.15s ease',
@@ -664,16 +682,16 @@ function AppInner() {
               onClick={() => setShowAddExpense(true)}
               title={sidebarCollapsed ? "Add Expense" : undefined}
             >
-              <Plus size={18} strokeWidth={2.5} style={{ color: '#000000' }} />
-              {!sidebarCollapsed && <span style={{ fontWeight: 600 }}>Add</span>}
+              <Plus size={18} strokeWidth={2.4} style={{ color: mode === 'dark' ? '#000000' : '#ffffff' }} />
+              {!sidebarCollapsed && <span style={{ fontWeight: 650 }}>Add</span>}
             </button>
           </div>
 
           <div className="sidebar-footer" style={{ padding: sidebarCollapsed ? '8px 4px 14px' : '10px 14px 14px', borderTop: 'none', background: 'transparent' }}>
             {!sidebarCollapsed ? (
               <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                <span style={{ fontSize: 13, color: '#5e6273', fontWeight: 500, whiteSpace: 'nowrap' }}>
-                  Theme: <strong style={{ color: mode === 'dark' ? '#ffffff' : '#111111', fontWeight: 600 }}>{mode === 'dark' ? 'Dark Mode' : 'Light Mode'}</strong>
+                <span style={{ fontSize: 13, color: 'var(--text-2)', fontWeight: 500, whiteSpace: 'nowrap' }}>
+                  Theme: <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{mode === 'dark' ? 'Dark Mode' : 'Light Mode'}</strong>
                 </span>
                 <button
                   type="button"
@@ -681,21 +699,22 @@ function AppInner() {
                   onClick={handleToggleDark}
                   title={`Switch to ${mode === 'dark' ? 'Light' : 'Dark'} mode`}
                   style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: 10,
-                    background: mode === 'dark' ? '#ffffff' : '#16171b',
-                    color: mode === 'dark' ? '#000000' : '#ffffff',
-                    border: 'none',
+                    width: 36,
+                    height: 36,
+                    borderRadius: 12,
+                    background: 'var(--surface2)',
+                    color: 'var(--text)',
+                    border: '1px solid var(--border)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
                     flexShrink: 0,
-                    boxShadow: '0 1px 4px rgba(0, 0, 0, 0.25)',
+                    boxShadow: 'var(--shadow)',
+                    transition: 'all 0.18s ease',
                   }}
                 >
-                  {mode === 'dark' ? <Moon size={16} strokeWidth={2.2} /> : <Sun size={16} strokeWidth={2.2} />}
+                  {mode === 'dark' ? <Moon size={16} strokeWidth={2.1} /> : <Sun size={16} strokeWidth={2.1} />}
                 </button>
               </div>
             ) : (
@@ -706,20 +725,21 @@ function AppInner() {
                   onClick={handleToggleDark}
                   title={`Switch to ${mode === 'dark' ? 'Light' : 'Dark'} mode`}
                   style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: 10,
-                    background: mode === 'dark' ? '#ffffff' : '#16171b',
-                    color: mode === 'dark' ? '#000000' : '#ffffff',
-                    border: 'none',
+                    width: 36,
+                    height: 36,
+                    borderRadius: 12,
+                    background: 'var(--surface2)',
+                    color: 'var(--text)',
+                    border: '1px solid var(--border)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
-                    boxShadow: '0 1px 4px rgba(0, 0, 0, 0.25)',
+                    boxShadow: 'var(--shadow)',
+                    transition: 'all 0.18s ease',
                   }}
                 >
-                  {mode === 'dark' ? <Moon size={16} strokeWidth={2.2} /> : <Sun size={16} strokeWidth={2.2} />}
+                  {mode === 'dark' ? <Moon size={16} strokeWidth={2.1} /> : <Sun size={16} strokeWidth={2.1} />}
                 </button>
               </div>
             )}
@@ -740,53 +760,38 @@ function AppInner() {
             color: 'text.primary',
             boxShadow: 'none',
             transition: 'background-color 0.2s ease',
-            pt: 'env(safe-area-inset-top, 0px)',
+            pt: 'calc(6px + env(safe-area-inset-top, 0px))',
+            pb: 0.5,
           }}
         >
-          <Toolbar variant="dense" sx={{ minHeight: { xs: '44px !important', sm: '56px' }, height: { xs: 44, sm: 56 }, px: 1.5, gap: 1, justifyContent: 'space-between' }}>
-            {/* Left side: Back button or Branded view title */}
+          <Toolbar
+            variant="dense"
+            sx={{
+              minHeight: { xs: '52px !important', sm: '58px !important' },
+              height: { xs: 52, sm: 58 },
+              px: { xs: 2.25, sm: 2.75 },
+              gap: 1.25,
+              justifyContent: 'space-between',
+            }}
+          >
+            {/* Left side: Back button or Clean view title (without leading icon) */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0, flexShrink: 1 }}>
-              {view === 'friend-detail' ? (
+              {(view === 'friend-detail' || view === 'settings') && (
                 <IconButton
                   size="small"
-                  onClick={() => setView('friends')}
+                  onClick={handleGoBack}
                   sx={{
                     color: 'text.primary',
                     bgcolor: mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
                     p: 0.8,
                     borderRadius: '10px',
+                    mr: 0.5,
                     '&:active': { transform: 'scale(0.92)' }
                   }}
-                  title="Back to Contacts"
+                  title={view === 'settings' ? 'Back' : 'Back to Contacts'}
                 >
                   <ArrowLeft size={18} />
                 </IconButton>
-              ) : (
-                <Box
-                  sx={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: '10px',
-                    bgcolor: 'var(--accent-soft)',
-                    color: 'primary.main',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}
-                >
-                  {view === 'dashboard' ? <LayoutDashboard size={18} /> :
-                   view === 'expenses' ? <ReceiptText size={18} /> :
-                   view === 'friends' ? <Users size={18} /> :
-                   view === 'wallets' ? <Wallet size={18} /> :
-                   view === 'recurring' ? <RefreshCw size={18} /> :
-                   view === 'settlements' ? <Handshake size={18} /> :
-                   view === 'split-trips' ? <Plane size={18} /> :
-                   view === 'analytics' ? <BarChart3 size={18} /> :
-                   view === 'settings' ? <SettingsIconLucide size={18} /> :
-                   view === 'dev-sql' ? <Database size={18} /> :
-                   <LayoutDashboard size={18} />}
-                </Box>
               )}
 
               <Box sx={{ minWidth: 0 }}>
@@ -794,14 +799,16 @@ function AppInner() {
                   variant="h6"
                   component="span"
                   sx={{
-                    fontWeight: 700,
-                    fontSize: { xs: '0.98rem', sm: '1.05rem' },
-                    letterSpacing: '-0.3px',
+                    fontFamily: 'var(--font-sans)',
+                    fontWeight: 750,
+                    fontSize: { xs: '1.24rem', sm: '1.34rem' },
+                    letterSpacing: '-0.4px',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
                     display: 'block',
-                    lineHeight: 1.2,
+                    lineHeight: 1.25,
+                    color: 'text.primary',
                   }}
                 >
                   {view === 'dashboard' ? 'Dashboard' :
@@ -1052,35 +1059,65 @@ function AppInner() {
                 </button>
               )}
 
-              {searchLocation === 'topbar' && (
+              {view === 'settings' ? (
                 <button
                   type="button"
-                  id="topbar-search-btn"
-                  className="btn-icon topbar-search-btn"
-                  onClick={() => setShowSearchModal(true)}
+                  id="topbar-settings-search-btn"
+                  className={`btn-icon ${mobileSettingsSearchOpen ? 'active' : ''}`}
+                  onClick={() => setMobileSettingsSearchOpen(prev => !prev)}
                   style={{
                     position: 'relative',
                     width: 36,
                     height: 36,
                     borderRadius: '50%',
-                    background: 'var(--surface2)',
-                    border: '1px solid var(--border)',
+                    background: mobileSettingsSearchOpen ? 'var(--accent-soft)' : 'var(--surface2)',
+                    border: `1px solid ${mobileSettingsSearchOpen ? 'var(--accent)' : 'var(--border)'}`,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: 'var(--text)',
+                    color: mobileSettingsSearchOpen ? 'var(--accent)' : 'var(--text)',
                     flexShrink: 0,
                     transition: 'transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease',
                   }}
-                  title="Search (Ctrl + K)"
-                  aria-label="Search"
+                  title="Search Settings"
+                  aria-label="Search Settings"
                 >
                   <Search size={17} />
                 </button>
-              )}
+              ) : (
+                <>
+                  {searchLocation === 'topbar' && (
+                    <button
+                      type="button"
+                      id="topbar-search-btn"
+                      className="btn-icon topbar-search-btn"
+                      onClick={() => setShowSearchModal(true)}
+                      style={{
+                        position: 'relative',
+                        width: 36,
+                        height: 36,
+                        borderRadius: '50%',
+                        background: 'var(--surface2)',
+                        border: '1px solid var(--border)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'var(--text)',
+                        flexShrink: 0,
+                        transition: 'transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease',
+                      }}
+                      title="Search (Ctrl + K)"
+                      aria-label="Search"
+                    >
+                      <Search size={17} />
+                    </button>
+                  )}
 
-              <NotificationBell onNavigate={navigate} />
+                  <NotificationBell onNavigate={navigate} />
+                </>
+              )}
             </Box>
           </Toolbar>
         </AppBar>
@@ -1275,24 +1312,34 @@ function AppInner() {
         </Paper>
       )}
 
-      {/* More drawer sheet */}
+      {/* Memento Elevated Sheet / Drawer */}
       <Drawer
         anchor="bottom"
         open={moreOpen && isMobile}
         onClose={() => setMoreOpen(false)}
         disableAutoFocus
         disableRestoreFocus
+        ModalProps={{
+          BackdropProps: {
+            sx: {
+              bgcolor: 'rgba(0, 0, 0, 0.75)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+            }
+          }
+        }}
         PaperProps={{
           sx: {
             borderTopLeftRadius: 28,
             borderTopRightRadius: 28,
-            bgcolor: 'var(--drawer-bg, #131418)',
+            bgcolor: mode === 'dark' ? '#121212' : '#ffffff',
             backgroundImage: 'none',
             p: 2.5,
             pb: 'calc(24px + env(safe-area-inset-bottom, 0px))',
-            maxHeight: '85vh',
-            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-            boxShadow: '0 -10px 40px rgba(0, 0, 0, 0.7)',
+            height: 'auto',
+            maxHeight: '92vh',
+            borderTop: mode === 'dark' ? '1px solid rgba(38, 38, 38, 0.8)' : '1px solid #e5e7eb',
+            boxShadow: '0 -10px 40px rgba(0, 0, 0, 0.8)',
           }
         }}
       >

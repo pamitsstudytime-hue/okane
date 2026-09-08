@@ -269,3 +269,94 @@ export function CategoryBadge({ category = '', color, icon = '', size = 14, show
     </span>
   );
 }
+
+// Memento Minimalist Dark: Top-Right Category Icon
+// "Prominent circular badge w-6.5 h-6.5 rounded-full flex items-center justify-center shrink-0 border containing a w-3.5 h-3.5 stroke-[2] icon."
+export interface TopRightCategoryIconProps {
+  category?: string;
+  icon?: string;
+  className?: string;
+  style?: React.CSSProperties;
+  color?: string;
+  borderColor?: string;
+  bg?: string;
+}
+
+export function TopRightCategoryIcon({
+  category = '',
+  icon = '',
+  className = '',
+  style,
+  color = '#ffffff',
+  borderColor = 'rgba(255, 255, 255, 0.15)',
+  bg = 'rgba(255, 255, 255, 0.05)',
+}: TopRightCategoryIconProps) {
+  return (
+    <div
+      className={`w-6.5 h-6.5 rounded-full flex items-center justify-center shrink-0 border ${className}`}
+      style={{
+        width: 26,
+        height: 26,
+        borderColor: borderColor,
+        backgroundColor: bg,
+        color: color,
+        ...style,
+      }}
+    >
+      <CategoryIcon
+        category={category}
+        icon={icon}
+        size={14}
+        className="w-3.5 h-3.5 stroke-[2]"
+        style={{ color: color }}
+      />
+    </div>
+  );
+}
+
+// Memento Minimalist Dark: Bottom-Left Indicators
+// "Compact capsule badge px-2 py-0.5 rounded-full text-[10px] font-semibold inline-flex items-center gap-1 with a smaller w-2.5 h-2.5 stroke-[2.5] icon."
+export interface BottomLeftIndicatorProps {
+  label: string;
+  icon?: React.ElementType;
+  className?: string;
+  style?: React.CSSProperties;
+  semantic?: 'checklist' | 'todo' | 'security' | 'passkeys' | 'notes' | 'ideas' | 'journal' | 'diary' | 'audio' | 'voice' | 'media' | 'photos';
+}
+
+export function BottomLeftIndicator({
+  label,
+  icon: IconComponent,
+  className = '',
+  style,
+  semantic,
+}: BottomLeftIndicatorProps) {
+  const semanticClasses: Record<string, string> = {
+    checklist: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
+    todo: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
+    security: 'bg-amber-500/10 text-amber-300 border-amber-500/20',
+    passkeys: 'bg-amber-500/10 text-amber-300 border-amber-500/20',
+    notes: 'bg-sky-500/10 text-sky-300 border-sky-500/20',
+    ideas: 'bg-sky-500/10 text-sky-300 border-sky-500/20',
+    journal: 'bg-purple-500/10 text-purple-300 border-purple-500/20',
+    diary: 'bg-purple-500/10 text-purple-300 border-purple-500/20',
+    audio: 'bg-teal-500/10 text-teal-300 border-teal-500/20',
+    voice: 'bg-teal-500/10 text-teal-300 border-teal-500/20',
+    media: 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20',
+    photos: 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20',
+  };
+
+  const badgeClass = semantic && semanticClasses[semantic]
+    ? semanticClasses[semantic]
+    : 'bg-neutral-800/80 text-neutral-300 border-neutral-700/50';
+
+  return (
+    <span
+      className={`px-2 py-0.5 rounded-full text-[10px] font-semibold inline-flex items-center gap-1 border ${badgeClass} ${className}`}
+      style={style}
+    >
+      {IconComponent && <IconComponent className="w-2.5 h-2.5 stroke-[2.5]" size={10} />}
+      <span>{label}</span>
+    </span>
+  );
+}

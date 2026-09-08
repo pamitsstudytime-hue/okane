@@ -214,20 +214,20 @@ export function buildTheme(mode: 'light' | 'dark', accent: AccentPreset = 'monoc
         contrastText: colors.contrast || '#ffffff',
       },
       background: mode === 'dark' ? {
-        default: '#000000', // true black OLED matching requested theme
-        paper: '#121316',   // pitch dark obsidian matching reference image
+        default: '#0a0a0c', // Deep OLED neutral #0a0a0c
+        paper: '#141416',   // Card Surface #141416
       } : {
-        default: '#fafafa',
+        default: '#f8f9fa',
         paper: '#ffffff',
       },
       text: mode === 'dark' ? {
-        primary: '#ffffff',   // crisp white
-        secondary: '#8e909a', // muted clean zinc
+        primary: '#ffffff',   // text-white
+        secondary: '#a1a1aa', // text-neutral-400
       } : {
-        primary: '#111111',
-        secondary: '#6b7280',
+        primary: '#171717',
+        secondary: '#52525b',
       },
-      divider: mode === 'dark' ? 'rgba(255, 255, 255, 0.06)' : '#e2e4e9',
+      divider: mode === 'dark' ? 'rgba(38, 38, 38, 0.8)' : '#e5e7eb',
     },
     typography: {
       fontFamily: "'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
@@ -243,7 +243,7 @@ export function buildTheme(mode: 'light' | 'dark', accent: AccentPreset = 'monoc
             borderBottom: 'none',
             border: 'none',
             ...(mode === 'dark' && {
-              backgroundColor: '#000000',
+              backgroundColor: '#0a0a0c',
             }),
           },
         },
@@ -255,7 +255,7 @@ export function buildTheme(mode: 'light' | 'dark', accent: AccentPreset = 'monoc
             border: 'none',
             boxShadow: 'none',
             ...(mode === 'dark' && {
-              backgroundColor: '#000000',
+              backgroundColor: '#0a0a0c',
             }),
           },
         },
@@ -265,8 +265,8 @@ export function buildTheme(mode: 'light' | 'dark', accent: AccentPreset = 'monoc
           root: {
             backgroundImage: 'none',
             ...(mode === 'dark' && {
-              backgroundColor: '#121316',
-              borderColor: 'rgba(255, 255, 255, 0.06)',
+              backgroundColor: '#141416',
+              borderColor: 'rgba(38, 38, 38, 0.8)',
             }),
           },
         },
@@ -274,10 +274,10 @@ export function buildTheme(mode: 'light' | 'dark', accent: AccentPreset = 'monoc
       MuiDialog: {
         styleOverrides: {
           paper: {
-            borderRadius: 22,
+            borderRadius: 28,
             ...(mode === 'dark' && {
-              backgroundColor: '#121316',
-              border: '1px solid rgba(255, 255, 255, 0.06)',
+              backgroundColor: '#121212',
+              border: '1px solid rgba(38, 38, 38, 0.8)',
               boxShadow: '0 20px 40px -15px rgba(0, 0, 0, 0.8)',
             }),
           },
@@ -290,8 +290,8 @@ export function buildTheme(mode: 'light' | 'dark', accent: AccentPreset = 'monoc
             borderTopRightRadius: 28,
             border: 'none',
             ...(mode === 'dark' && {
-              backgroundColor: '#121316',
-              borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+              backgroundColor: '#121212',
+              borderTop: '1px solid rgba(38, 38, 38, 0.8)',
               boxShadow: '0 -10px 40px rgba(0, 0, 0, 0.8)',
             }),
           },
