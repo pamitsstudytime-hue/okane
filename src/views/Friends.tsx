@@ -10,7 +10,6 @@ import {
   Users,
   Store,
   Tv,
-  SlidersHorizontal,
   X,
   RotateCcw,
 } from 'lucide-react';
@@ -189,6 +188,22 @@ export default function Friends({ onNavigate }: Props) {
     return count;
   }, [statusFilter, sortBy, userDensityOverride, search]);
 
+  // Listen for top bar filter button trigger
+  useEffect(() => {
+    const handleOpenFilters = () => {
+      setShowFilters(true);
+    };
+    window.addEventListener('app-open-filters', handleOpenFilters);
+    return () => window.removeEventListener('app-open-filters', handleOpenFilters);
+  }, []);
+
+  // Sync active filter count with top bar
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('app-filter-count-update', {
+      detail: { view: 'friends', count: activeFilterCount }
+    }));
+  }, [activeFilterCount]);
+
   const handleClearAll = () => {
     setStatusFilter('all');
     setSortBy('owed_desc');
@@ -311,22 +326,6 @@ export default function Friends({ onNavigate }: Props) {
               <span className="type-badge">{counts.subscription}</span>
             </div>
             <span className="type-label">Subscriptions</span>
-          </button>
-
-          {/* Integrated Filter Action Button (No split line, icon only) */}
-          <button
-            type="button"
-            className={`contact-filter-integrated-btn ${activeFilterCount > 0 ? 'active' : ''}`}
-            onClick={() => setShowFilters(true)}
-            title={activeFilterCount > 0 ? `${activeFilterCount} active filters` : "Filters & Sorting"}
-            aria-label="Open Filters"
-          >
-            <SlidersHorizontal size={15} style={{ color: activeFilterCount > 0 ? 'var(--accent)' : 'inherit' }} />
-            {activeFilterCount > 0 && (
-              <span className="contact-filter-badge">
-                {activeFilterCount}
-              </span>
-            )}
           </button>
         </div>
 

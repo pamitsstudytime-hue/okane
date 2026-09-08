@@ -4,7 +4,7 @@ import {
   Store, Wallet as WalletIcon
 } from 'lucide-react';
 import CategoryIcon from '../CategoryIcon';
-import { fmtMoney, friendInitial, getAvatarStyle, typeLabel, resolveCategoryMeta, type GroupedExpense } from '../../utils';
+import { fmtMoney, friendInitial, getAvatarStyle, typeLabel, resolveCategoryMeta, cleanSettlementDescription, type GroupedExpense } from '../../utils';
 import type { Expense, Friend, Wallet, Category, Settlement } from '../../types';
 import { renderWalletIcon } from '../WalletIconRenderer';
 
@@ -84,30 +84,27 @@ export const ExpenseTableRow: React.FC<Props> = React.memo(({
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>{ge.description}</span>
+                <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>{cleanSettlementDescription(ge.description)}</span>
                 {vendor && (
                   <span
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: 3.5,
-                      padding: '1.5px 7px',
-                      borderRadius: 10,
-                      fontSize: 10.5,
-                      fontWeight: 600,
+                      justifyContent: 'center',
+                      width: 20,
+                      height: 20,
+                      borderRadius: 6,
                       background: 'var(--surface2)',
-                      color: 'var(--text-2)',
+                      color: 'var(--accent)',
                       border: '1px solid var(--border)',
-                      whiteSpace: 'nowrap',
                       flexShrink: 0
                     }}
-                    title={`Vendor / Store: ${vendor.name}`}
+                    title={`Vendor: ${vendor.name}`}
                   >
-                    <Store size={11} style={{ color: 'var(--accent)' }} />
-                    <span>{vendor.name}</span>
+                    <Store size={12} />
                   </span>
                 )}
-                {(ge.isSplit || ge.items.length > 1 || ge.isSettlementGroup) && (
+                {!ge.isSettlementGroup && (ge.isSplit || ge.items.length > 1) && (
                   <span
                     style={{
                       display: 'inline-flex',
@@ -123,24 +120,26 @@ export const ExpenseTableRow: React.FC<Props> = React.memo(({
                       flexShrink: 0,
                     }}
                   >
-                    <Users size={11} /> {ge.isSettlementGroup ? 'Settlement' : (ge.isSplit ? 'Split' : 'Breakdown')}
+                    <Users size={11} /> {ge.isSplit ? 'Split' : 'Breakdown'}
                   </span>
                 )}
               </div>
               <div style={{ fontSize: 11.5, color: 'var(--text-3)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span>{ge.category}</span>
-                {ge.isSettlementGroup && <span>• {ge.settlementItemCount} item{ge.settlementItemCount! > 1 ? 's' : ''} settled</span>}
+                {!ge.isSettlementGroup && <span>{ge.category}</span>}
+                {!ge.isSettlementGroup && friendsInGroup.length > 0 && <span>•</span>}
+                {friendsInGroup.length > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--text-3)' }}>
+                    {friendsInGroup.map((f: Friend | undefined) => f && (
+                      <span key={f.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        <div className="avatar avatar-sm" style={{ ...getAvatarStyle(f.color), width: 16, height: 16, fontSize: 8, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {f.type === 'vendor' ? <Store size={9} /> : friendInitial(f.name, f.avatarNumber)}
+                        </div>
+                        <span>{f.name}</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
-              {friendsInGroup.length > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--text-3)' }}>
-                  {friendsInGroup.map((f: Friend | undefined) => f && (
-                    <span key={f.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                      <div className="avatar avatar-sm" style={{ ...getAvatarStyle(f.color), width: 16, height: 16, fontSize: 8 }}>{friendInitial(f.name, f.avatarNumber)}</div>
-                      <span>{f.name}</span>
-                    </span>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
         </td>

@@ -229,6 +229,9 @@ export function buildTheme(mode: 'light' | 'dark', accent: AccentPreset = 'monoc
       },
       divider: mode === 'dark' ? '#27272a' : '#e2e4e9', // border-zinc-800
     },
+    typography: {
+      fontFamily: "'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    },
     shape: {
       borderRadius: 8,
     },

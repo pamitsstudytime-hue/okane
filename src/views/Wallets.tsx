@@ -20,7 +20,7 @@ import {
 import { useStore } from '../store';
 import type { Wallet, Expense, Settlement } from '../types';
 import { walletBalance, expenseFlow, monthKey } from '../db';
-import { fmtMoney, fmtDate, typeLabel, statusLabel, groupExpenses, resolveCategoryMeta, type GroupedExpense } from '../utils';
+import { fmtMoney, fmtDate, typeLabel, statusLabel, groupExpenses, resolveCategoryMeta, cleanSettlementDescription, type GroupedExpense } from '../utils';
 import WalletModal from '../components/WalletModal';
 import { renderWalletIcon } from '../components/WalletIconRenderer';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -118,13 +118,11 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
     const stlItems = db.settlements
       .filter(s => s.walletId === activeWallet.id)
       .map(s => {
-        const friend = db.friends.find(f => f.id === s.friendId);
-        const friendName = friend ? friend.name : 'Friend';
         const flow = s.amount >= 0 ? 'in' : 'out';
         return {
           id: s.id,
           isSettlement: true as const,
-          description: `Settlement: ${s.amount >= 0 ? 'Received from' : 'Paid to'} ${friendName}${s.note ? ` (${s.note})` : ''}`,
+          description: `Settlement: ${s.amount >= 0 ? 'Received' : 'Paid'}${s.note ? ` (${s.note})` : ''}`,
           category: 'Settlement',
           date: s.date,
           createdAt: s.createdAt,
@@ -139,7 +137,7 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
     const combined = [...expItems, ...stlItems];
     combined.sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
     return combined;
-  }, [activeWallet, expenses, db.settlements, db.friends]);
+  }, [activeWallet, expenses, db.settlements]);
 
   const filteredTx = useMemo(() => {
     if (!searchQuery.trim()) return unifiedTransactions;
@@ -815,7 +813,7 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                                   whiteSpace: 'nowrap',
                                 }}
                               >
-                                {tx.description}
+                                {cleanSettlementDescription(tx.description)}
                               </span>
                               {isSplit && (
                                 <span
@@ -853,8 +851,12 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                                 whiteSpace: 'nowrap',
                               }}
                             >
-                              <span style={{ flexShrink: 0 }}>{tx.category}</span>
-                              <span style={{ flexShrink: 0 }}>•</span>
+                              {!tx.isSettlement && (
+                                <>
+                                  <span style={{ flexShrink: 0 }}>{tx.category}</span>
+                                  <span style={{ flexShrink: 0 }}>•</span>
+                                </>
+                              )}
                               <span style={{ flexShrink: 0 }}>{fmtDate(tx.date)}</span>
                               {vendor && (
                                 <>

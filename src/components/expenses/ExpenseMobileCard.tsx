@@ -1,7 +1,7 @@
 import React from 'react';
 import { Users, Store } from 'lucide-react';
 import CategoryIcon from '../CategoryIcon';
-import { fmtMoney, friendInitial, getAvatarStyle, resolveCategoryMeta, type GroupedExpense } from '../../utils';
+import { fmtMoney, friendInitial, getAvatarStyle, resolveCategoryMeta, cleanSettlementDescription, type GroupedExpense } from '../../utils';
 import type { Expense, Friend, Wallet, Category, Settlement } from '../../types';
 
 interface Props {
@@ -35,7 +35,7 @@ export const ExpenseMobileCard: React.FC<Props> = React.memo(({
   const rawFriends = ge.friendIds.map((fid: string) => friendsMap.get(fid)).filter((f): f is Friend => Boolean(f));
   const vendorId = ge.vendorId || ge.items.find((i: Expense) => i.vendorId)?.vendorId;
   const vendor = vendorId ? friendsMap.get(vendorId) : null;
-  const friendsToShow = vendor ? rawFriends.filter(f => f.id !== vendor.id) : rawFriends;
+  const friendsToShow = ge.isSettlementGroup ? rawFriends : (vendor ? rawFriends.filter(f => f.id !== vendor.id) : rawFriends);
 
   const catMeta = resolveCategoryMeta(ge.category, categoryObj, ge.isSettlementGroup);
 
@@ -84,67 +84,84 @@ export const ExpenseMobileCard: React.FC<Props> = React.memo(({
 
           {/* Middle Info Column */}
           <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 3.5 }}>
-            {/* Top Row: Title + Unified Status Badge */}
+            {/* Top Row: Title + Vendor Icon + Unified Status Badge (for non-settlement) */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
               <span
                 className="mobile-expense-title"
                 style={{
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
                   overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
+                  wordBreak: 'break-word',
+                  lineHeight: 1.3,
                   fontWeight: 650,
                   fontSize: 13.5,
                 }}
               >
-                {ge.description}
+                {cleanSettlementDescription(ge.description)}
               </span>
 
-              {groupStatus.statusKey !== 'none' && groupStatus.statusLabel ? (
-                ge.isSettlementGroup ? (
-                  <span className="tx-status-pill status-settled" style={{ padding: '2px 7px', fontSize: 10, flexShrink: 0 }}>
-                    <span>Settled ✓</span>
-                  </span>
-                ) : (
-                  <span
-                    className={`tx-status-pill status-${groupStatus.statusKey}`}
-                    style={{
-                      padding: '2px 7px',
-                      fontSize: 10,
-                      flexShrink: 0,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 3.5,
-                    }}
-                  >
-                    {ge.isSplit && <Users size={10} />}
-                    <span>{groupStatus.statusLabel}</span>
-                  </span>
-                )
-              ) : (
-                ge.isSplit && (
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 3.5,
-                      padding: '2px 6px',
-                      borderRadius: 6,
-                      fontSize: 10,
-                      fontWeight: 600,
-                      background: 'var(--accent-soft)',
-                      color: 'var(--accent)',
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Users size={10} />
-                    <span>{ge.isSettlementGroup ? 'Settlement' : 'Split'}</span>
-                  </span>
-                )
+              {vendor && (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 18,
+                    height: 18,
+                    borderRadius: 5,
+                    background: 'var(--surface2)',
+                    color: 'var(--accent)',
+                    border: '1px solid var(--border)',
+                    flexShrink: 0,
+                  }}
+                  title={`Vendor: ${vendor.name}`}
+                >
+                  <Store size={10} />
+                </span>
+              )}
+
+              {!ge.isSettlementGroup && groupStatus.statusKey !== 'none' && groupStatus.statusLabel && (
+                <span
+                  className={`tx-status-pill status-${groupStatus.statusKey}`}
+                  style={{
+                    padding: '2px 7px',
+                    fontSize: 10,
+                    flexShrink: 0,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 3.5,
+                  }}
+                >
+                  {ge.isSplit && <Users size={10} />}
+                  <span>{groupStatus.statusLabel}</span>
+                </span>
+              )}
+
+              {!ge.isSettlementGroup && !groupStatus.statusLabel && ge.isSplit && (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 3.5,
+                    padding: '2px 6px',
+                    borderRadius: 6,
+                    fontSize: 10,
+                    fontWeight: 600,
+                    background: 'var(--accent-soft)',
+                    color: 'var(--accent)',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Users size={10} />
+                  <span>Split</span>
+                </span>
               )}
             </div>
 
-            {/* Bottom Row: Category · Contacts · Vendor (Strict 1-line) */}
+            {/* Bottom Row: Category · Contacts (with avatar badge) */}
             <div
               style={{
                 display: 'flex',
@@ -158,21 +175,15 @@ export const ExpenseMobileCard: React.FC<Props> = React.memo(({
                 textOverflow: 'ellipsis',
               }}
             >
-              <span style={{ fontWeight: 500, flexShrink: 0 }}>{ge.category}</span>
-
-              {vendor && (
-                <span
-                  style={{ display: 'inline-flex', alignItems: 'center', color: 'var(--accent)', flexShrink: 0 }}
-                  title={`Vendor: ${vendor.name}`}
-                >
-                  <span style={{ color: 'var(--text-3)', marginRight: 3 }}>•</span>
-                  <Store size={12} strokeWidth={2.2} />
-                </span>
+              {!ge.isSettlementGroup && (
+                <span style={{ fontWeight: 500, flexShrink: 0 }}>{ge.category}</span>
               )}
 
               {friendsToShow.length > 0 && (
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  <span style={{ color: 'var(--text-3)', marginRight: 1, flexShrink: 0 }}>•</span>
+                  {!ge.isSettlementGroup && (
+                    <span style={{ color: 'var(--text-3)', marginRight: 1, flexShrink: 0 }}>•</span>
+                  )}
                   {friendsToShow.length === 1 ? (
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       <span
@@ -183,9 +194,12 @@ export const ExpenseMobileCard: React.FC<Props> = React.memo(({
                           height: 15,
                           fontSize: 8,
                           flexShrink: 0,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                         }}
                       >
-                        {friendInitial(friendsToShow[0].name, friendsToShow[0].avatarNumber)}
+                        {friendsToShow[0].type === 'vendor' ? <Store size={8} /> : friendInitial(friendsToShow[0].name, friendsToShow[0].avatarNumber)}
                       </span>
                       <span style={{ color: 'var(--text-2)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {friendsToShow[0].name}
@@ -207,10 +221,13 @@ export const ExpenseMobileCard: React.FC<Props> = React.memo(({
                               border: '1.5px solid var(--surface)',
                               flexShrink: 0,
                               zIndex: 2 - idx,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
                             }}
                             title={f.name}
                           >
-                            {friendInitial(f.name, f.avatarNumber)}
+                            {f.type === 'vendor' ? <Store size={8} /> : friendInitial(f.name, f.avatarNumber)}
                           </span>
                         ))}
                       </span>
@@ -219,13 +236,6 @@ export const ExpenseMobileCard: React.FC<Props> = React.memo(({
                       </span>
                     </span>
                   )}
-                </span>
-              )}
-
-              {ge.isSettlementGroup && (
-                <span style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center' }}>
-                  <span style={{ color: 'var(--text-3)', marginRight: 3 }}>•</span>
-                  {ge.settlementItemCount} item{ge.settlementItemCount! > 1 ? 's' : ''}
                 </span>
               )}
             </div>

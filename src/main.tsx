@@ -9,10 +9,12 @@ import { ColorModeContext, buildTheme, getAccentColors, type AccentPreset } from
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
 
-import '@fontsource/roboto/300.css';
-import '@fontsource/roboto/400.css';
-import '@fontsource/roboto/500.css';
-import '@fontsource/roboto/700.css';
+import '@fontsource/plus-jakarta-sans/300.css';
+import '@fontsource/plus-jakarta-sans/400.css';
+import '@fontsource/plus-jakarta-sans/500.css';
+import '@fontsource/plus-jakarta-sans/600.css';
+import '@fontsource/plus-jakarta-sans/700.css';
+import '@fontsource/plus-jakarta-sans/800.css';
 
 function getInitialMode(): 'light' | 'dark' {
   const saved = localStorage.getItem('color-mode') as 'light' | 'dark' | null;

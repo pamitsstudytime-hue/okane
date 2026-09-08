@@ -34,6 +34,7 @@ import {
   X,
   HelpCircle,
   Search,
+  Filter,
 } from 'lucide-react';
 import { StoreProvider, useStore } from './store';
 import { useColorMode, type AccentPreset } from './theme';
@@ -298,6 +299,21 @@ function AppInner() {
 
   const spendingMode = db.settings?.spendingMode || 'all';
 
+  const [topbarFilterCount, setTopbarFilterCount] = useState(0);
+
+  useEffect(() => {
+    const handleCountUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent<{ view: string; count: number }>;
+      if (customEvent.detail && customEvent.detail.view === view) {
+        setTopbarFilterCount(customEvent.detail.count);
+      }
+    };
+    window.addEventListener('app-filter-count-update', handleCountUpdate);
+    return () => window.removeEventListener('app-filter-count-update', handleCountUpdate);
+  }, [view]);
+
+  const showFilterInTopbar = ['expenses', 'friends', 'settlements'].includes(view);
+
   const { expenses, friends, currency } = useMemo(() => ({
     expenses: db.expenses,
     friends: db.friends,
@@ -333,6 +349,7 @@ function AppInner() {
     setView(prevView => {
       if (prevView !== v) {
         setViewHistory(h => [...h.slice(-15), { view: prevView, arg: viewArg, friendDetailId }]);
+        setTopbarFilterCount(0);
       }
       return v;
     });
@@ -845,26 +862,86 @@ function AppInner() {
                 </Box>
               )}
 
+              {showFilterInTopbar && (
+                <button
+                  type="button"
+                  id="topbar-filter-btn"
+                  className={`btn-icon topbar-filter-btn ${topbarFilterCount > 0 ? 'active' : ''}`}
+                  onClick={() => {
+                    window.dispatchEvent(new CustomEvent('app-open-filters', { detail: { view } }));
+                  }}
+                  style={{
+                    position: 'relative',
+                    width: 36,
+                    height: 36,
+                    borderRadius: '50%',
+                    background: topbarFilterCount > 0 ? 'var(--accent-soft)' : 'var(--surface2)',
+                    border: `1px solid ${topbarFilterCount > 0 ? 'var(--accent)' : 'var(--border)'}`,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: topbarFilterCount > 0 ? 'var(--accent)' : 'var(--text)',
+                    flexShrink: 0,
+                    transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                  title={topbarFilterCount > 0 ? `${topbarFilterCount} active filters` : "Filters & Sorting"}
+                  aria-label="Filters & Sorting"
+                >
+                  <Filter size={17} />
+                  {topbarFilterCount > 0 && (
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: -3,
+                        right: -3,
+                        minWidth: 16,
+                        height: 16,
+                        borderRadius: 999,
+                        background: 'var(--accent)',
+                        color: 'var(--accent-contrast, #ffffff)',
+                        fontSize: 10,
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '0 4px',
+                        lineHeight: 1,
+                        border: '1.5px solid var(--surface)',
+                      }}
+                    >
+                      {topbarFilterCount}
+                    </span>
+                  )}
+                </button>
+              )}
+
               {searchLocation === 'topbar' && (
-                <IconButton
-                  size="small"
+                <button
+                  type="button"
+                  id="topbar-search-btn"
+                  className="btn-icon topbar-search-btn"
                   onClick={() => setShowSearchModal(true)}
-                  sx={{
-                    color: 'text.primary',
-                    bgcolor: mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
-                    p: 0.8,
-                    borderRadius: '10px',
-                    transition: 'transform 0.15s ease, background-color 0.15s ease',
-                    '&:hover': {
-                      bgcolor: mode === 'dark' ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.08)',
-                    },
-                    '&:active': { transform: 'scale(0.92)' }
+                  style={{
+                    position: 'relative',
+                    width: 36,
+                    height: 36,
+                    borderRadius: '50%',
+                    background: 'var(--surface2)',
+                    border: '1px solid var(--border)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--text)',
+                    flexShrink: 0,
+                    transition: 'transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease',
                   }}
                   title="Search (Ctrl + K)"
                   aria-label="Search"
                 >
-                  <Search size={18} />
-                </IconButton>
+                  <Search size={17} />
+                </button>
               )}
 
               <NotificationBell onNavigate={navigate} />

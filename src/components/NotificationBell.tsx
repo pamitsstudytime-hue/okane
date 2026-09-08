@@ -52,7 +52,7 @@ export default function NotificationBell({ onNavigate }: Props) {
           position: 'relative',
           width: 36,
           height: 36,
-          borderRadius: 10,
+          borderRadius: '50%',
           background: open ? 'var(--surface3)' : 'var(--surface2)',
           border: '1px solid var(--border)',
           cursor: 'pointer',

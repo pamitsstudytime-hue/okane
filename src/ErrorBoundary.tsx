@@ -56,7 +56,7 @@ export class ErrorBoundary extends Component<Props, State> {
             padding: '24px',
             backgroundColor: '#0f0f11',
             color: '#f4f4f5',
-            fontFamily: 'Roboto, system-ui, -apple-system, sans-serif',
+            fontFamily: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif",
           }}
         >
           <div

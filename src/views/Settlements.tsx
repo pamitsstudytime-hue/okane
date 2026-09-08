@@ -81,6 +81,22 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
     return count;
   }, [typeFilter, friendFilter, timeframe]);
 
+  // Listen for top bar filter button trigger
+  useEffect(() => {
+    const handleOpenFilters = () => {
+      setShowFilterDrawer(true);
+    };
+    window.addEventListener('app-open-filters', handleOpenFilters);
+    return () => window.removeEventListener('app-open-filters', handleOpenFilters);
+  }, []);
+
+  // Sync active filter count with top bar
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('app-filter-count-update', {
+      detail: { view: 'settlements', count: activeFilterCount }
+    }));
+  }, [activeFilterCount]);
+
   const handleResetFilters = () => {
     setTypeFilter('all');
     setFriendFilter('all');

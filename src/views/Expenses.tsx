@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { Plus, Layers, ArrowUpRight, ArrowDownLeft, ReceiptText, ChevronDown, SlidersHorizontal } from 'lucide-react';
+import { Plus, Layers, ArrowUpRight, ArrowDownLeft, ReceiptText, ChevronDown, Filter } from 'lucide-react';
 import { useStore } from '../store';
 import type { Expense, GroupedExpense } from '../types';
 import { cleanExpenseDescription, getGroupSettlementStatus, groupExpenses, fmtMoney, fmtDate } from '../utils';
@@ -82,6 +82,22 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
   const [displayLimit, setDisplayLimit] = useState(60);
 
   const activeFilterCount = (catFilter ? 1 : 0) + (typeFilter ? 1 : 0) + (walletFilter ? 1 : 0) + (sort !== 'date-desc' ? 1 : 0);
+
+  // Listen for top bar filter button trigger
+  useEffect(() => {
+    const handleOpenFilters = () => {
+      setShowFilters(true);
+    };
+    window.addEventListener('app-open-filters', handleOpenFilters);
+    return () => window.removeEventListener('app-open-filters', handleOpenFilters);
+  }, []);
+
+  // Sync active filter count with top bar
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('app-filter-count-update', {
+      detail: { view: 'expenses', count: activeFilterCount }
+    }));
+  }, [activeFilterCount]);
 
   // O(1) Lookup Maps for instant access during search and rendering
   const walletsMap = useMemo(() => new Map(db.wallets.map(w => [w.id, w])), [db.wallets]);
@@ -304,22 +320,6 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
             <ArrowDownLeft size={14} style={{ color: 'var(--credit, #22c55e)' }} />
             <span>Received</span>
           </button>
-
-          {/* Compact Filter Action Button */}
-          <button
-            type="button"
-            className={`flow-filter-btn ${activeFilterCount > 0 ? 'active' : ''}`}
-            onClick={() => setShowFilters(true)}
-            title={activeFilterCount > 0 ? `${activeFilterCount} active filters` : "Filters & Sorting"}
-            aria-label="Open Filters"
-          >
-            <SlidersHorizontal size={14} style={{ color: activeFilterCount > 0 ? 'var(--accent)' : 'inherit' }} />
-            {activeFilterCount > 0 && (
-              <span className="flow-filter-badge">
-                {activeFilterCount}
-              </span>
-            )}
-          </button>
         </div>
 
         {/* Active Filter Chips Only (Summary text removed) */}
@@ -504,7 +504,7 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
           <div className="empty-state" style={{ padding: '48px 24px' }}>
             <div className="empty-state-icon" style={{ opacity: 0.65, color: 'var(--text-3)' }}>
               {hasActiveFilters ? (
-                <SlidersHorizontal size={40} />
+                <Filter size={40} />
               ) : flowFilter === 'out' ? (
                 <ArrowUpRight size={40} />
               ) : flowFilter === 'in' ? (

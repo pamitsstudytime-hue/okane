@@ -199,6 +199,9 @@ const iconMap: Record<string, React.ElementType> = {
   refund: RotateCcw,
   cashback: RotateCcw,
   return: RotateCcw,
+  settlement: RotateCcw,
+  settled: RotateCcw,
+  settle: RotateCcw,
   work: Briefcase,
   business: Briefcase,
   freelance: Briefcase,
@@ -229,12 +232,13 @@ interface CategoryBadgeProps {
 }
 
 export function CategoryBadge({ category = '', color, icon = '', size = 14, showLabel = true }: CategoryBadgeProps) {
-  const iconColor = color || 'var(--accent)';
+  const isSettlement = (category || '').trim().toLowerCase() === 'settlement' || (icon || '').trim().toLowerCase() === 'settlement' || (icon || '').trim().toLowerCase() === 'refund';
+  const iconColor = color || (isSettlement ? '#10B981' : 'var(--accent)');
   
   // Safe background tint calculation
   const bgStyle = color && color.startsWith('#') && color.length === 7
     ? `${color}20` // 12% opacity tint for hex colors
-    : 'var(--accent-soft)';
+    : (isSettlement ? 'rgba(16, 185, 129, 0.12)' : 'var(--accent-soft)');
 
   return (
     <span

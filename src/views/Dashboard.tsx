@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Plus, TrendingUp, TrendingDown, Users, ReceiptText, ArrowLeftRight, Store, ArrowRight, Eye, EyeOff, PieChart, ChevronDown, Check, Flame } from 'lucide-react';
 import { useStore } from '../store';
 import { walletBalance, totalWalletBalance, expenseFlow, monthKey, allFriendBalances } from '../db';
-import { fmtMoney, fmtDate, friendInitial, getAvatarStyle, groupExpenses, type GroupedExpense } from '../utils';
+import { fmtMoney, fmtDate, friendInitial, getAvatarStyle, groupExpenses, resolveCategoryMeta, cleanSettlementDescription, type GroupedExpense } from '../utils';
 import type { Friend, ViewName, Expense } from '../types';
 import { CategoryBadge } from '../components/CategoryIcon';
 import TransferModal from '../components/TransferModal';
@@ -147,6 +147,7 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
   }, [expenses, activeCatMonth]);
 
   const monthName = now.toLocaleDateString(undefined, { month: 'long' });
+  const shortMonthName = now.toLocaleDateString(undefined, { month: 'short' });
 
   return (
     <div className="view-container">
@@ -287,7 +288,7 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
                   }}>
                     <TrendingDown size={12} />
                   </div>
-                  <span>{monthName} Spend</span>
+                  <span>{shortMonthName} Spend</span>
                 </div>
                 <div className="dashboard-mini-stat-val" style={{ color: 'var(--debit)' }}>
                   {fmtMoney(monthSpend, currency)}
@@ -314,7 +315,7 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
                   }}>
                     <TrendingUp size={12} />
                   </div>
-                  <span>{monthName} Income</span>
+                  <span>{shortMonthName} Income</span>
                 </div>
                 <div className="dashboard-mini-stat-val" style={{ color: 'var(--credit)' }}>
                   {fmtMoney(monthIncome, currency)}
@@ -335,12 +336,12 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
                       ? 'var(--credit-bg, rgba(34, 197, 94, 0.12))'
                       : netFriends < 0
                       ? 'var(--debit-bg, rgba(239, 68, 68, 0.12))'
-                      : 'var(--accent-soft)',
-                    border: `1px solid ${netFriends > 0 ? 'var(--credit-border, rgba(46, 125, 50, 0.22))' : netFriends < 0 ? 'var(--debit-border, rgba(211, 47, 47, 0.22))' : 'var(--accent-border-soft)'}`,
+                      : 'var(--surface3)',
+                    border: `1px solid ${netFriends > 0 ? 'var(--credit-border, rgba(46, 125, 50, 0.22))' : netFriends < 0 ? 'var(--debit-border, rgba(211, 47, 47, 0.22))' : 'var(--border)'}`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: netFriends > 0 ? 'var(--credit)' : netFriends < 0 ? 'var(--debit)' : 'var(--accent)',
+                    color: netFriends > 0 ? 'var(--credit)' : netFriends < 0 ? 'var(--debit)' : 'var(--text-2)',
                     flexShrink: 0
                   }}>
                     <Users size={12} />
@@ -425,6 +426,8 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: '100%', minWidth: 0 }}>
               {recentExpenses.map((ge) => {
                 const cat = db.settings.categories.find(c => c.name === ge.category);
+                const isSettlement = ge.isSettlementGroup || ge.category === 'Settlement';
+                const catMeta = resolveCategoryMeta(ge.category, cat, isSettlement);
                 const isIn = ge.flow === 'in' && ge.category !== 'Transfer';
                 const friendsInGroup = ge.friendIds.map(fid => db.friends.find(f => f.id === fid)).filter(Boolean);
                 const vendorId = ge.vendorId || ge.items.find(i => i.vendorId)?.vendorId;
@@ -457,10 +460,10 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: '1 1 auto', overflow: 'hidden' }}>
-                      <CategoryBadge category={ge.category} color={cat?.color} icon={cat?.icon} size={15} showLabel={false} />
+                      <CategoryBadge category={catMeta.name} color={catMeta.color} icon={catMeta.icon} size={15} showLabel={false} />
                       <div style={{ minWidth: 0, flex: '1 1 auto', overflow: 'hidden' }}>
                         <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, width: '100%' }}>
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0, flex: '0 1 auto' }}>{ge.description}</span>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0, flex: '0 1 auto' }}>{cleanSettlementDescription(ge.description)}</span>
                           {vendor && (
                             <span
                               style={{
@@ -481,7 +484,7 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
                               <Store size={10} style={{ color: 'var(--accent)', flexShrink: 0 }} />
                             </span>
                           )}
-                          {ge.isSplit && (
+                          {!isSettlement && ge.isSplit && (
                             <span style={{
                               fontSize: 10,
                               fontWeight: 600,
@@ -494,14 +497,72 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
                             }}>Split</span>
                           )}
                         </div>
-                        <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
-                          {fmtDate(ge.date)} · {ge.category}
-                          {friendsInGroup.length > 0 ? ` · ${friendsInGroup.map(f => f?.name).join(', ')}` : ''}
+                        <div style={{
+                          fontSize: 11,
+                          color: 'var(--text-3)',
+                          marginTop: 2,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          minWidth: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 5
+                        }}>
+                          <span style={{ flexShrink: 0 }}>{fmtDate(ge.date)}</span>
+                          {!isSettlement && (
+                            <>
+                              <span style={{ flexShrink: 0 }}>•</span>
+                              <span style={{ flexShrink: 0 }}>{ge.category}</span>
+                            </>
+                          )}
+                          {friendsInGroup.length > 0 && (
+                            <>
+                              <span style={{ flexShrink: 0 }}>•</span>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {friendsInGroup.map((f) => f && (
+                                  <span key={f.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 3.5, flexShrink: 0 }}>
+                                    <span
+                                      className="avatar avatar-sm"
+                                      style={{
+                                        ...getAvatarStyle(f.color),
+                                        width: 14,
+                                        height: 14,
+                                        fontSize: 8,
+                                        flexShrink: 0,
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                      }}
+                                    >
+                                      {f.type === 'vendor' ? <Store size={8} /> : friendInitial(f.name, f.avatarNumber)}
+                                    </span>
+                                    <span style={{ color: 'var(--text-2)', fontWeight: 500 }}>
+                                      {f.name}
+                                    </span>
+                                  </span>
+                                ))}
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
-                    <div style={{ textAlign: 'right', fontWeight: 700, fontSize: 13, flexShrink: 0, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', color: isIn ? 'var(--credit)' : 'var(--text)' }}>
-                      {isIn ? '+' : ''}{fmtMoney(ge.totalAmount, currency)}
+                    <div style={{
+                      textAlign: 'right',
+                      fontWeight: 700,
+                      fontSize: 13,
+                      flexShrink: 0,
+                      whiteSpace: 'nowrap',
+                      fontVariantNumeric: 'tabular-nums',
+                      color: isSettlement
+                        ? (ge.flow === 'in' ? 'var(--credit)' : 'var(--debit)')
+                        : (isIn ? 'var(--credit)' : 'var(--text)')
+                    }}>
+                      {isSettlement
+                        ? (ge.flow === 'in' ? '+' : '-')
+                        : (isIn ? '+' : '')}
+                      {fmtMoney(ge.totalAmount, currency)}
                     </div>
                   </div>
                 );

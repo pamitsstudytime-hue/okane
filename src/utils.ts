@@ -393,7 +393,6 @@ export function groupExpenses(
   if (settlements && settlements.length > 0) {
     for (const s of settlements) {
       const friend = friends?.find(f => f.id === s.friendId);
-      const friendName = friend ? friend.name : 'Contact';
       const flow: ExpenseFlow = s.amount >= 0 ? 'in' : 'out';
       const totalAmount = Math.abs(s.amount);
 
@@ -403,9 +402,10 @@ export function groupExpenses(
         (e.vendorSettlementId && String(e.vendorSettlementId).trim() === String(s.id).trim())
       );
 
+      const action = s.amount >= 0 ? 'Received' : 'Paid';
       const cleanDesc = s.note
-        ? `Settlement: ${s.amount >= 0 ? 'Received from' : 'Paid to'} ${friendName} (${s.note})`
-        : `Settlement: ${s.amount >= 0 ? 'Received from' : 'Paid to'} ${friendName}`;
+        ? `Settlement: ${action} (${s.note})`
+        : `Settlement: ${action}`;
 
       result.push({
         id: `stl_${s.id}`,
@@ -824,4 +824,20 @@ export function resolveCategoryMeta(
     bg: `${hex}18`,
     border: `${hex}30`,
   };
+}
+
+/**
+ * Normalizes settlement descriptions so that "Settlement: Paid to <Name>" -> "Settlement: Paid"
+ * and "Settlement: Received from <Name>" -> "Settlement: Received", preserving notes if attached.
+ */
+export function cleanSettlementDescription(desc: string): string {
+  if (!desc) return desc;
+  const m = desc.match(/^Settlement:\s*(Paid\s+to|Received\s+from)\s+(.+?)(?:\s*\((.*?)\))?$/i);
+  if (m) {
+    const isPaid = m[1].toLowerCase().includes('paid');
+    const action = isPaid ? 'Paid' : 'Received';
+    const note = m[3]?.trim();
+    return note ? `Settlement: ${action} (${note})` : `Settlement: ${action}`;
+  }
+  return desc;
 }

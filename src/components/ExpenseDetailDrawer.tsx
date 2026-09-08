@@ -11,6 +11,7 @@ import {
   getAvatarStyle,
   typeLabel,
   cleanExpenseDescription,
+  cleanSettlementDescription,
   getGroupSettlementStatus,
   type GroupedExpense
 } from '../utils';
@@ -80,7 +81,7 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
   const rawFriends = ge.friendIds.map((fid: string) => friendsMap.get(fid)).filter((f): f is Friend => Boolean(f));
   const vendorId = ge.vendorId || ge.items.find((i: Expense) => i.vendorId)?.vendorId;
   const vendor = vendorId ? friendsMap.get(vendorId) : null;
-  const friendsToShow = vendor ? rawFriends.filter(f => f.id !== vendor.id) : rawFriends;
+  const friendsToShow = ge.isSettlementGroup ? rawFriends : (vendor ? rawFriends.filter(f => f.id !== vendor.id) : rawFriends);
 
   const categoryColor = categoryObj?.color || 'var(--accent)';
   const isDebit = ge.flow === 'out';
@@ -216,19 +217,21 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
 
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--text)', lineHeight: 1.2, wordBreak: 'break-word' }}>
-                    {ge.description}
+                    {cleanSettlementDescription(ge.description)}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 11.5, color: 'var(--text-2)', fontWeight: 500 }}>
-                      {ge.category}
-                    </span>
+                    {!ge.isSettlementGroup && (
+                      <span style={{ fontSize: 11.5, color: 'var(--text-2)', fontWeight: 500 }}>
+                        {ge.category}
+                      </span>
+                    )}
+                    {!ge.isSettlementGroup && friendsToShow.length > 0 && (
+                      <span style={{ color: 'var(--text-3)', fontSize: 9 }}>•</span>
+                    )}
                     {friendsToShow.length > 0 && (
-                      <>
-                        <span style={{ color: 'var(--text-3)', fontSize: 9 }}>•</span>
-                        <span style={{ fontSize: 11.5, color: 'var(--text-2)', fontWeight: 600 }}>
-                          {friendsToShow.map(f => f.name).join(', ')}
-                        </span>
-                      </>
+                      <span style={{ fontSize: 11.5, color: 'var(--text-2)', fontWeight: 600 }}>
+                        {friendsToShow.map(f => f.name).join(', ')}
+                      </span>
                     )}
                   </div>
                 </div>
