@@ -2676,14 +2676,21 @@ input[type="number"] {
   font-size: 14px;
   color: var(--text);
   font-family: inherit;
-  transition: border-color var(--transition), box-shadow var(--transition);
+  transition: border-color var(--transition), box-shadow var(--transition), background-color var(--transition);
   outline: none;
   width: 100%;
   min-height: 42px;
 }
 .form-input:focus, .form-control:focus, .form-select:focus, .form-textarea:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2.5px var(--accent-soft);
+  border-color: rgba(255, 255, 255, 0.32);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
+}
+[data-color-scheme="light"] .form-input:focus,
+[data-color-scheme="light"] .form-control:focus,
+[data-color-scheme="light"] .form-select:focus,
+[data-color-scheme="light"] .form-textarea:focus {
+  border-color: rgba(0, 0, 0, 0.32);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
 }
 .form-input::placeholder, .form-control::placeholder, .form-textarea::placeholder { color: var(--text-3); }
 .form-select {
@@ -2698,6 +2705,119 @@ input[type="number"] {
 .form-textarea { resize: vertical; min-height: 76px; }
 .form-hint { font-size: 11.5px; color: var(--text-3); }
 .form-error { font-size: 12px; color: var(--debit); font-weight: 500; }
+
+/* Micro-Pill interactive badge buttons (e.g. + Note, + Add) */
+.btn-micro-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4.5px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  text-decoration: none;
+  user-select: none;
+}
+.btn-micro-pill:hover {
+  background: var(--surface3);
+  color: var(--text);
+  border-color: var(--border2);
+  transform: translateY(-0.5px);
+}
+.btn-micro-pill:active {
+  transform: scale(0.95);
+}
+[data-color-scheme="dark"] .btn-micro-pill {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #d4d4d8;
+}
+[data-color-scheme="dark"] .btn-micro-pill:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+.btn-micro-pill.active {
+  background: var(--accent-soft) !important;
+  border-color: var(--accent-border-soft) !important;
+  color: var(--accent) !important;
+}
+[data-color-scheme="dark"] .btn-micro-pill.active {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  color: #ffffff !important;
+}
+
+/* Expense Type Segment Control */
+.expense-type-segment {
+  display: flex;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 4px;
+  gap: 4px;
+  width: 100%;
+  box-sizing: border-box;
+}
+[data-color-scheme="dark"] .expense-type-segment {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.expense-type-segment .segment-btn {
+  flex: 1;
+  min-height: 38px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 550;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  color: var(--text-2);
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.expense-type-segment .segment-btn:hover:not(.active) {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+}
+[data-color-scheme="light"] .expense-type-segment .segment-btn:hover:not(.active) {
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.04);
+}
+.expense-type-segment .segment-btn.active {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  font-weight: 700 !important;
+  border: 1px solid var(--border2) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+}
+[data-color-scheme="dark"] .expense-type-segment .segment-btn.active {
+  background: #202024 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+}
+.expense-type-segment .segment-btn.active .segment-icon {
+  color: #ffffff !important;
+}
+[data-color-scheme="light"] .expense-type-segment .segment-btn.active .segment-icon {
+  color: #000000 !important;
+}
+.expense-type-segment .segment-btn:not(.active) .segment-icon {
+  color: var(--text-3);
+}
 
 /* Segment control */
 .segment-control {
@@ -2865,20 +2985,25 @@ input[type="number"] {
   height: 42px;
   padding: 8px 14px;
   font-size: 13.5px;
-  font-weight: 600;
+  font-weight: 550;
   border-radius: 14px;
   background: var(--surface2);
-  border: 1px solid transparent;
+  border: 1px solid var(--border);
   color: var(--text);
   box-sizing: border-box;
-  transition: all 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
 .modal.expense-drawer-modal .form-input:focus,
 .modal.expense-drawer-modal .form-select:focus {
   background: var(--surface);
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-soft);
+  border-color: rgba(255, 255, 255, 0.32);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
   outline: none;
+}
+[data-color-scheme="light"] .modal.expense-drawer-modal .form-input:focus,
+[data-color-scheme="light"] .modal.expense-drawer-modal .form-select:focus {
+  border-color: rgba(0, 0, 0, 0.32);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
 }
 .modal.expense-drawer-modal .hero-amount-card {
   padding: 12px 16px 10px;
@@ -2891,7 +3016,10 @@ input[type="number"] {
 }
 .modal.expense-drawer-modal .hero-amount-card:focus-within {
   background: var(--surface);
-  box-shadow: 0 0 0 2px var(--accent-soft);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
+}
+[data-color-scheme="light"] .modal.expense-drawer-modal .hero-amount-card:focus-within {
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08);
 }
 .modal.expense-drawer-modal .hero-amount-card.hero-debit .hero-amount-input,
 .modal.expense-drawer-modal .hero-amount-card.hero-debit .hero-currency-symbol {

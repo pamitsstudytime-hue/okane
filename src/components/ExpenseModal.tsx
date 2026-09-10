@@ -771,7 +771,7 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                         Expense Type
                       </label>
                     </div>
-                    <div className="segment-control">
+                    <div className="segment-control expense-type-segment">
                       <button
                         type="button"
                         className={`segment-btn ${whoPaid === 'me' && splitMode === 'just_me' ? 'active' : ''}`}
@@ -782,7 +782,7 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                           setError('');
                         }}
                       >
-                        <User size={14} /> Just Me
+                        <User size={14} className="segment-icon" /> Just Me
                       </button>
                       <button
                         type="button"
@@ -799,7 +799,7 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                           setError('');
                         }}
                       >
-                        <Users size={14} /> With Friends
+                        <Users size={14} className="segment-icon" /> With Friends
                       </button>
                       <button
                         type="button"
@@ -810,7 +810,7 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                           setError('');
                         }}
                       >
-                        <HeartHandshake size={14} /> Someone Paid
+                        <HeartHandshake size={14} className="segment-icon" /> Someone Paid
                       </button>
                     </div>
                   </div>
@@ -920,21 +920,9 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                       </label>
                       <button
                         type="button"
-                        style={{
-                          background: notes ? 'var(--accent-soft)' : 'var(--surface2)',
-                          border: 'none',
-                          borderRadius: 9999,
-                          fontSize: 10.5,
-                          fontWeight: 700,
-                          color: notes ? 'var(--accent)' : 'var(--text-2)',
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 4,
-                          padding: '3px 10px',
-                          transition: 'all 0.15s ease',
-                        }}
+                        className={`btn-micro-pill ${notes ? 'active' : ''}`}
                         onClick={() => setIsNoteModalOpen(true)}
+                        title={notes ? 'Edit note' : 'Add note'}
                       >
                         <FileText size={11} /> {notes ? 'Note Added' : '+ Note'}
                       </button>
@@ -1255,26 +1243,14 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                     <>
                       <div className="form-group" style={{ animation: 'fadein 0.15s ease' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                          <label className="form-label" style={{ margin: 0, fontSize: 11.5, fontWeight: 600 }}>Income Source / Name *</label>
+                          <label className="form-label" style={{ margin: 0, fontSize: 10.5, fontWeight: 750, letterSpacing: '0.6px', textTransform: 'uppercase', color: 'var(--text-3)' }}>Income Source / Name *</label>
                           <button
                             type="button"
-                            style={{
-                              background: notes ? 'var(--accent-soft)' : 'transparent',
-                              border: notes ? '1px solid var(--accent-border-soft, rgba(236,72,153,0.25))' : 'none',
-                              borderRadius: 6,
-                              fontSize: 11,
-                              fontWeight: 650,
-                              color: notes ? 'var(--accent)' : 'var(--text-3)',
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: 4,
-                              padding: notes ? '2px 7px' : '2px 0',
-                              transition: 'all 0.15s ease',
-                            }}
+                            className={`btn-micro-pill ${notes ? 'active' : ''}`}
                             onClick={() => setIsNoteModalOpen(true)}
+                            title={notes ? 'Edit note' : 'Add note'}
                           >
-                            <FileText size={12} /> {notes ? 'Note Added' : '+ Note'}
+                            <FileText size={11} /> {notes ? 'Note Added' : '+ Note'}
                           </button>
                         </div>
                         <input
