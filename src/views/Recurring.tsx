@@ -295,10 +295,11 @@ export default function Recurring({ onNavigate, initialArg }: Props) {
               padding: '0 10px',
               borderRadius: '11px',
               fontSize: '12px',
-              fontWeight: 600,
-              backgroundColor: activeFilterCount > 0 ? 'var(--accent-soft)' : 'var(--surface2)',
-              color: activeFilterCount > 0 ? 'var(--accent)' : 'var(--text-2)',
-              border: activeFilterCount > 0 ? '1px solid var(--accent)' : '1px solid var(--border)',
+              fontWeight: activeFilterCount > 0 ? 650 : 500,
+              backgroundColor: activeFilterCount > 0 ? 'var(--surface)' : 'var(--surface2)',
+              color: activeFilterCount > 0 ? 'var(--text)' : 'var(--text-2)',
+              border: activeFilterCount > 0 ? '1px solid var(--border2)' : '1px solid var(--border)',
+              boxShadow: activeFilterCount > 0 ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
               cursor: 'pointer',
               transition: 'all 0.15s ease',
               flexShrink: 0,
@@ -306,13 +307,13 @@ export default function Recurring({ onNavigate, initialArg }: Props) {
             title="Filters & Search"
             aria-label="Open Filters"
           >
-            <SlidersHorizontal size={14} style={{ color: activeFilterCount > 0 ? 'var(--accent)' : 'var(--text-2)' }} />
+            <SlidersHorizontal size={14} style={{ color: activeFilterCount > 0 ? 'var(--text)' : 'var(--text-2)' }} />
             <span className="desktop-only">Filters</span>
             {activeFilterCount > 0 && (
               <span
                 style={{
-                  backgroundColor: 'var(--accent)',
-                  color: 'var(--accent-contrast, #ffffff)',
+                  backgroundColor: 'var(--text)',
+                  color: 'var(--surface)',
                   fontSize: '10px',
                   fontWeight: 700,
                   borderRadius: '999px',
@@ -330,142 +331,57 @@ export default function Recurring({ onNavigate, initialArg }: Props) {
         {activeFilterCount > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', padding: '0 2px' }}>
             {search && (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  padding: '2.5px 8px',
-                  borderRadius: '12px',
-                  fontSize: '11px',
-                  backgroundColor: 'var(--accent-soft)',
-                  color: 'var(--accent)',
-                  border: '1px solid var(--accent-border-soft, var(--accent))',
-                  fontWeight: 500,
-                }}
-              >
+              <span className="app-filter-chip">
                 Search: "{search}"
                 <button
                   type="button"
                   onClick={() => setSearch('')}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'var(--accent)',
-                    padding: 0,
-                    lineHeight: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
+                  className="app-filter-chip-remove"
+                  title="Clear search"
                 >
-                  <X size={11} />
+                  <X size={12} />
                 </button>
               </span>
             )}
 
             {statusFilter !== 'all' && (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  padding: '2.5px 8px',
-                  borderRadius: '12px',
-                  fontSize: '11px',
-                  backgroundColor: 'var(--accent-soft)',
-                  color: 'var(--accent)',
-                  border: '1px solid var(--accent-border-soft, var(--accent))',
-                  fontWeight: 500,
-                }}
-              >
+              <span className="app-filter-chip">
                 Status: {statusLabel}
                 <button
                   type="button"
                   onClick={() => setStatusFilter('all')}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'var(--accent)',
-                    padding: 0,
-                    lineHeight: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
+                  className="app-filter-chip-remove"
+                  title="Clear status filter"
                 >
-                  <X size={11} />
+                  <X size={12} />
                 </button>
               </span>
             )}
 
             {freqFilter !== 'all' && (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  padding: '2.5px 8px',
-                  borderRadius: '12px',
-                  fontSize: '11px',
-                  backgroundColor: 'var(--accent-soft)',
-                  color: 'var(--accent)',
-                  border: '1px solid var(--accent-border-soft, var(--accent))',
-                  fontWeight: 500,
-                  textTransform: 'capitalize',
-                }}
-              >
+              <span className="app-filter-chip" style={{ textTransform: 'capitalize' }}>
                 Freq: {freqFilter}
                 <button
                   type="button"
                   onClick={() => setFreqFilter('all')}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'var(--accent)',
-                    padding: 0,
-                    lineHeight: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
+                  className="app-filter-chip-remove"
+                  title="Clear frequency filter"
                 >
-                  <X size={11} />
+                  <X size={12} />
                 </button>
               </span>
             )}
 
             {sortBy !== 'due_asc' && (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  padding: '2.5px 8px',
-                  borderRadius: '12px',
-                  fontSize: '11px',
-                  backgroundColor: 'var(--accent-soft)',
-                  color: 'var(--accent)',
-                  border: '1px solid var(--accent-border-soft, var(--accent))',
-                  fontWeight: 500,
-                }}
-              >
+              <span className="app-filter-chip">
                 Sort: {sortLabel}
                 <button
                   type="button"
                   onClick={() => setSortBy('due_asc')}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'var(--accent)',
-                    padding: 0,
-                    lineHeight: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
+                  className="app-filter-chip-remove"
+                  title="Reset sort"
                 >
-                  <X size={11} />
+                  <X size={12} />
                 </button>
               </span>
             )}
@@ -477,11 +393,14 @@ export default function Recurring({ onNavigate, initialArg }: Props) {
                 background: 'none',
                 border: 'none',
                 color: 'var(--text-3)',
-                fontSize: '11px',
+                fontSize: '11.5px',
+                fontWeight: 600,
                 cursor: 'pointer',
-                padding: '2px 6px',
-                textDecoration: 'underline',
+                padding: '3px 6px',
+                transition: 'color 0.15s ease',
               }}
+              onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}
             >
               Clear all
             </button>

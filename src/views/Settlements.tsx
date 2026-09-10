@@ -660,9 +660,9 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
                     height: 38,
                     padding: activeFilterCount > 0 ? '0 12px' : '0 11px',
                     borderRadius: 10,
-                    border: activeFilterCount > 0 ? '1.5px solid var(--accent)' : '1px solid var(--border)',
-                    backgroundColor: activeFilterCount > 0 ? 'var(--accent-soft)' : 'var(--surface2)',
-                    color: activeFilterCount > 0 ? 'var(--accent)' : 'var(--text-2)',
+                    border: activeFilterCount > 0 ? '1px solid var(--border2)' : '1px solid var(--border)',
+                    backgroundColor: activeFilterCount > 0 ? 'var(--surface)' : 'var(--surface2)',
+                    color: activeFilterCount > 0 ? 'var(--text)' : 'var(--text-2)',
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -670,7 +670,7 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
                     cursor: 'pointer',
                     flexShrink: 0,
                     transition: 'all 0.15s ease',
-                    boxShadow: activeFilterCount > 0 ? '0 2px 8px var(--accent-soft)' : 'none',
+                    boxShadow: activeFilterCount > 0 ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                   }}
                   title="Filter settlements"
                 >
@@ -684,8 +684,8 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
                         height: 17,
                         padding: '0 4.5px',
                         borderRadius: 99,
-                        backgroundColor: 'var(--accent)',
-                        color: 'var(--accent-contrast, #ffffff)',
+                        backgroundColor: 'var(--text)',
+                        color: 'var(--surface)',
                         display: 'grid',
                         placeItems: 'center',
                         lineHeight: 1,
@@ -715,35 +715,15 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
                   </span>
 
                   {friendFilter !== 'all' && (
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 4,
-                        padding: '3px 8px',
-                        borderRadius: 99,
-                        backgroundColor: 'var(--accent-soft)',
-                        border: '1px solid var(--accent-border-soft, var(--accent))',
-                        color: 'var(--accent)',
-                        fontSize: 11.5,
-                        fontWeight: 600,
-                      }}
-                    >
+                    <span className="app-filter-chip">
                       <span>Friend: {friends.find(f => f.id === friendFilter)?.name || 'Friend'}</span>
                       <button
                         type="button"
                         onClick={() => setFriendFilter('all')}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: 'var(--accent)',
-                          cursor: 'pointer',
-                          display: 'grid',
-                          placeItems: 'center',
-                          padding: 0,
-                        }}
+                        className="app-filter-chip-remove"
+                        title="Clear friend filter"
                       >
-                        <X size={11} />
+                        <X size={12} />
                       </button>
                     </span>
                   )}

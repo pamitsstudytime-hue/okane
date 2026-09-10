@@ -407,19 +407,20 @@ export const SettlementFilterDrawer: React.FC<Props> = ({
                     style={{
                       padding: '6px 12px',
                       borderRadius: 18,
-                      border: isSelected ? '1.5px solid var(--accent)' : '1px solid var(--border)',
-                      backgroundColor: isSelected ? 'var(--accent-soft)' : 'var(--surface2)',
-                      color: isSelected ? 'var(--accent)' : 'var(--text-2)',
+                      border: isSelected ? '1px solid var(--border2)' : '1px solid var(--border)',
+                      backgroundColor: isSelected ? 'var(--surface)' : 'var(--surface2)',
+                      color: isSelected ? 'var(--text)' : 'var(--text-2)',
                       fontSize: '12px',
-                      fontWeight: isSelected ? 700 : 500,
+                      fontWeight: isSelected ? 650 : 500,
                       cursor: 'pointer',
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: 4,
+                      boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                       transition: 'all 0.15s ease',
                     }}
                   >
-                    {isSelected && <Check size={12} strokeWidth={2.8} />}
+                    {isSelected && <Check size={12} strokeWidth={2.5} />}
                     <span>{opt.label}</span>
                   </button>
                 );
@@ -513,17 +514,18 @@ export const SettlementFilterDrawer: React.FC<Props> = ({
                 type="button"
                 onClick={() => setFriendFilter('all')}
                 style={{
-                  border: friendFilter === 'all' ? '1.5px solid var(--accent)' : '1px solid var(--border)',
-                  background: friendFilter === 'all' ? 'var(--accent-soft)' : 'var(--surface2)',
-                  color: friendFilter === 'all' ? 'var(--accent)' : 'var(--text-2)',
+                  border: friendFilter === 'all' ? '1px solid var(--border2)' : '1px solid var(--border)',
+                  background: friendFilter === 'all' ? 'var(--surface)' : 'var(--surface2)',
+                  color: friendFilter === 'all' ? 'var(--text)' : 'var(--text-2)',
                   fontSize: 12,
-                  fontWeight: friendFilter === 'all' ? 700 : 500,
+                  fontWeight: friendFilter === 'all' ? 650 : 500,
                   padding: '5px 11px',
                   borderRadius: 20,
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 6,
+                  boxShadow: friendFilter === 'all' ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                   transition: 'all 0.15s ease',
                 }}
               >
@@ -532,11 +534,11 @@ export const SettlementFilterDrawer: React.FC<Props> = ({
                 <span
                   style={{
                     fontSize: '10px',
-                    fontWeight: 700,
+                    fontWeight: 650,
                     padding: '1px 6px',
                     borderRadius: 99,
-                    background: friendFilter === 'all' ? 'var(--accent)' : 'var(--surface3)',
-                    color: friendFilter === 'all' ? 'var(--accent-contrast, #ffffff)' : 'var(--text-3)',
+                    background: friendFilter === 'all' ? 'var(--surface2)' : 'var(--surface3)',
+                    color: friendFilter === 'all' ? 'var(--text)' : 'var(--text-3)',
                   }}
                 >
                   {totalTimeframeCount}
@@ -553,17 +555,18 @@ export const SettlementFilterDrawer: React.FC<Props> = ({
                     type="button"
                     onClick={() => setFriendFilter(f.id)}
                     style={{
-                      border: isActive ? '1.5px solid var(--accent)' : '1px solid var(--border)',
-                      background: isActive ? 'var(--accent-soft)' : 'var(--surface2)',
-                      color: isActive ? 'var(--accent)' : 'var(--text-2)',
+                      border: isActive ? '1px solid var(--border2)' : '1px solid var(--border)',
+                      background: isActive ? 'var(--surface)' : 'var(--surface2)',
+                      color: isActive ? 'var(--text)' : 'var(--text-2)',
                       fontSize: 12,
-                      fontWeight: isActive ? 700 : 500,
+                      fontWeight: isActive ? 650 : 500,
                       padding: '4px 10px',
                       borderRadius: 20,
                       cursor: 'pointer',
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: 6,
+                      boxShadow: isActive ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                       transition: 'all 0.15s ease',
                     }}
                   >
@@ -588,11 +591,11 @@ export const SettlementFilterDrawer: React.FC<Props> = ({
                     <span
                       style={{
                         fontSize: '10px',
-                        fontWeight: 700,
+                        fontWeight: 650,
                         padding: '1px 6px',
                         borderRadius: 99,
-                        background: isActive ? 'var(--accent)' : 'var(--surface3)',
-                        color: isActive ? 'var(--accent-contrast, #ffffff)' : 'var(--text-3)',
+                        background: isActive ? 'var(--surface2)' : 'var(--surface3)',
+                        color: isActive ? 'var(--text)' : 'var(--text-3)',
                       }}
                     >
                       {count}

@@ -1476,11 +1476,12 @@ export default function DailyWalletBalanceDrawer({
                 height: 34,
                 padding: '0 11px',
                 borderRadius: 8,
-                border: activeFilterCount > 0 ? '1px solid var(--accent)' : '1px solid var(--border)',
-                background: activeFilterCount > 0 ? 'var(--accent-soft)' : 'var(--surface2)',
-                color: activeFilterCount > 0 ? 'var(--accent)' : 'var(--text-2)',
+                border: activeFilterCount > 0 ? '1px solid var(--border2)' : '1px solid var(--border)',
+                background: activeFilterCount > 0 ? 'var(--surface)' : 'var(--surface2)',
+                color: activeFilterCount > 0 ? 'var(--text)' : 'var(--text-2)',
                 fontSize: 12,
-                fontWeight: 650,
+                fontWeight: activeFilterCount > 0 ? 650 : 500,
+                boxShadow: activeFilterCount > 0 ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -1513,75 +1514,45 @@ export default function DailyWalletBalanceDrawer({
           {!showFilterPanel && activeFilterCount > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
               {selectedWalletId !== 'all' && (
-                <button
-                  type="button"
-                  onClick={() => setSelectedWalletId('all')}
-                  style={{
-                    padding: '3px 8px',
-                    borderRadius: 99,
-                    border: '1px solid var(--accent)',
-                    background: 'var(--accent-soft)',
-                    color: 'var(--accent)',
-                    fontSize: 11,
-                    fontWeight: 600,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 5,
-                    cursor: 'pointer',
-                  }}
-                  title="Remove account filter"
-                >
+                <span className="app-filter-chip">
                   <span>Account: {walletMap.get(selectedWalletId)?.name || 'Selected'}</span>
-                  <X size={12} />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedWalletId('all')}
+                    className="app-filter-chip-remove"
+                    title="Remove account filter"
+                  >
+                    <X size={12} />
+                  </button>
+                </span>
               )}
 
               {filterMode === 'activity_only' && (
-                <button
-                  type="button"
-                  onClick={() => setFilterMode('all_days')}
-                  style={{
-                    padding: '3px 8px',
-                    borderRadius: 99,
-                    border: '1px solid var(--accent)',
-                    background: 'var(--accent-soft)',
-                    color: 'var(--accent)',
-                    fontSize: 11,
-                    fontWeight: 600,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 5,
-                    cursor: 'pointer',
-                  }}
-                  title="Show all days"
-                >
+                <span className="app-filter-chip">
                   <span>Active days only</span>
-                  <X size={12} />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setFilterMode('all_days')}
+                    className="app-filter-chip-remove"
+                    title="Show all days"
+                  >
+                    <X size={12} />
+                  </button>
+                </span>
               )}
 
               {sortOrder === 'asc' && (
-                <button
-                  type="button"
-                  onClick={() => setSortOrder('desc')}
-                  style={{
-                    padding: '3px 8px',
-                    borderRadius: 99,
-                    border: '1px solid var(--accent)',
-                    background: 'var(--accent-soft)',
-                    color: 'var(--accent)',
-                    fontSize: 11,
-                    fontWeight: 600,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 5,
-                    cursor: 'pointer',
-                  }}
-                  title="Reset to newest first"
-                >
+                <span className="app-filter-chip">
                   <span>Oldest first (1 → 31)</span>
-                  <X size={12} />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setSortOrder('desc')}
+                    className="app-filter-chip-remove"
+                    title="Reset to newest first"
+                  >
+                    <X size={12} />
+                  </button>
+                </span>
               )}
 
               <button
@@ -1688,10 +1659,11 @@ export default function DailyWalletBalanceDrawer({
                         : 'var(--surface2)',
                       borderRadius: 10,
                       border: dayRow.isToday
-                        ? '1px solid var(--accent-border-soft, var(--accent))'
+                        ? '1px solid var(--border2)'
                         : isSelected
-                        ? '1px solid var(--accent)'
+                        ? '1px solid var(--border2)'
                         : '1px solid var(--border)',
+                      boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.08)' : 'none',
                       padding: '10px 12px',
                       display: 'flex',
                       alignItems: 'center',
@@ -1964,15 +1936,16 @@ export default function DailyWalletBalanceDrawer({
                     style={{
                       padding: '9px 12px',
                       borderRadius: 10,
-                      border: selectedWalletId === 'all' ? '1.5px solid var(--accent)' : '1px solid var(--border)',
-                      background: selectedWalletId === 'all' ? 'var(--accent-soft)' : 'var(--surface2)',
-                      color: selectedWalletId === 'all' ? 'var(--accent)' : 'var(--text-2)',
+                      border: selectedWalletId === 'all' ? '1px solid var(--border2)' : '1px solid var(--border)',
+                      background: selectedWalletId === 'all' ? 'var(--surface)' : 'var(--surface2)',
+                      color: selectedWalletId === 'all' ? 'var(--text)' : 'var(--text-2)',
                       fontSize: 12,
-                      fontWeight: selectedWalletId === 'all' ? 700 : 550,
+                      fontWeight: selectedWalletId === 'all' ? 650 : 500,
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
+                      boxShadow: selectedWalletId === 'all' ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                       transition: 'all 0.15s ease',
                     }}
                   >
@@ -1983,12 +1956,12 @@ export default function DailyWalletBalanceDrawer({
                     <span
                       style={{
                         fontSize: 10.5,
-                        fontWeight: 700,
+                        fontWeight: 650,
                         opacity: 0.8,
                         padding: '1px 5px',
                         borderRadius: 99,
-                        background: selectedWalletId === 'all' ? 'var(--accent)' : 'var(--surface3)',
-                        color: selectedWalletId === 'all' ? 'var(--accent-contrast, #fff)' : 'var(--text-3)',
+                        background: selectedWalletId === 'all' ? 'var(--surface2)' : 'var(--surface3)',
+                        color: selectedWalletId === 'all' ? 'var(--text)' : 'var(--text-3)',
                       }}
                     >
                       {wallets.length}
@@ -2051,15 +2024,16 @@ export default function DailyWalletBalanceDrawer({
                     style={{
                       padding: '10px 12px',
                       borderRadius: 10,
-                      border: filterMode === 'all_days' ? '1.5px solid var(--accent)' : '1px solid var(--border)',
-                      background: filterMode === 'all_days' ? 'var(--accent-soft)' : 'var(--surface2)',
-                      color: filterMode === 'all_days' ? 'var(--accent)' : 'var(--text-2)',
+                      border: filterMode === 'all_days' ? '1px solid var(--border2)' : '1px solid var(--border)',
+                      background: filterMode === 'all_days' ? 'var(--surface)' : 'var(--surface2)',
+                      color: filterMode === 'all_days' ? 'var(--text)' : 'var(--text-2)',
                       fontSize: 12,
-                      fontWeight: filterMode === 'all_days' ? 700 : 500,
+                      fontWeight: filterMode === 'all_days' ? 650 : 500,
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
+                      boxShadow: filterMode === 'all_days' ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                       transition: 'all 0.15s ease',
                     }}
                   >
@@ -2073,15 +2047,16 @@ export default function DailyWalletBalanceDrawer({
                     style={{
                       padding: '10px 12px',
                       borderRadius: 10,
-                      border: filterMode === 'activity_only' ? '1.5px solid var(--accent)' : '1px solid var(--border)',
-                      background: filterMode === 'activity_only' ? 'var(--accent-soft)' : 'var(--surface2)',
-                      color: filterMode === 'activity_only' ? 'var(--accent)' : 'var(--text-2)',
+                      border: filterMode === 'activity_only' ? '1px solid var(--border2)' : '1px solid var(--border)',
+                      background: filterMode === 'activity_only' ? 'var(--surface)' : 'var(--surface2)',
+                      color: filterMode === 'activity_only' ? 'var(--text)' : 'var(--text-2)',
                       fontSize: 12,
-                      fontWeight: filterMode === 'activity_only' ? 700 : 500,
+                      fontWeight: filterMode === 'activity_only' ? 650 : 500,
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
+                      boxShadow: filterMode === 'activity_only' ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                       transition: 'all 0.15s ease',
                     }}
                   >
@@ -2103,15 +2078,16 @@ export default function DailyWalletBalanceDrawer({
                     style={{
                       padding: '10px 12px',
                       borderRadius: 10,
-                      border: sortOrder === 'desc' ? '1.5px solid var(--accent)' : '1px solid var(--border)',
-                      background: sortOrder === 'desc' ? 'var(--accent-soft)' : 'var(--surface2)',
-                      color: sortOrder === 'desc' ? 'var(--accent)' : 'var(--text-2)',
+                      border: sortOrder === 'desc' ? '1px solid var(--border2)' : '1px solid var(--border)',
+                      background: sortOrder === 'desc' ? 'var(--surface)' : 'var(--surface2)',
+                      color: sortOrder === 'desc' ? 'var(--text)' : 'var(--text-2)',
                       fontSize: 12,
-                      fontWeight: sortOrder === 'desc' ? 700 : 500,
+                      fontWeight: sortOrder === 'desc' ? 650 : 500,
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
+                      boxShadow: sortOrder === 'desc' ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                       transition: 'all 0.15s ease',
                     }}
                   >
@@ -2125,15 +2101,16 @@ export default function DailyWalletBalanceDrawer({
                     style={{
                       padding: '10px 12px',
                       borderRadius: 10,
-                      border: sortOrder === 'asc' ? '1.5px solid var(--accent)' : '1px solid var(--border)',
-                      background: sortOrder === 'asc' ? 'var(--accent-soft)' : 'var(--surface2)',
-                      color: sortOrder === 'asc' ? 'var(--accent)' : 'var(--text-2)',
+                      border: sortOrder === 'asc' ? '1px solid var(--border2)' : '1px solid var(--border)',
+                      background: sortOrder === 'asc' ? 'var(--surface)' : 'var(--surface2)',
+                      color: sortOrder === 'asc' ? 'var(--text)' : 'var(--text-2)',
                       fontSize: 12,
-                      fontWeight: sortOrder === 'asc' ? 700 : 500,
+                      fontWeight: sortOrder === 'asc' ? 650 : 500,
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
+                      boxShadow: sortOrder === 'asc' ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                       transition: 'all 0.15s ease',
                     }}
                   >

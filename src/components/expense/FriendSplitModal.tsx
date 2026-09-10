@@ -377,8 +377,9 @@ export function FriendSplitModal({
                       gap: 6,
                       padding: '8px 10px',
                       borderRadius: 10,
-                      background: 'var(--surface2)',
-                      border: isYouSelected ? '1px solid var(--accent)' : '1px solid var(--border)',
+                      background: isYouSelected ? 'var(--surface)' : 'var(--surface2)',
+                      border: isYouSelected ? '1px solid var(--border2)' : '1px solid var(--border)',
+                      boxShadow: isYouSelected ? '0 1px 3px rgba(0, 0, 0, 0.08)' : 'none',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease',
                     }}
@@ -389,8 +390,8 @@ export function FriendSplitModal({
                           width: 26,
                           height: 26,
                           borderRadius: 7,
-                          background: isYouSelected ? 'var(--accent-soft)' : 'var(--surface3)',
-                          color: isYouSelected ? 'var(--accent)' : 'var(--text-3)',
+                          background: isYouSelected ? 'var(--surface3)' : 'var(--surface3)',
+                          color: isYouSelected ? 'var(--text)' : 'var(--text-3)',
                           fontSize: 11.5,
                           fontWeight: 750,
                           display: 'grid',
@@ -462,8 +463,9 @@ export function FriendSplitModal({
                         gap: 6,
                         padding: '8px 10px',
                         borderRadius: 10,
-                        background: 'var(--surface2)',
-                        border: isSel ? '1px solid var(--accent)' : '1px solid var(--border)',
+                        background: isSel ? 'var(--surface)' : 'var(--surface2)',
+                        border: isSel ? '1px solid var(--border2)' : '1px solid var(--border)',
+                        boxShadow: isSel ? '0 1px 3px rgba(0, 0, 0, 0.08)' : 'none',
                         cursor: 'pointer',
                         transition: 'all 0.15s ease',
                       }}
@@ -691,19 +693,19 @@ export function FriendSplitModal({
                     alignItems: 'center',
                     gap: 6,
                     padding: '5px 10px',
-                    background: isYouSelected ? 'var(--accent-soft)' : 'var(--surface)',
-                    border: isYouSelected ? '1px solid var(--accent)' : '1px solid var(--border)',
+                    background: isYouSelected ? 'var(--surface2)' : 'var(--surface)',
+                    border: isYouSelected ? '1px solid var(--border2)' : '1px solid var(--border)',
                     borderRadius: 8,
                     flexShrink: 0,
                   }}
                 >
-                  <span style={{ fontSize: 11, color: isYouSelected ? 'var(--accent)' : 'var(--text-3)', fontWeight: 600 }}>
+                  <span style={{ fontSize: 11, color: isYouSelected ? 'var(--text)' : 'var(--text-3)', fontWeight: 600 }}>
                     {isYouSelected ? 'Share:' : 'Excluded:'}
                   </span>
                   <strong
                     style={{
                       fontSize: 12.5,
-                      color: isYouSelected ? 'var(--accent)' : 'var(--text-3)',
+                      color: isYouSelected ? 'var(--text)' : 'var(--text-3)',
                       fontWeight: 700,
                     }}
                   >

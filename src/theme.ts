@@ -164,7 +164,7 @@ export function getAccentColors(accent: AccentPreset, mode: 'light' | 'dark', cu
   const surfaceGradient = mode === 'dark'
     ? `linear-gradient(135deg, ${soft} 0%, rgba(24, 24, 27, 0.85) 100%)`
     : `linear-gradient(135deg, ${soft} 0%, rgba(255, 255, 255, 0.92) 100%)`;
-  const borderSoft = hexToRgba(main, mode === 'dark' ? 0.32 : 0.22);
+  const borderSoft = hexToRgba(main, mode === 'dark' ? 0.14 : 0.10);
 
   return {
     main,

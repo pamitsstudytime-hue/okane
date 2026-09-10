@@ -198,25 +198,7 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
                 <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0, lineHeight: 1.2, color: 'var(--text)' }}>
                   {friend.name}
                 </h2>
-                <span
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 700,
-                    padding: '2px 7px',
-                    borderRadius: 6,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.4px',
-                    background:
-                      contactType === 'vendor'
-                        ? 'rgba(245, 158, 11, 0.12)'
-                        : 'var(--accent-soft)',
-                    color:
-                      contactType === 'vendor'
-                        ? '#D97706'
-                        : 'var(--accent)',
-                    border: '1px solid var(--accent-border-soft, transparent)',
-                  }}
-                >
+                <span className={`app-contact-badge ${contactType}`}>
                   {contactType}
                 </span>
               </div>
@@ -388,13 +370,13 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
         ) : (
           <div
             style={{
-              background: 'var(--accent-soft)',
-              border: '1px solid var(--accent-border-soft, var(--accent))',
-              borderRadius: 12,
-              padding: '12px 14px',
+              background: 'var(--surface2)',
+              border: '1px solid var(--border)',
+              borderRadius: 14,
+              padding: '14px 16px',
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-              gap: 10,
+              gap: 12,
             }}
           >
             <div>
@@ -601,82 +583,24 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
       {/* Standalone Filter Tabs: Active vs Settled */}
       <div style={{ marginBottom: 12 }}>
         {(contactType === 'friend' || activeExps.length > 0 || settledExps.length > 0) ? (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              background: 'var(--surface2)',
-              border: '1px solid var(--border)',
-              borderRadius: 12,
-              padding: 4,
-              width: '100%',
-              boxSizing: 'border-box',
-            }}
-          >
+          <div className="app-segmented-group" style={{ width: '100%' }}>
             <button
               type="button"
               onClick={() => setTab('active')}
-              style={{
-                flex: 1,
-                padding: '8px 14px',
-                fontSize: 13,
-                fontWeight: tab === 'active' ? 700 : 500,
-                borderRadius: 9,
-                border: tab === 'active' ? '1px solid var(--accent-border-soft, var(--accent))' : '1px solid transparent',
-                background: tab === 'active' ? 'var(--accent-soft)' : 'transparent',
-                color: tab === 'active' ? 'var(--accent)' : 'var(--text-3)',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6,
-                boxShadow: tab === 'active' ? '0 1px 3px var(--accent-soft)' : 'none',
-              }}
+              className={`app-segmented-item ${tab === 'active' ? 'active' : ''}`}
             >
               <span>Active</span>
-              <span style={{
-                fontSize: 11,
-                padding: '1px 6px',
-                borderRadius: 99,
-                background: tab === 'active' ? 'var(--accent)' : 'var(--surface)',
-                color: tab === 'active' ? 'var(--accent-contrast, #ffffff)' : 'var(--text-3)',
-                fontWeight: 700,
-              }}>
+              <span className="app-segmented-counter">
                 {activeExps.length}
               </span>
             </button>
             <button
               type="button"
               onClick={() => setTab('settled')}
-              style={{
-                flex: 1,
-                padding: '8px 14px',
-                fontSize: 13,
-                fontWeight: tab === 'settled' ? 700 : 500,
-                borderRadius: 9,
-                border: tab === 'settled' ? '1px solid var(--accent-border-soft, var(--accent))' : '1px solid transparent',
-                background: tab === 'settled' ? 'var(--accent-soft)' : 'transparent',
-                color: tab === 'settled' ? 'var(--accent)' : 'var(--text-3)',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6,
-                boxShadow: tab === 'settled' ? '0 1px 3px var(--accent-soft)' : 'none',
-              }}
+              className={`app-segmented-item ${tab === 'settled' ? 'active' : ''}`}
             >
               <span>Settled</span>
-              <span style={{
-                fontSize: 11,
-                padding: '1px 6px',
-                borderRadius: 99,
-                background: tab === 'settled' ? 'var(--accent)' : 'var(--surface)',
-                color: tab === 'settled' ? 'var(--accent-contrast, #ffffff)' : 'var(--text-3)',
-                fontWeight: 700,
-              }}>
+              <span className="app-segmented-counter">
                 {settledExps.length}
               </span>
             </button>

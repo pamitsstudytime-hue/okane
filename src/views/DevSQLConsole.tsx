@@ -454,25 +454,25 @@ export default function DevSQLConsole({ onNavigate }: DevSQLConsoleProps) {
                   padding: '6px 12px',
                   borderRadius: 20,
                   fontSize: 12,
-                  fontWeight: 600,
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
                   flexShrink: 0,
                   transition: 'all 0.15s ease',
-                  border: isActive ? '1px solid var(--accent)' : '1px solid var(--border)',
-                  background: isActive ? 'var(--accent-soft)' : 'var(--surface-hover)',
-                  color: isActive ? 'var(--accent)' : 'var(--text-2)',
-                  boxShadow: isActive ? '0 2px 6px -2px var(--accent-soft)' : 'none',
+                  border: isActive ? '1px solid var(--border2)' : '1px solid var(--border)',
+                  background: isActive ? 'var(--surface)' : 'var(--surface2)',
+                  color: isActive ? 'var(--text)' : 'var(--text-2)',
+                  fontWeight: isActive ? 650 : 500,
+                  boxShadow: isActive ? '0 1px 3px rgba(0, 0, 0, 0.12)' : 'none',
                 }}
               >
                 <span>{label}</span>
                 <span style={{
-                  fontSize: 10,
-                  fontWeight: 700,
+                  fontSize: 10.5,
+                  fontWeight: 600,
                   padding: '1px 6px',
                   borderRadius: 10,
-                  background: isActive ? 'var(--accent)' : 'var(--border2)',
-                  color: isActive ? 'var(--accent-contrast)' : 'var(--text-2)',
+                  background: isActive ? 'var(--surface2)' : 'var(--border)',
+                  color: isActive ? 'var(--text)' : 'var(--text-3)',
                 }}>
                   {tableCounts[tbl] ?? 0}
                 </span>

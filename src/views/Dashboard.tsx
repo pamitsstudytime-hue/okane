@@ -181,17 +181,18 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
                       onClick={() => setTempReveal(!tempReveal)}
                       title={isCardMasked ? "Click to show amounts" : "Click to hide amounts"}
                       style={{
-                        background: isCardMasked ? 'var(--accent-soft)' : 'var(--surface2)',
-                        border: `1px solid ${isCardMasked ? 'var(--accent)' : 'var(--border)'}`,
+                        background: isCardMasked ? 'var(--surface)' : 'var(--surface2)',
+                        border: `1px solid ${isCardMasked ? 'var(--border2)' : 'var(--border)'}`,
                         borderRadius: 999,
                         padding: '2px 8px',
-                        color: isCardMasked ? 'var(--accent)' : 'var(--text-3)',
+                        color: isCardMasked ? 'var(--text)' : 'var(--text-3)',
+                        boxShadow: isCardMasked ? '0 1px 3px rgba(0, 0, 0, 0.08)' : 'none',
                         cursor: 'pointer',
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: 4,
                         fontSize: 10.5,
-                        fontWeight: 600,
+                        fontWeight: isCardMasked ? 650 : 500,
                         transition: 'all 0.2s ease',
                         lineHeight: 1,
                       }}

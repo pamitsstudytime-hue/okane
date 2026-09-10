@@ -276,14 +276,15 @@ export const ExpenseFilterBar: React.FC<Props> = ({
                       borderRadius: 10,
                       fontSize: '12.5px',
                       fontWeight: isSelected ? 650 : 500,
-                      backgroundColor: isSelected ? 'var(--accent-soft)' : 'var(--surface2)',
-                      color: isSelected ? 'var(--accent)' : 'var(--text-2)',
-                      border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border)',
+                      backgroundColor: isSelected ? 'var(--surface)' : 'var(--surface2)',
+                      color: isSelected ? 'var(--text)' : 'var(--text-2)',
+                      border: isSelected ? '1px solid var(--border2)' : '1px solid var(--border)',
+                      boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease',
                     }}
                   >
-                    <Icon size={14} style={{ color: isSelected ? 'var(--accent)' : f.color || 'var(--text-3)' }} />
+                    <Icon size={14} style={{ color: isSelected ? 'var(--text)' : f.color || 'var(--text-3)' }} />
                     <span>{f.label}</span>
                   </button>
                 );
@@ -326,15 +327,16 @@ export const ExpenseFilterBar: React.FC<Props> = ({
                       borderRadius: 10,
                       fontSize: '12.5px',
                       fontWeight: isSelected ? 650 : 500,
-                      backgroundColor: isSelected ? 'var(--accent-soft)' : 'var(--surface2)',
-                      color: isSelected ? 'var(--accent)' : 'var(--text-2)',
-                      border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border)',
+                      backgroundColor: isSelected ? 'var(--surface)' : 'var(--surface2)',
+                      color: isSelected ? 'var(--text)' : 'var(--text-2)',
+                      border: isSelected ? '1px solid var(--border2)' : '1px solid var(--border)',
+                      boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease',
                     }}
                   >
                     <span>{s.label}</span>
-                    {isSelected && <Check size={14} style={{ color: 'var(--accent)' }} />}
+                    {isSelected && <Check size={14} style={{ color: 'var(--text)' }} />}
                   </button>
                 );
               })}
@@ -387,10 +389,12 @@ export const ExpenseFilterBar: React.FC<Props> = ({
                   borderRadius: 20,
                   fontSize: '12px',
                   fontWeight: catFilter === '' ? 650 : 500,
-                  backgroundColor: catFilter === '' ? 'var(--accent-soft)' : 'var(--surface2)',
-                  color: catFilter === '' ? 'var(--accent)' : 'var(--text-2)',
-                  border: catFilter === '' ? '1px solid var(--accent)' : '1px solid var(--border)',
+                  backgroundColor: catFilter === '' ? 'var(--surface)' : 'var(--surface2)',
+                  color: catFilter === '' ? 'var(--text)' : 'var(--text-2)',
+                  border: catFilter === '' ? '1px solid var(--border2)' : '1px solid var(--border)',
+                  boxShadow: catFilter === '' ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                   cursor: 'pointer',
+                  transition: 'all 0.15s ease',
                 }}
               >
                 <Sparkles size={13} />
@@ -412,9 +416,10 @@ export const ExpenseFilterBar: React.FC<Props> = ({
                       borderRadius: 20,
                       fontSize: '12px',
                       fontWeight: isSelected ? 650 : 500,
-                      backgroundColor: isSelected ? 'var(--accent-soft)' : 'var(--surface2)',
-                      color: isSelected ? 'var(--accent)' : 'var(--text-2)',
-                      border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border)',
+                      backgroundColor: isSelected ? 'var(--surface)' : 'var(--surface2)',
+                      color: isSelected ? 'var(--text)' : 'var(--text-2)',
+                      border: isSelected ? '1px solid var(--border2)' : '1px solid var(--border)',
+                      boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease',
                     }}
@@ -462,14 +467,16 @@ export const ExpenseFilterBar: React.FC<Props> = ({
                       borderRadius: 10,
                       fontSize: '12.5px',
                       fontWeight: isSelected ? 650 : 500,
-                      backgroundColor: isSelected ? 'var(--accent-soft)' : 'var(--surface2)',
-                      color: isSelected ? 'var(--accent)' : 'var(--text-2)',
-                      border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border)',
+                      backgroundColor: isSelected ? 'var(--surface)' : 'var(--surface2)',
+                      color: isSelected ? 'var(--text)' : 'var(--text-2)',
+                      border: isSelected ? '1px solid var(--border2)' : '1px solid var(--border)',
+                      boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                       cursor: 'pointer',
+                      transition: 'all 0.15s ease',
                     }}
                   >
                     <span>{t.label}</span>
-                    {isSelected && <Check size={14} style={{ color: 'var(--accent)' }} />}
+                    {isSelected && <Check size={14} style={{ color: 'var(--text)' }} />}
                   </button>
                 );
               })}
@@ -523,10 +530,12 @@ export const ExpenseFilterBar: React.FC<Props> = ({
                     borderRadius: 20,
                     fontSize: '12px',
                     fontWeight: walletFilter === '' ? 650 : 500,
-                    backgroundColor: walletFilter === '' ? 'var(--accent-soft)' : 'var(--surface2)',
-                    color: walletFilter === '' ? 'var(--accent)' : 'var(--text-2)',
-                    border: walletFilter === '' ? '1px solid var(--accent)' : '1px solid var(--border)',
+                    backgroundColor: walletFilter === '' ? 'var(--surface)' : 'var(--surface2)',
+                    color: walletFilter === '' ? 'var(--text)' : 'var(--text-2)',
+                    border: walletFilter === '' ? '1px solid var(--border2)' : '1px solid var(--border)',
+                    boxShadow: walletFilter === '' ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                     cursor: 'pointer',
+                    transition: 'all 0.15s ease',
                   }}
                 >
                   <WalletIcon size={13} />
@@ -548,10 +557,12 @@ export const ExpenseFilterBar: React.FC<Props> = ({
                         borderRadius: 20,
                         fontSize: '12px',
                         fontWeight: isSelected ? 650 : 500,
-                        backgroundColor: isSelected ? 'var(--accent-soft)' : 'var(--surface2)',
-                        color: isSelected ? 'var(--accent)' : 'var(--text-2)',
-                        border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border)',
+                        backgroundColor: isSelected ? 'var(--surface)' : 'var(--surface2)',
+                        color: isSelected ? 'var(--text)' : 'var(--text-2)',
+                        border: isSelected ? '1px solid var(--border2)' : '1px solid var(--border)',
+                        boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                         cursor: 'pointer',
+                        transition: 'all 0.15s ease',
                       }}
                     >
                       <WalletIcon size={13} />

@@ -409,11 +409,11 @@ export default function SettleExpensePickerModal({
                 type="button"
                 onClick={() => setFriendFilter('all')}
                 style={{
-                  border: friendFilter === 'all' ? '1.5px solid var(--accent)' : '1px solid var(--border)',
-                  background: friendFilter === 'all' ? 'var(--accent-soft)' : 'var(--surface2)',
-                  color: friendFilter === 'all' ? 'var(--accent)' : 'var(--text-2)',
+                  border: friendFilter === 'all' ? '1px solid var(--border2)' : '1px solid var(--border)',
+                  background: friendFilter === 'all' ? 'var(--surface)' : 'var(--surface2)',
+                  color: friendFilter === 'all' ? 'var(--text)' : 'var(--text-2)',
                   fontSize: 11.5,
-                  fontWeight: friendFilter === 'all' ? 700 : 500,
+                  fontWeight: friendFilter === 'all' ? 650 : 500,
                   padding: '4px 10px',
                   borderRadius: 20,
                   cursor: 'pointer',
@@ -422,6 +422,7 @@ export default function SettleExpensePickerModal({
                   gap: 5,
                   whiteSpace: 'nowrap',
                   flexShrink: 0,
+                  boxShadow: friendFilter === 'all' ? '0 1px 3px rgba(0, 0, 0, 0.12)' : 'none',
                   transition: 'all 0.15s ease',
                 }}
               >
@@ -429,11 +430,11 @@ export default function SettleExpensePickerModal({
                 <span
                   style={{
                     fontSize: 10,
-                    fontWeight: 700,
+                    fontWeight: 650,
                     padding: '1px 6px',
                     borderRadius: 99,
-                    background: friendFilter === 'all' ? 'var(--accent)' : 'var(--surface3)',
-                    color: friendFilter === 'all' ? 'var(--accent-contrast, #ffffff)' : 'var(--text-3)',
+                    background: friendFilter === 'all' ? 'var(--surface2)' : 'var(--surface3)',
+                    color: friendFilter === 'all' ? 'var(--text)' : 'var(--text-3)',
                   }}
                 >
                   {expenses.length}
@@ -446,11 +447,11 @@ export default function SettleExpensePickerModal({
                   type="button"
                   onClick={() => setFriendFilter('personal')}
                   style={{
-                    border: friendFilter === 'personal' ? '1.5px solid var(--accent)' : '1px solid var(--border)',
-                    background: friendFilter === 'personal' ? 'var(--accent-soft)' : 'var(--surface2)',
-                    color: friendFilter === 'personal' ? 'var(--accent)' : 'var(--text-2)',
+                    border: friendFilter === 'personal' ? '1px solid var(--border2)' : '1px solid var(--border)',
+                    background: friendFilter === 'personal' ? 'var(--surface)' : 'var(--surface2)',
+                    color: friendFilter === 'personal' ? 'var(--text)' : 'var(--text-2)',
                     fontSize: 11.5,
-                    fontWeight: friendFilter === 'personal' ? 700 : 500,
+                    fontWeight: friendFilter === 'personal' ? 650 : 500,
                     padding: '4px 10px',
                     borderRadius: 20,
                     cursor: 'pointer',
@@ -459,6 +460,7 @@ export default function SettleExpensePickerModal({
                     gap: 5,
                     whiteSpace: 'nowrap',
                     flexShrink: 0,
+                    boxShadow: friendFilter === 'personal' ? '0 1px 3px rgba(0, 0, 0, 0.12)' : 'none',
                     transition: 'all 0.15s ease',
                   }}
                 >
@@ -467,8 +469,8 @@ export default function SettleExpensePickerModal({
                       width: 15,
                       height: 15,
                       borderRadius: '50%',
-                      background: 'var(--accent-soft)',
-                      color: 'var(--accent)',
+                      background: 'var(--surface2)',
+                      color: 'var(--text-2)',
                       fontSize: 8.5,
                       fontWeight: 700,
                       display: 'grid',
@@ -484,11 +486,11 @@ export default function SettleExpensePickerModal({
                   <span
                     style={{
                       fontSize: 10,
-                      fontWeight: 700,
+                      fontWeight: 650,
                       padding: '1px 6px',
                       borderRadius: 99,
-                      background: friendFilter === 'personal' ? 'var(--accent)' : 'var(--surface3)',
-                      color: friendFilter === 'personal' ? 'var(--accent-contrast, #ffffff)' : 'var(--text-3)',
+                      background: friendFilter === 'personal' ? 'var(--surface2)' : 'var(--surface3)',
+                      color: friendFilter === 'personal' ? 'var(--text)' : 'var(--text-3)',
                     }}
                   >
                     {friendStats.personalCount}
@@ -506,11 +508,11 @@ export default function SettleExpensePickerModal({
                     type="button"
                     onClick={() => setFriendFilter(f.id)}
                     style={{
-                      border: isActive ? '1.5px solid var(--accent)' : '1px solid var(--border)',
-                      background: isActive ? 'var(--accent-soft)' : 'var(--surface2)',
-                      color: isActive ? 'var(--accent)' : 'var(--text)',
+                      border: isActive ? '1px solid var(--border2)' : '1px solid var(--border)',
+                      background: isActive ? 'var(--surface)' : 'var(--surface2)',
+                      color: isActive ? 'var(--text)' : 'var(--text-2)',
                       fontSize: 11.5,
-                      fontWeight: isActive ? 700 : 500,
+                      fontWeight: isActive ? 650 : 500,
                       padding: '4px 10px',
                       borderRadius: 20,
                       cursor: 'pointer',
@@ -519,6 +521,7 @@ export default function SettleExpensePickerModal({
                       gap: 5,
                       whiteSpace: 'nowrap',
                       flexShrink: 0,
+                      boxShadow: isActive ? '0 1px 3px rgba(0, 0, 0, 0.12)' : 'none',
                       transition: 'all 0.15s ease',
                     }}
                   >
@@ -544,11 +547,11 @@ export default function SettleExpensePickerModal({
                     <span
                       style={{
                         fontSize: 10,
-                        fontWeight: 700,
+                        fontWeight: 650,
                         padding: '1px 6px',
                         borderRadius: 99,
-                        background: isActive ? 'var(--accent)' : 'var(--surface3)',
-                        color: isActive ? 'var(--accent-contrast, #ffffff)' : 'var(--text-3)',
+                        background: isActive ? 'var(--surface2)' : 'var(--surface3)',
+                        color: isActive ? 'var(--text)' : 'var(--text-3)',
                       }}
                     >
                       {count}

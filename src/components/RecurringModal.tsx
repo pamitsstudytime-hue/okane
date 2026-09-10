@@ -778,8 +778,9 @@ export default function RecurringModal({ rule, defaultKind = 'autopay', onClose 
                   justifyContent: 'space-between',
                   padding: '7px 10px',
                   borderRadius: 'var(--radius-sm, 8px)',
-                  background: autoDeduct ? 'var(--accent-soft)' : 'var(--surface2)',
-                  border: autoDeduct ? '1px solid var(--accent-border-soft)' : '1px solid var(--border)',
+                  background: autoDeduct ? 'var(--surface)' : 'var(--surface2)',
+                  border: autoDeduct ? '1px solid var(--border2)' : '1px solid var(--border)',
+                  boxShadow: autoDeduct ? '0 1px 3px rgba(0, 0, 0, 0.08)' : 'none',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease'
                 }}
@@ -790,8 +791,8 @@ export default function RecurringModal({ rule, defaultKind = 'autopay', onClose 
                       width: 24,
                       height: 24,
                       borderRadius: 6,
-                      background: autoDeduct ? 'var(--accent)' : 'var(--surface)',
-                      color: autoDeduct ? 'var(--accent-contrast, #ffffff)' : 'var(--text-3)',
+                      background: autoDeduct ? 'var(--text)' : 'var(--surface)',
+                      color: autoDeduct ? 'var(--surface)' : 'var(--text-3)',
                       display: 'grid',
                       placeItems: 'center',
                       flexShrink: 0
@@ -800,7 +801,7 @@ export default function RecurringModal({ rule, defaultKind = 'autopay', onClose 
                     <Bell size={13} />
                   </div>
                   <div>
-                    <div style={{ fontSize: 11.5, fontWeight: 600, color: autoDeduct ? 'var(--accent)' : 'var(--text)', lineHeight: 1.2 }}>
+                    <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text)', lineHeight: 1.2 }}>
                       Auto-Deduct Prompt
                     </div>
                     <div style={{ fontSize: 10.5, color: 'var(--text-3)', lineHeight: 1.1 }}>
@@ -829,8 +830,9 @@ export default function RecurringModal({ rule, defaultKind = 'autopay', onClose 
                   justifyContent: 'space-between',
                   padding: '8px 11px',
                   borderRadius: 'var(--radius-sm, 8px)',
-                  background: 'var(--surface2)',
-                  border: friendId ? '1.5px solid var(--accent-border-soft, var(--border))' : '1px solid var(--border)',
+                  background: friendId ? 'var(--surface)' : 'var(--surface2)',
+                  border: friendId ? '1px solid var(--border2)' : '1px solid var(--border)',
+                  boxShadow: friendId ? '0 1px 3px rgba(0, 0, 0, 0.08)' : 'none',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease'
                 }}
@@ -841,10 +843,10 @@ export default function RecurringModal({ rule, defaultKind = 'autopay', onClose 
                       width: 28,
                       height: 28,
                       borderRadius: 6,
-                      background: friendId ? 'var(--accent-soft)' : 'var(--surface)',
+                      background: friendId ? 'var(--surface2)' : 'var(--surface)',
                       display: 'grid',
                       placeItems: 'center',
-                      color: friendId ? 'var(--accent)' : 'var(--text-3)',
+                      color: friendId ? 'var(--text)' : 'var(--text-3)',
                       border: '1px solid var(--border)',
                       flexShrink: 0
                     }}
@@ -1227,11 +1229,12 @@ export default function RecurringModal({ rule, defaultKind = 'autopay', onClose 
                           style={{
                             padding: '6px 8px',
                             fontSize: 11,
-                            fontWeight: 600,
+                            fontWeight: paymentMode === 'paid' ? 650 : 500,
                             borderRadius: 6,
-                            border: paymentMode === 'paid' ? '1.5px solid var(--accent)' : '1px solid var(--border)',
-                            background: paymentMode === 'paid' ? 'var(--accent-soft)' : 'var(--surface)',
-                            color: paymentMode === 'paid' ? 'var(--accent)' : 'var(--text)',
+                            border: paymentMode === 'paid' ? '1px solid var(--border2)' : '1px solid var(--border)',
+                            background: paymentMode === 'paid' ? 'var(--surface)' : 'var(--surface2)',
+                            color: 'var(--text)',
+                            boxShadow: paymentMode === 'paid' ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                             cursor: 'pointer',
                             transition: 'all 0.12s ease',
                             textAlign: 'center',
@@ -1248,11 +1251,12 @@ export default function RecurringModal({ rule, defaultKind = 'autopay', onClose 
                           style={{
                             padding: '6px 8px',
                             fontSize: 11,
-                            fontWeight: 600,
+                            fontWeight: paymentMode === 'debt' ? 650 : 500,
                             borderRadius: 6,
-                            border: paymentMode === 'debt' ? '1.5px solid var(--accent)' : '1px solid var(--border)',
-                            background: paymentMode === 'debt' ? 'var(--accent-soft)' : 'var(--surface)',
-                            color: paymentMode === 'debt' ? 'var(--accent)' : 'var(--text)',
+                            border: paymentMode === 'debt' ? '1px solid var(--border2)' : '1px solid var(--border)',
+                            background: paymentMode === 'debt' ? 'var(--surface)' : 'var(--surface2)',
+                            color: 'var(--text)',
+                            boxShadow: paymentMode === 'debt' ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                             cursor: 'pointer',
                             transition: 'all 0.12s ease',
                             textAlign: 'center',

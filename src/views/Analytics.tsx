@@ -1155,11 +1155,11 @@ export default function Analytics() {
                       width: '100%',
                       minWidth: '100%',
                       boxSizing: 'border-box',
-                      background: 'var(--surface2)',
-                      border: isActiveCard ? '1.5px solid var(--accent)' : '1px solid var(--border)',
+                      background: isActiveCard ? 'var(--surface)' : 'var(--surface2)',
+                      border: isActiveCard ? '1px solid var(--border2)' : '1px solid var(--border)',
                       borderRadius: 'var(--radius-lg)',
                       padding: '12px 14px',
-                      boxShadow: isActiveCard ? '0 2px 10px var(--accent-soft)' : undefined,
+                      boxShadow: isActiveCard ? '0 2px 8px rgba(0, 0, 0, 0.1)' : undefined,
                       transition: 'all 0.2s ease',
                     }}
                   >
@@ -1393,7 +1393,8 @@ export default function Analytics() {
                     style={{
                       width: '100%',
                       boxSizing: 'border-box',
-                      border: isSelected ? '1.5px solid var(--accent)' : undefined,
+                      border: isSelected ? '1px solid var(--border2)' : undefined,
+                      boxShadow: isSelected ? '0 1px 4px rgba(0, 0, 0, 0.1)' : undefined,
                     }}
                   >
                     {/* Day Row Header - Opens Day Details Drawer directly */}
@@ -1412,7 +1413,7 @@ export default function Analytics() {
                         <div style={{ minWidth: 0, flex: 1 }}>
                           <div style={{ fontWeight: 650, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap', overflow: 'hidden' }}>
                             <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--text)', fontSize: 13.5 }}>{row.dayName}</span>
-                            {row.isToday && <span style={{ background: 'var(--accent-soft)', color: 'var(--accent)', fontSize: 9.5, fontWeight: 700, padding: '1.5px 6px', borderRadius: 5, flexShrink: 0 }}>Today</span>}
+                            {row.isToday && <span style={{ background: 'var(--surface3)', color: 'var(--text)', fontSize: 9.5, fontWeight: 700, padding: '1.5px 6px', borderRadius: 5, flexShrink: 0 }}>Today</span>}
                             {row.isYesterday && <span style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981', fontSize: 9.5, fontWeight: 700, padding: '1.5px 6px', borderRadius: 5, flexShrink: 0 }}>Yest.</span>}
                           </div>
                           <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>

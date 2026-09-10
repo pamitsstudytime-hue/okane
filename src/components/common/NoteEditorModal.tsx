@@ -234,14 +234,15 @@ function NoteEditorContent({
                       type="button"
                       onClick={() => handleTagClick(tag)}
                       style={{
-                        background: active ? 'var(--accent-soft)' : 'var(--surface2)',
-                        border: active ? '1px solid var(--accent)' : '1px solid var(--border)',
-                        color: active ? 'var(--accent)' : 'var(--text-2)',
+                        background: active ? 'var(--surface)' : 'var(--surface2)',
+                        border: active ? '1px solid var(--border2)' : '1px solid var(--border)',
+                        color: active ? 'var(--text)' : 'var(--text-2)',
                         fontSize: 11.5,
                         fontWeight: active ? 650 : 500,
                         padding: '4px 10px',
                         borderRadius: 8,
                         cursor: 'pointer',
+                        boxShadow: active ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                         transition: 'all 0.15s ease',
                         whiteSpace: 'nowrap',
                         display: 'inline-flex',

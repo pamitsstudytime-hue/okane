@@ -818,8 +818,8 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                         onClick={() => setIsFriendPickerOpen(true)}
                         style={{
                           padding: '7px 11px',
-                          background: 'var(--accent-soft)',
-                          border: '1.5px solid var(--accent-border-soft, var(--accent))',
+                          background: 'var(--surface2)',
+                          border: '1px solid var(--border2)',
                           borderRadius: 11,
                           cursor: 'pointer',
                           display: 'flex',
@@ -827,7 +827,7 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                           justifyContent: 'space-between',
                           gap: 10,
                           transition: 'all 0.15s ease',
-                          boxShadow: '0 2px 6px var(--accent-soft)',
+                          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 }}>
@@ -1037,13 +1037,14 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                                 title={itemText}
                                 style={{
                                   fontSize: 11,
-                                  fontWeight: isSelected ? 600 : 450,
+                                  fontWeight: isSelected ? 650 : 450,
                                   height: 24,
                                   padding: '0 9px',
                                   borderRadius: 7,
-                                  border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border)',
-                                  background: isSelected ? 'var(--accent-soft)' : 'var(--surface2)',
-                                  color: isSelected ? 'var(--accent)' : 'var(--text-2)',
+                                  border: isSelected ? '1px solid var(--border2)' : '1px solid var(--border)',
+                                  background: isSelected ? 'var(--surface)' : 'var(--surface2)',
+                                  color: isSelected ? 'var(--text)' : 'var(--text-2)',
+                                  boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.08)' : 'none',
                                   flexShrink: 0,
                                   display: 'inline-flex',
                                   alignItems: 'center',
@@ -1322,10 +1323,10 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                                   fontWeight: isSelected ? 650 : 500,
                                   padding: '3px 10px',
                                   borderRadius: 999,
-                                  border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border2)',
-                                  background: isSelected ? 'var(--accent-soft)' : 'var(--surface2)',
-                                  color: isSelected ? 'var(--accent)' : 'var(--text-2)',
-                                  boxShadow: isSelected ? '0 1px 6px var(--accent-soft)' : 'none',
+                                  border: isSelected ? '1px solid var(--border2)' : '1px solid var(--border2)',
+                                  background: isSelected ? 'var(--surface)' : 'var(--surface2)',
+                                  color: isSelected ? 'var(--text)' : 'var(--text-2)',
+                                  boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                                   cursor: 'pointer',
                                   transition: 'all 0.15s ease',
                                 }}

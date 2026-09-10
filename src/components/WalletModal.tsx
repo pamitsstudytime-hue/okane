@@ -322,11 +322,14 @@ export default function WalletModal({ wallet, onClose }: Props) {
                         padding: '8px 4px 6px',
                         borderRadius: 10,
                         border: isSelected
-                          ? '1.5px solid var(--accent)'
+                          ? '1px solid var(--border2)'
                           : '1px solid var(--border)',
                         background: isSelected
-                          ? 'var(--accent-soft)'
+                          ? 'var(--surface)'
                           : 'var(--surface2)',
+                        boxShadow: isSelected
+                          ? '0 1px 3px rgba(0, 0, 0, 0.1)'
+                          : 'none',
                         cursor: 'pointer',
                         transition: 'all 0.15s ease',
                       }}
@@ -372,8 +375,9 @@ export default function WalletModal({ wallet, onClose }: Props) {
                 justifyContent: 'space-between',
                 padding: '11px 14px',
                 borderRadius: 12,
-                background: isDefault ? 'var(--accent-soft)' : 'var(--surface2)',
-                border: isDefault ? '1px solid var(--accent)' : '1px solid var(--border)',
+                background: isDefault ? 'var(--surface)' : 'var(--surface2)',
+                border: isDefault ? '1px solid var(--border2)' : '1px solid var(--border)',
+                boxShadow: isDefault ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 userSelect: 'none',
@@ -386,14 +390,14 @@ export default function WalletModal({ wallet, onClose }: Props) {
                     width: 34,
                     height: 34,
                     borderRadius: 9,
-                    background: isDefault ? 'var(--accent)' : 'var(--surface3)',
-                    color: isDefault ? 'var(--accent-contrast, #ffffff)' : 'var(--text-3)',
+                    background: isDefault ? 'var(--surface2)' : 'var(--surface3)',
+                    color: isDefault ? 'var(--text)' : 'var(--text-3)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     transition: 'all 0.2s ease',
                     flexShrink: 0,
-                    boxShadow: isDefault ? '0 2px 6px rgba(0,0,0,0.12)' : 'none',
+                    boxShadow: isDefault ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
                   }}
                 >
                   <CheckCircle2 size={18} strokeWidth={isDefault ? 2.4 : 1.8} style={{ color: 'inherit' }} />
@@ -421,8 +425,8 @@ export default function WalletModal({ wallet, onClose }: Props) {
                   width: 42,
                   height: 24,
                   borderRadius: 99,
-                  background: isDefault ? 'var(--accent)' : 'var(--surface3)',
-                  border: isDefault ? '1px solid var(--accent)' : '1px solid var(--border)',
+                  background: isDefault ? 'var(--text)' : 'var(--surface3)',
+                  border: isDefault ? '1px solid var(--text)' : '1px solid var(--border)',
                   padding: 2,
                   display: 'flex',
                   alignItems: 'center',
@@ -436,7 +440,7 @@ export default function WalletModal({ wallet, onClose }: Props) {
                     width: 18,
                     height: 18,
                     borderRadius: '50%',
-                    background: isDefault ? 'var(--accent-contrast, #ffffff)' : 'var(--text-2, #a1a1aa)',
+                    background: isDefault ? 'var(--surface)' : 'var(--text-2, #a1a1aa)',
                     boxShadow: '0 1px 3px rgba(0, 0, 0, 0.28)',
                     transform: isDefault ? 'translateX(18px)' : 'translateX(0px)',
                     transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease',

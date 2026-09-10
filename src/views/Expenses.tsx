@@ -327,128 +327,52 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
         {activeFilterCount > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', padding: '0 2px' }}>
             {catFilter && (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  padding: '2px 8px',
-                  borderRadius: '12px',
-                  fontSize: '11px',
-                  backgroundColor: 'var(--accent-soft)',
-                  color: 'var(--accent)',
-                  border: '1px solid var(--accent-border-soft, var(--accent))',
-                  fontWeight: 500,
-                }}
-              >
+              <span className="app-filter-chip">
                 Category: {catFilter}
                 <button
                   type="button"
                   onClick={() => setCatFilter('')}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'var(--accent)',
-                    padding: 0,
-                    lineHeight: 1,
-                  }}
+                  className="app-filter-chip-remove"
+                  title="Remove category filter"
                 >
                   ✕
                 </button>
               </span>
             )}
             {typeFilter && (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  padding: '2px 8px',
-                  borderRadius: '12px',
-                  fontSize: '11px',
-                  backgroundColor: 'var(--accent-soft)',
-                  color: 'var(--accent)',
-                  border: '1px solid var(--accent-border-soft, var(--accent))',
-                  fontWeight: 500,
-                }}
-              >
+              <span className="app-filter-chip">
                 Type: {typeFilter.replace('_', ' ')}
                 <button
                   type="button"
                   onClick={() => setTypeFilter('')}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'var(--accent)',
-                    padding: 0,
-                    lineHeight: 1,
-                  }}
+                  className="app-filter-chip-remove"
+                  title="Remove type filter"
                 >
                   ✕
                 </button>
               </span>
             )}
             {walletFilter && (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  padding: '2px 8px',
-                  borderRadius: '12px',
-                  fontSize: '11px',
-                  backgroundColor: 'var(--accent-soft)',
-                  color: 'var(--accent)',
-                  border: '1px solid var(--accent-border-soft, var(--accent))',
-                  fontWeight: 500,
-                }}
-              >
+              <span className="app-filter-chip">
                 Wallet: {walletsMap.get(walletFilter)?.name || walletFilter}
                 <button
                   type="button"
                   onClick={() => setWalletFilter('')}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'var(--accent)',
-                    padding: 0,
-                    lineHeight: 1,
-                  }}
+                  className="app-filter-chip-remove"
+                  title="Remove wallet filter"
                 >
                   ✕
                 </button>
               </span>
             )}
             {sort !== 'date-desc' && (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  padding: '2px 8px',
-                  borderRadius: '12px',
-                  fontSize: '11px',
-                  backgroundColor: 'var(--accent-soft)',
-                  color: 'var(--accent)',
-                  border: '1px solid var(--accent-border-soft, var(--accent))',
-                  fontWeight: 500,
-                }}
-              >
+              <span className="app-filter-chip">
                 Sort: {sort.replace('-', ' ')}
                 <button
                   type="button"
                   onClick={() => setSort('date-desc')}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'var(--accent)',
-                    padding: 0,
-                    lineHeight: 1,
-                  }}
+                  className="app-filter-chip-remove"
+                  title="Reset sort"
                 >
                   ✕
                 </button>
@@ -460,12 +384,15 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
               style={{
                 background: 'none',
                 border: 'none',
-                color: 'var(--accent)',
-                fontSize: '11px',
+                color: 'var(--text-3)',
+                fontSize: '11.5px',
                 fontWeight: 600,
                 cursor: 'pointer',
-                padding: '2px 4px',
+                padding: '3px 6px',
+                transition: 'color 0.15s ease',
               }}
+              onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}
             >
               Clear all
             </button>

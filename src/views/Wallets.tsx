@@ -305,11 +305,11 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                               alignItems: 'center',
                               padding: '2px 8px',
                               borderRadius: 999,
-                              background: 'var(--accent-soft)',
-                              color: 'var(--accent)',
+                              background: 'var(--surface2)',
+                              color: 'var(--text)',
                               fontSize: 10.5,
-                              fontWeight: 700,
-                              border: '1px solid var(--accent-border-soft, var(--accent))',
+                              fontWeight: 650,
+                              border: '1px solid var(--border)',
                               letterSpacing: '0.2px',
                             }}
                           >

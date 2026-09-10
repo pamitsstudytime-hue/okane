@@ -234,11 +234,12 @@ export const ContactFilterBar: React.FC<Props> = ({
                   gap: 4,
                   padding: '5px 9px',
                   borderRadius: 8,
-                  backgroundColor: showBreakdown ? 'var(--accent-soft)' : 'var(--surface2)',
-                  border: showBreakdown ? '1px solid var(--accent)' : '1px solid var(--border)',
-                  color: showBreakdown ? 'var(--accent)' : 'var(--text-2)',
+                  backgroundColor: showBreakdown ? 'var(--surface)' : 'var(--surface2)',
+                  border: showBreakdown ? '1px solid var(--border2)' : '1px solid var(--border)',
+                  color: showBreakdown ? 'var(--text)' : 'var(--text-2)',
                   fontSize: '12px',
-                  fontWeight: 600,
+                  fontWeight: showBreakdown ? 650 : 500,
+                  boxShadow: showBreakdown ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
                 }}
@@ -450,19 +451,19 @@ export const ContactFilterBar: React.FC<Props> = ({
                       gap: 6,
                       padding: '7px 4px',
                       borderRadius: '8px',
-                      border: isSelected ? '1px solid var(--accent-border-soft, var(--accent))' : '1px solid transparent',
-                      backgroundColor: isSelected ? 'var(--accent-soft)' : 'transparent',
-                      color: isSelected ? 'var(--accent)' : 'var(--text-2)',
+                      border: isSelected ? '1px solid var(--border)' : '1px solid transparent',
+                      backgroundColor: isSelected ? 'var(--surface)' : 'transparent',
+                      color: isSelected ? 'var(--text)' : 'var(--text-2)',
                       fontSize: '12px',
                       fontWeight: isSelected ? 650 : 500,
                       cursor: 'pointer',
-                      boxShadow: isSelected ? '0 1px 3px var(--accent-soft)' : 'none',
+                      boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.12)' : 'none',
                       transition: 'all 0.15s ease',
                       whiteSpace: 'nowrap',
                     }}
                   >
                     {React.cloneElement(tab.icon, {
-                      style: { color: isSelected ? 'var(--accent)' : 'var(--text-3)' }
+                      style: { color: isSelected ? 'var(--text)' : 'var(--text-3)' }
                     })}
                     <span>{tab.label}</span>
                     <span style={{ fontSize: '10px', opacity: isSelected ? 0.95 : 0.6 }}>({tab.count})</span>
@@ -497,23 +498,24 @@ export const ContactFilterBar: React.FC<Props> = ({
                         justifyContent: 'space-between',
                         padding: '9px 12px',
                         borderRadius: '10px',
-                        backgroundColor: isSelected ? 'var(--accent-soft)' : 'var(--surface)',
-                        border: isSelected ? '1.5px solid var(--accent)' : '1px solid var(--border)',
-                        color: isSelected ? 'var(--accent)' : 'var(--text-2)',
+                        backgroundColor: isSelected ? 'var(--surface)' : 'var(--surface2)',
+                        border: isSelected ? '1px solid var(--border2)' : '1px solid var(--border)',
+                        color: isSelected ? 'var(--text)' : 'var(--text-2)',
                         cursor: 'pointer',
                         textAlign: 'left',
+                        boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                         transition: 'all 0.15s ease',
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                         {opt.icon}
                         <div>
-                          <div style={{ fontSize: '12px', fontWeight: isSelected ? 650 : 500, color: isSelected ? 'var(--accent)' : 'inherit' }}>
+                          <div style={{ fontSize: '12px', fontWeight: isSelected ? 650 : 500, color: isSelected ? 'var(--text)' : 'inherit' }}>
                             {opt.label}
                           </div>
                         </div>
                       </div>
-                      {isSelected && <Check size={14} style={{ color: 'var(--accent)', flexShrink: 0 }} />}
+                      {isSelected && <Check size={14} style={{ color: 'var(--text)', flexShrink: 0 }} />}
                     </button>
                   );
                 })}
@@ -548,9 +550,9 @@ export const ContactFilterBar: React.FC<Props> = ({
                       justifyContent: 'space-between',
                       padding: '8px 12px',
                       borderRadius: '8px',
-                      backgroundColor: isSelected ? 'var(--accent-soft)' : 'transparent',
-                      border: isSelected ? '1px solid var(--accent-border-soft, var(--accent))' : '1px solid transparent',
-                      color: isSelected ? 'var(--accent)' : 'var(--text-2)',
+                      backgroundColor: isSelected ? 'var(--surface2)' : 'transparent',
+                      border: '1px solid transparent',
+                      color: isSelected ? 'var(--text)' : 'var(--text-2)',
                       fontSize: '12.5px',
                       fontWeight: isSelected ? 650 : 450,
                       cursor: 'pointer',
@@ -560,11 +562,11 @@ export const ContactFilterBar: React.FC<Props> = ({
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       {React.cloneElement(opt.icon, {
-                        style: { color: isSelected ? 'var(--accent)' : 'var(--text-3)', ...opt.icon.props.style }
+                        style: { color: isSelected ? 'var(--text)' : 'var(--text-3)', ...opt.icon.props.style }
                       })}
                       <span>{opt.label}</span>
                     </div>
-                    {isSelected && <Check size={14} style={{ color: 'var(--accent)' }} />}
+                    {isSelected && <Check size={14} style={{ color: 'var(--text)' }} />}
                   </button>
                 );
               })}
@@ -605,18 +607,18 @@ export const ContactFilterBar: React.FC<Props> = ({
                       gap: 6,
                       padding: '8px 6px',
                       borderRadius: '8px',
-                      border: isSelected ? '1px solid var(--accent-border-soft, var(--accent))' : '1px solid transparent',
-                      backgroundColor: isSelected ? 'var(--accent-soft)' : 'transparent',
-                      color: isSelected ? 'var(--accent)' : 'var(--text-2)',
+                      border: isSelected ? '1px solid var(--border)' : '1px solid transparent',
+                      backgroundColor: isSelected ? 'var(--surface)' : 'transparent',
+                      color: isSelected ? 'var(--text)' : 'var(--text-2)',
                       fontSize: '12px',
                       fontWeight: isSelected ? 650 : 500,
                       cursor: 'pointer',
-                      boxShadow: isSelected ? '0 1px 3px var(--accent-soft)' : 'none',
+                      boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.12)' : 'none',
                       transition: 'all 0.15s ease',
                     }}
                   >
                     {React.cloneElement(opt.icon, {
-                      style: { color: isSelected ? 'var(--accent)' : 'var(--text-3)' }
+                      style: { color: isSelected ? 'var(--text)' : 'var(--text-3)' }
                     })}
                     <span>{opt.label}</span>
                   </button>

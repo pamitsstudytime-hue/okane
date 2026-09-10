@@ -538,17 +538,18 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                   padding: '5px 12px',
                   borderRadius: '20px',
                   fontSize: '12.5px',
-                  fontWeight: isSelected ? 600 : 500,
-                  backgroundColor: isSelected ? 'var(--accent-soft)' : 'var(--surface2)',
-                  color: isSelected ? 'var(--accent)' : 'var(--text-2)',
-                  border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border)',
+                  fontWeight: isSelected ? 650 : 500,
+                  backgroundColor: isSelected ? 'var(--surface)' : 'var(--surface2)',
+                  color: isSelected ? 'var(--text)' : 'var(--text-2)',
+                  border: isSelected ? '1px solid var(--border2)' : '1px solid var(--border)',
+                  boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
                   flexShrink: 0,
                   transition: 'all 0.15s ease',
                 }}
               >
-                <Icon size={14} style={{ color: isSelected ? 'var(--accent)' : 'var(--text-3)' }} />
+                <Icon size={14} style={{ color: isSelected ? 'var(--text)' : 'var(--text-3)' }} />
                 <span>{tab.label}</span>
               </button>
             );

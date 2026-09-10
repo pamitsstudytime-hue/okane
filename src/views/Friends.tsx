@@ -324,141 +324,57 @@ export default function Friends({ onNavigate }: Props) {
         {activeFilterCount > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', padding: '0 2px' }}>
             {search && (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  padding: '2px 8px',
-                  borderRadius: '12px',
-                  fontSize: '11px',
-                  backgroundColor: 'var(--accent-soft)',
-                  color: 'var(--accent)',
-                  border: '1px solid var(--accent-border-soft, var(--accent))',
-                  fontWeight: 500,
-                }}
-              >
+              <span className="app-filter-chip">
                 Search: "{search}"
                 <button
                   type="button"
                   onClick={() => setSearch('')}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'var(--accent)',
-                    padding: 0,
-                    lineHeight: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
+                  className="app-filter-chip-remove"
+                  title="Clear search"
                 >
-                  <X size={11} />
+                  <X size={12} />
                 </button>
               </span>
             )}
 
             {statusFilter !== 'all' && (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  padding: '2px 8px',
-                  borderRadius: '12px',
-                  fontSize: '11px',
-                  backgroundColor: 'var(--accent-soft)',
-                  color: 'var(--accent)',
-                  border: '1px solid var(--accent-border-soft, var(--accent))',
-                  fontWeight: 500,
-                }}
-              >
+              <span className="app-filter-chip">
                 Status: {statusLabel}
                 <button
                   type="button"
                   onClick={() => setStatusFilter('all')}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'var(--accent)',
-                    padding: 0,
-                    lineHeight: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
+                  className="app-filter-chip-remove"
+                  title="Clear status filter"
                 >
-                  <X size={11} />
+                  <X size={12} />
                 </button>
               </span>
             )}
 
             {sortBy !== 'owed_desc' && (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  padding: '2px 8px',
-                  borderRadius: '12px',
-                  fontSize: '11px',
-                  backgroundColor: 'var(--accent-soft)',
-                  color: 'var(--accent)',
-                  border: '1px solid var(--accent-border-soft, var(--accent))',
-                  fontWeight: 500,
-                }}
-              >
+              <span className="app-filter-chip">
                 Sort: {sortLabel}
                 <button
                   type="button"
                   onClick={() => setSortBy('owed_desc')}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'var(--accent)',
-                    padding: 0,
-                    lineHeight: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
+                  className="app-filter-chip-remove"
+                  title="Reset sort"
                 >
-                  <X size={11} />
+                  <X size={12} />
                 </button>
               </span>
             )}
 
             {userDensityOverride !== null && (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  padding: '2px 8px',
-                  borderRadius: '12px',
-                  fontSize: '11px',
-                  backgroundColor: 'var(--accent-soft)',
-                  color: 'var(--accent)',
-                  border: '1px solid var(--accent-border-soft, var(--accent))',
-                  fontWeight: 500,
-                }}
-              >
+              <span className="app-filter-chip">
                 Layout: {density === 'detailed' ? 'Detailed' : density === 'grid' ? 'Grid' : 'Compact'}
                 <button
                   type="button"
                   onClick={() => setUserDensityOverride(null)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'var(--accent)',
-                    padding: 0,
-                    lineHeight: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
+                  className="app-filter-chip-remove"
+                  title="Reset layout"
                 >
-                  <X size={11} />
+                  <X size={12} />
                 </button>
               </span>
             )}
@@ -469,18 +385,21 @@ export default function Friends({ onNavigate }: Props) {
               style={{
                 background: 'none',
                 border: 'none',
-                color: 'var(--accent)',
-                fontSize: '11px',
+                color: 'var(--text-3)',
+                fontSize: '11.5px',
                 fontWeight: 600,
                 cursor: 'pointer',
-                padding: '2px 4px',
+                padding: '3px 6px',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 3,
+                transition: 'color 0.15s ease',
               }}
+              onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}
             >
-              <RotateCcw size={10} />
-              Reset all
+              <RotateCcw size={12} />
+              Clear all
             </button>
           </div>
         )}
@@ -763,7 +682,7 @@ export default function Friends({ onNavigate }: Props) {
                         {f.name}
                       </span>
                       {typeFilter !== fType && fType !== 'friend' && (
-                        <span style={{ fontSize: 9.5, fontWeight: 700, padding: '1.5px 6px', borderRadius: 6, textTransform: 'uppercase', background: 'var(--accent-soft)', color: 'var(--accent)', border: '1px solid var(--accent-border-soft, transparent)', flexShrink: 0 }}>
+                        <span className={`app-contact-badge ${fType}`}>
                           {fType}
                         </span>
                       )}
@@ -879,7 +798,7 @@ export default function Friends({ onNavigate }: Props) {
                       {f.name}
                     </span>
                     {typeFilter !== fType && fType !== 'friend' && (
-                      <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 4, textTransform: 'uppercase', background: 'var(--accent-soft)', color: 'var(--accent)', flexShrink: 0 }}>
+                      <span className={`app-contact-badge ${fType}`}>
                         {fType}
                       </span>
                     )}

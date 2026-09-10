@@ -1392,8 +1392,9 @@ export default function Settings({
                           }}
                           className="accent-picker-btn"
                           style={{
-                            border: isSelected ? '2px solid var(--accent)' : '1px solid var(--border)',
-                            background: isSelected ? 'var(--accent-soft)' : 'var(--surface2)',
+                            border: isSelected ? '1px solid var(--border2)' : '1px solid var(--border)',
+                            background: isSelected ? 'var(--surface)' : 'var(--surface2)',
+                            boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                           }}
                         >
                           <div style={{
@@ -1581,20 +1582,21 @@ export default function Settings({
                         style={{
                           padding: '10px 12px',
                           borderRadius: 10,
-                          border: (settings.searchLocation ?? 'topbar') === 'floating' ? '2px solid var(--accent)' : '1px solid var(--border)',
-                          background: (settings.searchLocation ?? 'topbar') === 'floating' ? 'var(--accent-soft)' : 'var(--surface)',
+                          border: (settings.searchLocation ?? 'topbar') === 'floating' ? '1px solid var(--border2)' : '1px solid var(--border)',
+                          background: (settings.searchLocation ?? 'topbar') === 'floating' ? 'var(--surface)' : 'var(--surface2)',
                           color: 'var(--text)',
                           fontSize: 12.5,
-                          fontWeight: (settings.searchLocation ?? 'topbar') === 'floating' ? 700 : 500,
+                          fontWeight: (settings.searchLocation ?? 'topbar') === 'floating' ? 650 : 500,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           gap: 6,
                           cursor: 'pointer',
+                          boxShadow: (settings.searchLocation ?? 'topbar') === 'floating' ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                           transition: 'all 0.15s ease',
                         }}
                       >
-                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: (settings.searchLocation ?? 'topbar') === 'floating' ? 'var(--accent)' : 'var(--text-3)' }} />
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: (settings.searchLocation ?? 'topbar') === 'floating' ? 'var(--text)' : 'var(--text-3)' }} />
                         <span>Floating</span>
                       </button>
 
@@ -1608,20 +1610,21 @@ export default function Settings({
                         style={{
                           padding: '10px 12px',
                           borderRadius: 10,
-                          border: (settings.searchLocation ?? 'topbar') === 'topbar' ? '2px solid var(--accent)' : '1px solid var(--border)',
-                          background: (settings.searchLocation ?? 'topbar') === 'topbar' ? 'var(--accent-soft)' : 'var(--surface)',
+                          border: (settings.searchLocation ?? 'topbar') === 'topbar' ? '1px solid var(--border2)' : '1px solid var(--border)',
+                          background: (settings.searchLocation ?? 'topbar') === 'topbar' ? 'var(--surface)' : 'var(--surface2)',
                           color: 'var(--text)',
                           fontSize: 12.5,
-                          fontWeight: (settings.searchLocation ?? 'topbar') === 'topbar' ? 700 : 500,
+                          fontWeight: (settings.searchLocation ?? 'topbar') === 'topbar' ? 650 : 500,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           gap: 6,
                           cursor: 'pointer',
+                          boxShadow: (settings.searchLocation ?? 'topbar') === 'topbar' ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                           transition: 'all 0.15s ease',
                         }}
                       >
-                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: (settings.searchLocation ?? 'topbar') === 'topbar' ? 'var(--accent)' : 'var(--text-3)' }} />
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: (settings.searchLocation ?? 'topbar') === 'topbar' ? 'var(--text)' : 'var(--text-3)' }} />
                         <span>Top Bar</span>
                       </button>
                     </div>
@@ -2697,11 +2700,12 @@ export default function Settings({
                             padding: '5px 10px',
                             borderRadius: 9,
                             fontSize: 12,
-                            fontWeight: isSelected ? 700 : 600,
-                            background: isSelected ? 'var(--accent-soft)' : 'var(--surface2)',
-                            border: `1px solid ${isSelected ? 'var(--accent)' : 'var(--border)'}`,
-                            color: isSelected ? 'var(--accent)' : 'var(--text-2)',
+                            fontWeight: isSelected ? 650 : 500,
+                            background: isSelected ? 'var(--surface)' : 'var(--surface2)',
+                            border: `1px solid ${isSelected ? 'var(--border2)' : 'var(--border)'}`,
+                            color: isSelected ? 'var(--text)' : 'var(--text-2)',
                             cursor: 'pointer',
+                            boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                             transition: 'all 0.15s ease'
                           }}
                         >
@@ -2744,8 +2748,9 @@ export default function Settings({
                           justifyContent: 'space-between',
                           padding: '10px 12px',
                           borderRadius: 12,
-                          background: isSelected ? 'var(--accent-soft)' : 'var(--surface2)',
-                          border: `1px solid ${isSelected ? 'var(--accent)' : 'var(--border)'}`,
+                          background: isSelected ? 'var(--surface)' : 'var(--surface2)',
+                          border: `1px solid ${isSelected ? 'var(--border2)' : 'var(--border)'}`,
+                          boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                           cursor: 'pointer',
                           transition: 'all 0.15s ease',
                           gap: 12
@@ -3088,20 +3093,21 @@ export default function Settings({
                       style={{
                         padding: '10px 12px',
                         borderRadius: 'var(--radius)',
-                        border: feedbackType === 'bug' ? '2px solid var(--accent)' : '1px solid var(--border)',
-                        background: feedbackType === 'bug' ? 'var(--accent-soft)' : 'var(--surface2)',
+                        border: feedbackType === 'bug' ? '1px solid var(--border2)' : '1px solid var(--border)',
+                        background: feedbackType === 'bug' ? 'var(--surface)' : 'var(--surface2)',
                         color: 'var(--text)',
-                        fontWeight: 600,
+                        fontWeight: feedbackType === 'bug' ? 650 : 500,
                         fontSize: 13,
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: 8,
+                        boxShadow: feedbackType === 'bug' ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                         transition: 'all 0.15s ease'
                       }}
                     >
-                      <Bug size={16} style={{ color: feedbackType === 'bug' ? 'var(--accent)' : 'var(--text-2)' }} />
+                      <Bug size={16} style={{ color: feedbackType === 'bug' ? 'var(--text)' : 'var(--text-2)' }} />
                       <span>Bug / Issue</span>
                     </button>
 
@@ -3111,20 +3117,21 @@ export default function Settings({
                       style={{
                         padding: '10px 12px',
                         borderRadius: 'var(--radius)',
-                        border: feedbackType === 'feature' ? '2px solid var(--accent)' : '1px solid var(--border)',
-                        background: feedbackType === 'feature' ? 'var(--accent-soft)' : 'var(--surface2)',
+                        border: feedbackType === 'feature' ? '1px solid var(--border2)' : '1px solid var(--border)',
+                        background: feedbackType === 'feature' ? 'var(--surface)' : 'var(--surface2)',
                         color: 'var(--text)',
-                        fontWeight: 600,
+                        fontWeight: feedbackType === 'feature' ? 650 : 500,
                         fontSize: 13,
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: 8,
+                        boxShadow: feedbackType === 'feature' ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                         transition: 'all 0.15s ease'
                       }}
                     >
-                      <Lightbulb size={16} style={{ color: feedbackType === 'feature' ? 'var(--accent)' : 'var(--text-2)' }} />
+                      <Lightbulb size={16} style={{ color: feedbackType === 'feature' ? 'var(--text)' : 'var(--text-2)' }} />
                       <span>Suggest Feature</span>
                     </button>
                   </div>
