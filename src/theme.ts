@@ -260,6 +260,33 @@ export function buildTheme(mode: 'light' | 'dark', accent: AccentPreset = 'monoc
           },
         },
       },
+      MuiBottomNavigationAction: {
+        defaultProps: {
+          disableRipple: true,
+        },
+        styleOverrides: {
+          root: {
+            backgroundColor: 'transparent',
+            WebkitTapHighlightColor: 'transparent',
+            '&:hover': {
+              backgroundColor: 'transparent',
+            },
+            '&:active': {
+              backgroundColor: 'transparent',
+            },
+            '&.Mui-selected': {
+              backgroundColor: 'transparent',
+            },
+            '&.Mui-focusVisible': {
+              backgroundColor: 'transparent',
+              outline: 'none',
+            },
+            '& .MuiTouchRipple-root': {
+              display: 'none',
+            },
+          },
+        },
+      },
       MuiPaper: {
         styleOverrides: {
           root: {

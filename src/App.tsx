@@ -1158,9 +1158,9 @@ function AppInner() {
                 navigate(newValue as ViewName);
               }
             }}
-            showLabels={false}
+            showLabels={true}
             sx={{
-              height: 64,
+              height: 66,
               bgcolor: 'var(--bg)',
               border: 'none',
               borderTop: 'none',
@@ -1172,88 +1172,141 @@ function AppInner() {
               '& .MuiBottomNavigationAction-root': {
                 minWidth: 'auto',
                 flex: 1,
-                padding: '0',
-                transition: 'all 0.2s ease',
+                padding: '6px 0 4px',
+                bgcolor: 'transparent !important',
+                background: 'transparent !important',
+                WebkitTapHighlightColor: 'transparent !important',
+                outline: 'none !important',
+                border: 'none !important',
+                boxShadow: 'none !important',
+                userSelect: 'none',
+                transition: 'all 0.15s ease',
+                '&:hover': {
+                  bgcolor: 'transparent !important',
+                  background: 'transparent !important',
+                },
                 '&:active': {
-                  transform: 'scale(0.92)',
+                  bgcolor: 'transparent !important',
+                  background: 'transparent !important',
+                  transform: 'scale(0.96)',
+                },
+                '&:focus': {
+                  outline: 'none !important',
+                  bgcolor: 'transparent !important',
+                  background: 'transparent !important',
+                },
+                '&.Mui-focusVisible': {
+                  outline: 'none !important',
+                  bgcolor: 'transparent !important',
+                  background: 'transparent !important',
+                },
+                '&.Mui-selected': {
+                  bgcolor: 'transparent !important',
+                  background: 'transparent !important',
+                },
+                '& .MuiTouchRipple-root': {
+                  display: 'none !important',
+                },
+                '& .MuiBottomNavigationAction-label': {
+                  fontSize: '11px !important',
+                  fontWeight: '500 !important',
+                  lineHeight: 1.2,
+                  marginTop: '3px',
+                  color: mode === 'dark' ? '#71717a' : '#8e8e93',
+                  transition: 'color 0.15s ease, font-weight 0.15s ease',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  '&.Mui-selected': {
+                    fontSize: '11px !important',
+                    fontWeight: '700 !important',
+                    color: mode === 'dark' ? '#ffffff' : '#111111',
+                  },
                 },
               },
             }}
           >
             <BottomNavigationAction
+              disableRipple
               value="dashboard"
+              label="Dashboard"
               icon={
                 <Box
                   sx={{
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    width: bottomNavValue === 'dashboard' ? 56 : 40,
-                    height: 32,
+                    width: bottomNavValue === 'dashboard' ? 48 : 36,
+                    height: 28,
                     borderRadius: '999px',
                     bgcolor: bottomNavValue === 'dashboard' ? (mode === 'dark' ? '#1f2127' : '#e4e4e7') : 'transparent',
                     color: bottomNavValue === 'dashboard' ? (mode === 'dark' ? '#ffffff' : '#111111') : (mode === 'dark' ? '#71717a' : '#8e8e93'),
-                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                   }}
                 >
-                  <LayoutDashboard size={20} />
+                  <LayoutDashboard size={19} />
                 </Box>
               }
             />
             <BottomNavigationAction
+              disableRipple
               value="expenses"
+              label="Expenses"
               icon={
                 <Box
                   sx={{
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    width: bottomNavValue === 'expenses' ? 56 : 40,
-                    height: 32,
+                    width: bottomNavValue === 'expenses' ? 48 : 36,
+                    height: 28,
                     borderRadius: '999px',
                     bgcolor: bottomNavValue === 'expenses' ? (mode === 'dark' ? '#1f2127' : '#e4e4e7') : 'transparent',
                     color: bottomNavValue === 'expenses' ? (mode === 'dark' ? '#ffffff' : '#111111') : (mode === 'dark' ? '#71717a' : '#8e8e93'),
-                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                   }}
                 >
-                  <ReceiptText size={20} />
+                  <ReceiptText size={19} />
                 </Box>
               }
             />
             <BottomNavigationAction
+              disableRipple
               value="add"
               icon={
                 <Box
                   sx={{
-                    width: 48,
-                    height: 48,
+                    width: 44,
+                    height: 44,
                     borderRadius: '50%',
                     bgcolor: mode === 'dark' ? '#ffffff' : '#111111',
                     color: mode === 'dark' ? '#000000' : '#ffffff',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: mode === 'dark' ? '0 4px 16px rgba(255, 255, 255, 0.18)' : '0 4px 14px rgba(0, 0, 0, 0.16)',
-                    transition: 'transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease',
+                    boxShadow: mode === 'dark' ? '0 4px 14px rgba(255, 255, 255, 0.16)' : '0 4px 12px rgba(0, 0, 0, 0.14)',
+                    transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease',
                     '&:hover': {
-                      transform: 'scale(1.08)',
+                      transform: 'scale(1.06)',
                     },
                     '&:active': {
-                      transform: 'scale(0.92)',
+                      transform: 'scale(0.94)',
                     },
                   }}
                 >
-                  <Plus size={24} strokeWidth={2.6} />
+                  <Plus size={22} strokeWidth={2.6} />
                 </Box>
               }
               sx={{
                 '& .MuiBottomNavigationAction-label': {
-                  display: 'none',
+                  display: 'none !important',
                 },
               }}
             />
             <BottomNavigationAction
+              disableRipple
               value="friends"
+              label="Contacts"
               icon={
                 <Box
                   sx={{
@@ -1261,18 +1314,18 @@ function AppInner() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     position: 'relative',
-                    width: bottomNavValue === 'friends' ? 56 : 40,
-                    height: 32,
+                    width: bottomNavValue === 'friends' ? 48 : 36,
+                    height: 28,
                     borderRadius: '999px',
                     bgcolor: bottomNavValue === 'friends' ? (mode === 'dark' ? '#1f2127' : '#e4e4e7') : 'transparent',
                     color: bottomNavValue === 'friends' ? (mode === 'dark' ? '#ffffff' : '#111111') : (mode === 'dark' ? '#71717a' : '#8e8e93'),
-                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                   }}
                 >
-                  <Users size={20} />
+                  <Users size={19} />
                   {pendingSettlements > 0 && (
                     <Box sx={{
-                      position: 'absolute', top: 4, right: 6,
+                      position: 'absolute', top: 3, right: 5,
                       width: 7, height: 7, borderRadius: '50%',
                       bgcolor: 'error.main'
                     }} />
@@ -1281,7 +1334,9 @@ function AppInner() {
               }
             />
             <BottomNavigationAction
+              disableRipple
               value="more"
+              label="More"
               icon={
                 <Box
                   sx={{
@@ -1289,18 +1344,18 @@ function AppInner() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     position: 'relative',
-                    width: bottomNavValue === 'more' ? 56 : 40,
-                    height: 32,
+                    width: bottomNavValue === 'more' ? 48 : 36,
+                    height: 28,
                     borderRadius: '999px',
                     bgcolor: bottomNavValue === 'more' ? (mode === 'dark' ? '#1f2127' : '#e4e4e7') : 'transparent',
                     color: bottomNavValue === 'more' ? (mode === 'dark' ? '#ffffff' : '#111111') : (mode === 'dark' ? '#71717a' : '#8e8e93'),
-                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                   }}
                 >
-                  <MoreHorizontal size={20} />
+                  <MoreHorizontal size={19} />
                   {(dueAutopaysCount > 0 || pendingSettlements > 0) && (
                     <Box sx={{
-                      position: 'absolute', top: 4, right: 6,
+                      position: 'absolute', top: 3, right: 5,
                       width: 7, height: 7, borderRadius: '50%',
                       bgcolor: dueAutopaysCount > 0 ? 'error.main' : 'primary.main'
                     }} />

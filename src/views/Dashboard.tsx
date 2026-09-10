@@ -213,31 +213,19 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
 
             {/* Quick Wallet Breakdown Chips */}
             <div style={{ marginTop: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, minHeight: 30 }}>
+                <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', display: 'flex', alignItems: 'center' }}>
                   Wallets Breakdown
                 </div>
                 {visibleWallets.length >= 2 && (
                   <button
                     type="button"
+                    className="btn-header-pill"
                     onClick={() => setShowTransfer(true)}
-                    style={{
-                      background: 'var(--accent-soft)',
-                      color: 'var(--accent)',
-                      border: '1px solid var(--accent-border-soft, transparent)',
-                      borderRadius: 8,
-                      fontSize: 11,
-                      fontWeight: 700,
-                      padding: '4px 10px',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 4,
-                      transition: 'all 0.15s ease'
-                    }}
                     title="Transfer funds between wallets"
                   >
-                    <ArrowLeftRight size={12} /> Transfer
+                    <ArrowLeftRight size={13} />
+                    <span>Transfer</span>
                   </button>
                 )}
               </div>
@@ -396,26 +384,16 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
       <div className="dashboard-grid">
         {/* Recent Expenses */}
         <div className="card" style={{ gridColumn: '1 / -1', minWidth: 0, width: '100%', boxSizing: 'border-box', padding: '18px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, width: '100%', minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, width: '100%', minWidth: 0, minHeight: 30 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
-              <div style={{
-                width: 28,
-                height: 28,
-                borderRadius: 8,
-                background: 'var(--accent-soft)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--accent)',
-                flexShrink: 0
-              }}>
-                <ReceiptText size={15} />
+              <div className="dashboard-card-icon">
+                <ReceiptText size={17} />
               </div>
-              <h2 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Recent Expenses</h2>
+              <h2 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0, display: 'flex', alignItems: 'center' }}>Recent Expenses</h2>
             </div>
             <button className="btn-view-all" onClick={() => onNavigate('expenses')}>
               <span>View all</span>
-              <ArrowRight size={13} className="btn-view-all-arrow" />
+              <ArrowRight size={14} className="btn-view-all-arrow" />
             </button>
           </div>
           {recentExpenses.length === 0 ? (
@@ -573,26 +551,16 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
 
         {/* Friend Balances */}
         <div className="card" style={{ minWidth: 0, width: '100%', boxSizing: 'border-box', padding: '18px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, width: '100%', minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, width: '100%', minWidth: 0, minHeight: 30 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
-              <div style={{
-                width: 28,
-                height: 28,
-                borderRadius: 8,
-                background: 'var(--accent-soft)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--accent)',
-                flexShrink: 0
-              }}>
-                <Users size={15} />
+              <div className="dashboard-card-icon">
+                <Users size={17} />
               </div>
-              <h2 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Friends</h2>
+              <h2 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0, display: 'flex', alignItems: 'center' }}>Friends</h2>
             </div>
             <button className="btn-view-all" onClick={() => onNavigate('friends')}>
               <span>View all</span>
-              <ArrowRight size={13} className="btn-view-all-arrow" />
+              <ArrowRight size={14} className="btn-view-all-arrow" />
             </button>
           </div>
           {balancedFriends.length === 0 ? (
@@ -666,47 +634,30 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
 
         {/* Category Spend */}
         <div className="card" style={{ minWidth: 0, width: '100%', boxSizing: 'border-box', padding: '18px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, minHeight: 30 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{
-                width: 28,
-                height: 28,
-                borderRadius: 8,
-                background: 'var(--accent-soft)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--accent)',
-                flexShrink: 0
-              }}>
-                <PieChart size={15} />
+              <div className="dashboard-card-icon">
+                <PieChart size={17} />
               </div>
-              <h2 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Top Categories</h2>
+              <h2 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', margin: 0, display: 'flex', alignItems: 'center' }}>Top Categories</h2>
             </div>
 
             {/* Month Selector Badge */}
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
               <button
                 type="button"
+                className="btn-header-pill"
                 onClick={() => setIsCatMonthPickerOpen(prev => !prev)}
-                style={{
-                  fontSize: 11,
-                  fontWeight: 650,
-                  padding: '4px 10px',
-                  borderRadius: 999,
-                  background: 'var(--surface2)',
-                  color: 'var(--text-2)',
-                  border: '1px solid var(--border)',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  transition: 'all 0.15s ease',
-                }}
                 title="Select month for top categories"
               >
                 <span>{formatMonthLabel(activeCatMonth)}</span>
-                <ChevronDown size={12} style={{ transform: isCatMonthPickerOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease' }} />
+                <ChevronDown
+                  size={13}
+                  className="btn-header-pill-chevron"
+                  style={{
+                    transform: isCatMonthPickerOpen ? 'rotate(180deg)' : 'none',
+                  }}
+                />
               </button>
 
               {isCatMonthPickerOpen && (
@@ -722,7 +673,7 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
                       right: 0,
                       zIndex: 100,
                       background: 'var(--surface)',
-                      border: '1px solid var(--border)',
+                      border: '1px solid var(--border-soft, rgba(255, 255, 255, 0.08))',
                       borderRadius: 12,
                       boxShadow: 'var(--shadow-lg)',
                       padding: '6px',
@@ -756,16 +707,17 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
                             borderRadius: 8,
                             fontSize: 12,
                             fontWeight: isSelected ? 700 : 500,
-                            background: isSelected ? 'var(--accent-soft)' : 'transparent',
-                            color: isSelected ? 'var(--accent)' : 'var(--text)',
+                            background: isSelected ? 'var(--surface2)' : 'transparent',
+                            color: isSelected ? 'var(--text)' : 'var(--text-2)',
                             border: 'none',
                             cursor: 'pointer',
                             textAlign: 'left',
                             width: '100%',
+                            transition: 'all 0.12s ease',
                           }}
                         >
                           <span>{label}</span>
-                          {isSelected && <Check size={13} style={{ color: 'var(--accent)' }} />}
+                          {isSelected && <Check size={13} style={{ color: 'var(--text)' }} />}
                         </button>
                       );
                     })}

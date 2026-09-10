@@ -4,7 +4,7 @@ import { useColorMode, ACCENT_PRESETS } from '../theme';
 import Switch from '@mui/material/Switch';
 import { Plus, X, RotateCcw, Tag, Upload, FlaskConical, Trash2, ChevronRight, ChevronDown, Edit2, Palette, ExternalLink, Sparkles, Zap, FileCode, Check, Database, Terminal, Download, RefreshCw, ArrowUpCircle, CheckCircle2, History, GitCommit, Plane, Send, HelpCircle, MessageSquarePlus, Bug, Lightbulb, GitPullRequest, Sliders, Moon, Sun, Compass, ShieldCheck, Fingerprint, Lock, KeyRound, Smartphone, EyeOff, Eye, ArrowLeft, Search, ScanFace, Keyboard as KeyboardIcon, Coins, Wallet, Layout } from 'lucide-react';
 import { useStore } from '../store';
-import { CURRENCIES, DEFAULT_CATEGORIES, FRIEND_PALETTE, generateSQLDumpString, downloadFile, importSQLDumpString } from '../db';
+import { CURRENCIES, DEFAULT_CATEGORIES, FRIEND_PALETTE, generateSQLDumpString, downloadFile, importSQLDumpString, seedSampleData, resetAndSeedSampleData } from '../db';
 import type { Category, AppDB, ViewName } from '../types';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { Capacitor } from "@capacitor/core";
@@ -263,6 +263,32 @@ export default function Settings({
   const { settings } = db;
   const fileRef = useRef<HTMLInputElement>(null);
   const [showReset, setShowReset] = useState(false);
+  const [showDummyModal, setShowDummyModal] = useState(false);
+
+  const handleAppendDummyData = () => {
+    try {
+      const seeded = seedSampleData(db);
+      restoreDB(seeded);
+      setShowDummyModal(false);
+      showToast('Dummy data added successfully! Added sample expenses, friends & vendor.');
+    } catch (err) {
+      console.error('Failed to add dummy data:', err);
+      showToast('Failed to add dummy data.');
+    }
+  };
+
+  const handleResetAndDummyData = () => {
+    try {
+      resetDB();
+      const fresh = resetAndSeedSampleData();
+      restoreDB(fresh);
+      setShowDummyModal(false);
+      showToast('Database reset and seeded with fresh sample data!');
+    } catch (err) {
+      console.error('Failed to reset and add dummy data:', err);
+      showToast('Failed to populate dummy data.');
+    }
+  };
   const [newCatName, setNewCatName] = useState('');
   const [newCatColor, setNewCatColor] = useState(FRIEND_PALETTE[0]);
   const [newCatIcon, setNewCatIcon] = useState('other');
@@ -1052,7 +1078,7 @@ export default function Settings({
   const showCategories = matches(['categories', 'tags', 'labels', 'colors']);
   const showGeneralSection = showAppearance || showAutoKeyboard || showPreferences || showCategories;
 
-  const showData = matches(['data', 'data management', 'storage', 'backup', 'restore', 'export', 'import', 'reset', 'clear', 'json', 'csv']);
+  const showData = matches(['data', 'data management', 'storage', 'backup', 'restore', 'export', 'import', 'reset', 'clear', 'json', 'csv', 'dummy', 'sample', 'seed', 'demo']);
   const showDataSection = showData;
 
   const showSecurity = matches(['security', 'privacy', 'pin', 'biometric', 'fingerprint', 'lock', 'face id']);
@@ -2884,6 +2910,43 @@ export default function Settings({
                 </div>
               </div>
             )}
+
+            {/* Add Dummy Data Card */}
+            {showData && (
+              <div
+                className="card settings-summary-card"
+                onClick={() => setShowDummyModal(true)}
+                style={{ cursor: 'pointer', marginTop: 10 }}
+              >
+                <div className="settings-card-inner">
+                  <div className="settings-card-left">
+                    <div className="settings-card-icon" style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}>
+                      <Sparkles size={19} />
+                    </div>
+                    <div className="settings-card-text">
+                      <h2 className="settings-card-title">Add Dummy Data</h2>
+                      <p className="settings-card-sub">
+                        Populate sample expenses, friends, splits & vendor records
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="settings-card-right">
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-xs"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowDummyModal(true);
+                      }}
+                      style={{ fontWeight: 650, borderRadius: 8, padding: '4px 10px', fontSize: 11.5 }}
+                    >
+                      Add Data
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -2934,7 +2997,7 @@ export default function Settings({
               </div>
 
               {/* Action Buttons Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10, marginBottom: 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(105px, 1fr))', gap: 10, marginBottom: 16 }}>
                 <button type="button" className="data-action-card" onClick={() => { setShowDataSheet(false); handleExportClick(); }}>
                   <Download size={24} />
                   <span className="data-action-label" style={{ fontWeight: 600 }}>Export</span>
@@ -2945,6 +3008,12 @@ export default function Settings({
                   <Upload size={24} />
                   <span className="data-action-label" style={{ fontWeight: 600 }}>Import</span>
                   <span style={{ fontSize: 10, color: 'var(--text-3)' }}>Restore from backup</span>
+                </button>
+
+                <button type="button" className="data-action-card" onClick={() => { setShowDataSheet(false); setShowDummyModal(true); }}>
+                  <Sparkles size={24} style={{ color: 'var(--accent)' }} />
+                  <span className="data-action-label" style={{ fontWeight: 600 }}>Dummy Data</span>
+                  <span style={{ fontSize: 10, color: 'var(--text-3)' }}>Add sample records</span>
                 </button>
               </div>
 
@@ -4152,6 +4221,138 @@ export default function Settings({
           onConfirm={handleReset}
           onClose={() => setShowReset(false)}
         />
+      )}
+
+      {/* Dummy Data Dialog Modal */}
+      {showDummyModal && createPortal(
+        <div
+          className="modal-backdrop"
+          style={{ zIndex: 100095 }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowDummyModal(false);
+          }}
+        >
+          <div
+            className="modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '420px',
+              padding: '22px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+              background: 'var(--surface)',
+              borderRadius: 16,
+              border: '1px solid var(--border)',
+            }}
+          >
+            <div className="modal-header" style={{ padding: 0, borderBottom: 'none', background: 'transparent' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div
+                  style={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: 10,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'var(--accent-soft)',
+                    color: 'var(--accent)',
+                    border: '1px solid var(--border2)',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Sparkles size={20} />
+                </div>
+                <div>
+                  <span className="modal-title" style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>
+                    Add Dummy Data
+                  </span>
+                  <p style={{ fontSize: 11.5, color: 'var(--text-3)', margin: '2px 0 0 0' }}>
+                    Populate sample data for testing & preview
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn-icon"
+                onClick={() => setShowDummyModal(false)}
+                style={{ borderRadius: 8, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                title="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={{ fontSize: 13.5, color: 'var(--text-2)', lineHeight: 1.55 }}>
+              This will add realistic sample records to your app:
+              <ul style={{ margin: '8px 0 0 18px', padding: 0, fontSize: 12.5, color: 'var(--text-2)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <li>14+ categorized expenses across multiple wallets & dates</li>
+                <li>Friends with split obligations (&apos;Owes You&apos; &amp; &apos;You Owe&apos;)</li>
+                <li>Vendor contact (Tiffin service) with dedicated vendor badge</li>
+                <li>Sample recurring payment subscription</li>
+              </ul>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginTop: 4 }}>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleAppendDummyData}
+                style={{
+                  width: '100%',
+                  padding: '11px 16px',
+                  fontWeight: 650,
+                  borderRadius: 10,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                }}
+              >
+                <Sparkles size={16} />
+                Append Sample Records
+              </button>
+
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleResetAndDummyData}
+                style={{
+                  width: '100%',
+                  padding: '10px 16px',
+                  fontWeight: 600,
+                  borderRadius: 10,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  color: 'var(--text-2)',
+                }}
+              >
+                <RotateCcw size={15} />
+                Reset &amp; Load Fresh Sample Data
+              </button>
+
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => setShowDummyModal(false)}
+                style={{
+                  width: '100%',
+                  padding: '8px 16px',
+                  fontWeight: 500,
+                  borderRadius: 10,
+                  fontSize: 13,
+                  color: 'var(--text-3)',
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
 
       {/* Export Options Modal */}

@@ -469,7 +469,7 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                       fontWeight: 600,
                       padding: '9px 14px',
                       borderRadius: 10,
-                      border: '1.5px solid var(--border)',
+                      border: '1px solid var(--border)',
                       background: 'var(--surface2)',
                       color: 'var(--text)',
                     }}
@@ -492,7 +492,7 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                       fontWeight: 600,
                       padding: '9px 14px',
                       borderRadius: 10,
-                      border: '1.5px solid var(--border)',
+                      border: '1px solid var(--border)',
                       background: 'var(--surface2)',
                       color: 'var(--text)',
                     }}

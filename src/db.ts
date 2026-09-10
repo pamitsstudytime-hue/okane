@@ -2596,31 +2596,65 @@ export function seedSampleData(db: AppDB): AppDB {
     return dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
   };
 
-  const { db: db1, friend: alex } = addFriend(current, { name: 'Alex Rivera' });
-  current = db1;
-  const { db: db2, friend: priya } = addFriend(current, { name: 'Priya Shah' });
-  current = db2;
-  const { db: db3, friend: sam } = addFriend(current, { name: 'Sam Okafor' });
-  current = db3;
+  const isINR = (current.settings?.currency || 'INR') === 'INR';
+  const val = (usd: number, inr: number) => (isINR ? inr : usd);
+
+  // Check or add friend 1 (Hrishi / Alex)
+  let alex = current.friends.find(f => f.name === 'Hrishi' || f.name === 'Alex Rivera');
+  if (!alex) {
+    const res = addFriend(current, { name: isINR ? 'Hrishi' : 'Alex Rivera', color: '#10b981' });
+    current = res.db;
+    alex = res.friend;
+  }
+
+  // Check or add friend 2 (Anushka / Priya)
+  let priya = current.friends.find(f => f.name === 'Anushka' || f.name === 'Priya Shah');
+  if (!priya) {
+    const res = addFriend(current, { name: isINR ? 'Anushka' : 'Priya Shah', color: '#f43f5e' });
+    current = res.db;
+    priya = res.friend;
+  }
+
+  // Check or add friend 3 (Shriyansh / Sam)
+  let sam = current.friends.find(f => f.name === 'Shriyansh' || f.name === 'Sam Okafor');
+  if (!sam) {
+    const res = addFriend(current, { name: isINR ? 'Shriyansh' : 'Sam Okafor', color: '#f59e0b' });
+    current = res.db;
+    sam = res.friend;
+  }
+
+  // Check or add a Store / Vendor contact (Tiffin Aunty / Corner Deli)
+  let vendor = current.friends.find(f => f.name === 'Tiffin Aunty' || f.type === 'vendor');
+  if (!vendor) {
+    const res = addFriend(current, {
+      name: isINR ? 'Tiffin Aunty' : 'Corner Mart & Deli',
+      type: 'vendor',
+      category: 'Food',
+      notes: 'Daily home-style tiffin & grocery meals',
+      color: '#6366f1',
+    });
+    current = res.db;
+    vendor = res.friend;
+  }
 
   const defaultWal = current.settings.defaultWalletId || current.wallets[0]?.id || 'wal_cash';
+  const secondWal = current.wallets.length > 1 ? current.wallets[1].id : defaultWal;
 
   const expenses = [
-    { description: 'Weekly groceries', amount: 64.20, category: 'Groceries', date: d(-2), type: 'personal' as ExpenseType, status: 'paid' as ExpenseStatus, walletId: defaultWal },
-    { description: 'Metro card top-up', amount: 25, category: 'Transport', date: d(-4), type: 'personal' as ExpenseType, status: 'paid' as ExpenseStatus, walletId: defaultWal },
-    { description: "Dinner at Otto's", amount: 88, category: 'Food', date: d(-5), type: 'for_friend' as ExpenseType, friendId: alex.id, status: 'unsettled' as ExpenseStatus, walletId: defaultWal },
-    { description: 'Movie night tickets', amount: 34, category: 'Entertainment', date: d(-6), type: 'for_friend' as ExpenseType, friendId: priya.id, status: 'unsettled' as ExpenseStatus, walletId: defaultWal },
-    { description: 'Uber to airport', amount: 41.50, category: 'Transport', date: d(-9), type: 'by_friend' as ExpenseType, friendId: alex.id, status: 'unsettled' as ExpenseStatus, walletId: defaultWal },
-    { description: 'Coffee run', amount: 12.75, category: 'Food', date: d(-10), type: 'for_friend' as ExpenseType, friendId: sam.id, status: 'unsettled' as ExpenseStatus, walletId: defaultWal },
-    { description: 'Electricity bill', amount: 76, category: 'Utilities', date: d(-12), type: 'personal' as ExpenseType, status: 'paid' as ExpenseStatus, walletId: defaultWal },
-    { description: 'Weekend cabin trip', amount: 210, category: 'Travel', date: d(-15), type: 'for_friend' as ExpenseType, friendId: priya.id, status: 'unsettled' as ExpenseStatus, walletId: defaultWal },
-    { description: 'Groceries for the week', amount: 58.40, category: 'Groceries', date: d(-18), type: 'personal' as ExpenseType, status: 'paid' as ExpenseStatus, walletId: defaultWal },
-    { description: 'New headphones', amount: 129, category: 'Shopping', date: d(-20), type: 'personal' as ExpenseType, status: 'paid' as ExpenseStatus, walletId: defaultWal },
-    { description: 'Gym membership', amount: 45, category: 'Health', date: d(-22), type: 'personal' as ExpenseType, status: 'unpaid' as ExpenseStatus, walletId: defaultWal },
-    { description: 'Rent, shared apartment', amount: 900, category: 'Rent', date: d(-25), type: 'by_friend' as ExpenseType, friendId: sam.id, status: 'unsettled' as ExpenseStatus, walletId: defaultWal },
-    { description: 'Birthday dinner', amount: 96, category: 'Food', date: d(-33), type: 'for_friend' as ExpenseType, friendId: alex.id, status: 'unsettled' as ExpenseStatus, walletId: defaultWal },
-    { description: 'Streaming subscriptions', amount: 28, category: 'Entertainment', date: d(-40), type: 'personal' as ExpenseType, status: 'paid' as ExpenseStatus, walletId: defaultWal },
-    { description: 'Flight tickets split', amount: 340, category: 'Travel', date: d(-48), type: 'for_friend' as ExpenseType, friendId: priya.id, status: 'unsettled' as ExpenseStatus, walletId: defaultWal },
+    { description: 'Weekly groceries', amount: val(64.20, 1420), category: 'Groceries', date: d(-1), type: 'personal' as ExpenseType, status: 'paid' as ExpenseStatus, walletId: defaultWal },
+    { description: 'Metro card top-up', amount: val(25, 350), category: 'Transport', date: d(-2), type: 'personal' as ExpenseType, status: 'paid' as ExpenseStatus, walletId: secondWal },
+    { description: "Dinner at Bistro", amount: val(88, 1689), category: 'Food', date: d(-3), type: 'for_friend' as ExpenseType, friendId: alex.id, status: 'unsettled' as ExpenseStatus, walletId: secondWal },
+    { description: 'Monthly Tiffin Service', amount: val(85, 2400), category: 'Food', date: d(-4), type: 'personal' as ExpenseType, friendId: vendor.id, vendorId: vendor.id, status: 'paid' as ExpenseStatus, walletId: secondWal },
+    { description: 'Movie night tickets', amount: val(34, 750), category: 'Entertainment', date: d(-5), type: 'for_friend' as ExpenseType, friendId: priya.id, status: 'unsettled' as ExpenseStatus, walletId: defaultWal },
+    { description: 'Uber to airport', amount: val(41.50, 620), category: 'Transport', date: d(-7), type: 'by_friend' as ExpenseType, friendId: alex.id, status: 'unsettled' as ExpenseStatus, walletId: defaultWal },
+    { description: 'Coffee run', amount: val(12.75, 220), category: 'Food', date: d(-8), type: 'for_friend' as ExpenseType, friendId: sam.id, status: 'unsettled' as ExpenseStatus, walletId: defaultWal },
+    { description: 'Electricity bill', amount: val(76, 1850), category: 'Utilities', date: d(-11), type: 'personal' as ExpenseType, status: 'paid' as ExpenseStatus, walletId: secondWal },
+    { description: 'Weekend cabin trip', amount: val(210, 4200), category: 'Travel', date: d(-14), type: 'for_friend' as ExpenseType, friendId: priya.id, status: 'unsettled' as ExpenseStatus, walletId: secondWal },
+    { description: 'New headphones', amount: val(129, 2999), category: 'Shopping', date: d(-18), type: 'personal' as ExpenseType, status: 'paid' as ExpenseStatus, walletId: secondWal },
+    { description: 'Gym membership', amount: val(45, 1500), category: 'Health', date: d(-21), type: 'personal' as ExpenseType, status: 'paid' as ExpenseStatus, walletId: secondWal },
+    { description: 'Apartment rent share', amount: val(900, 11500), category: 'Rent', date: d(-24), type: 'by_friend' as ExpenseType, friendId: sam.id, status: 'unsettled' as ExpenseStatus, walletId: defaultWal },
+    { description: 'Flight tickets split', amount: val(340, 5400), category: 'Travel', date: d(-30), type: 'for_friend' as ExpenseType, friendId: priya.id, status: 'settled' as ExpenseStatus, settled: true, walletId: secondWal },
+    { description: 'Streaming subscriptions', amount: val(28, 649), category: 'Entertainment', date: d(-35), type: 'personal' as ExpenseType, status: 'paid' as ExpenseStatus, walletId: secondWal },
   ];
 
   expenses.forEach(e => { current = addExpense(current, e); });
@@ -2632,6 +2666,11 @@ export function seedSampleData(db: AppDB): AppDB {
   };
 
   return current;
+}
+
+export function resetAndSeedSampleData(): AppDB {
+  const fresh = defaultDB();
+  return seedSampleData(fresh);
 }
 
 export function addRecurringRule(db: AppDB, data: Partial<RecurringRule>): AppDB {

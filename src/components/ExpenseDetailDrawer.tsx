@@ -1,14 +1,13 @@
 import React, { useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  Users, Pencil, Trash2, X, Store, FileText, Calendar, Wallet as WalletIcon, Tag, ArrowUpRight, ArrowDownLeft, Repeat, RotateCcw, Check
+  Users, Pencil, Trash2, X, Store, FileText, Wallet as WalletIcon, Tag, ArrowUpRight, ArrowDownLeft, Repeat, RotateCcw, Check
 } from 'lucide-react';
 import CategoryIcon, { CategoryBadge } from './CategoryIcon';
 import {
   fmtMoney,
   fmtDate,
   friendInitial,
-  getAvatarStyle,
   cleanExpenseDescription,
   cleanSettlementDescription,
   getGroupSettlementStatus,
@@ -17,6 +16,7 @@ import {
 import type { Expense, Friend, Wallet, Category, Settlement } from '../types';
 import { renderWalletIcon } from './WalletIconRenderer';
 import { useStore } from '../store';
+import { friendBalance } from '../db';
 
 interface ExpenseDetailDrawerProps {
   ge: GroupedExpense;
@@ -76,22 +76,148 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
     }
   }
 
+  const isSettlement = ge.isSettlementGroup || ge.category === 'Settlement';
   const isTransfer = ge.category === 'Transfer' || ge.items.some((i: Expense) => i.category === 'Transfer');
-  const rawFriends = ge.friendIds.map((fid: string) => friendsMap.get(fid)).filter((f): f is Friend => Boolean(f));
-  const vendorId = ge.vendorId || ge.items.find((i: Expense) => i.vendorId)?.vendorId;
-  const vendor = vendorId ? friendsMap.get(vendorId) : null;
-  const friendsToShow = ge.isSettlementGroup ? rawFriends : (vendor ? rawFriends.filter(f => f.id !== vendor.id) : rawFriends);
-
-  const categoryColor = categoryObj?.color || 'var(--accent)';
   const isDebit = ge.flow === 'out';
   const flowSign = isDebit ? '-' : '+';
 
-  // Compute settlement/split progress
-  const splitItems = ge.items.filter((item: Expense) => !(item.type === 'personal' && (Number(item.amount) || 0) <= 0));
-  const totalItemsCount = splitItems.length;
-  const settledItemsCount = splitItems.filter(item => item.settled || item.type === 'personal').length;
-  const settledPercent = totalItemsCount > 0 ? Math.round((settledItemsCount / totalItemsCount) * 100) : 100;
-  const hasMultipleParticipants = totalItemsCount > 1 || ge.isSplit || ge.isSettlementGroup;
+  const isContactVendor = (f: Friend | null | undefined): boolean => {
+    if (!f) return false;
+    if (f.type === 'vendor') return true;
+    if (f.category?.toLowerCase() === 'vendor' || f.category?.toLowerCase() === 'store') return true;
+    if (ge.vendorId === f.id || ge.items.some((i: Expense) => i.vendorId === f.id)) return true;
+    const n = (f.name || '').toLowerCase();
+    return /tiffin|aunty|vendor|store|merchant|canteen|mess|hotel|shop|restaurant|mart|supermarket|bazaar|swiggy|zomato|grocer/i.test(n);
+  };
+
+  const allFriendIds = Array.from(new Set([
+    ...ge.friendIds,
+    ...ge.items.map(i => i.friendId).filter(Boolean) as string[],
+    ...(ge.settlementId ? [settlementsMap.get(ge.settlementId)?.friendId].filter(Boolean) as string[] : []),
+  ]));
+  const rawFriends = allFriendIds.map((fid: string) => friendsMap.get(fid)).filter((f): f is Friend => Boolean(f));
+  
+  const explicitVendorId = ge.vendorId || ge.items.find((i: Expense) => i.vendorId)?.vendorId;
+  const explicitVendor = explicitVendorId ? friendsMap.get(explicitVendorId) : null;
+  const detectedVendor = explicitVendor || rawFriends.find(isContactVendor) || null;
+
+  // Filter out vendor so friends and vendor are never lumped together
+  const nonVendorFriends = rawFriends.filter(f => f.id !== detectedVendor?.id);
+
+  let friendsToShow = nonVendorFriends;
+  if (friendsToShow.length === 0 && isSettlement && !detectedVendor) {
+    const m = ge.description.match(/^Settlement:\s*(Paid\s+to|Received\s+from)\s+(.+?)(?:\s*\((.*?)\))?$/i);
+    if (m && m[2]) {
+      friendsToShow = [{ id: 'synthetic_friend', name: m[2].trim() } as Friend];
+    }
+  }
+
+  interface FriendRoleInfo {
+    friend: Friend;
+    role: 'i_owe' | 'owes_me' | 'neutral';
+    amount?: number;
+    statusText: string;
+    isSettled: boolean;
+  }
+
+  const categorizedFriends = useMemo(() => {
+    return friendsToShow.map((friend): FriendRoleInfo => {
+      const friendItems = ge.items.filter(i => i.friendId === friend.id);
+      const hasByFriend = friendItems.some(i => i.type === 'by_friend');
+      const hasForFriend = friendItems.some(i => i.type === 'for_friend');
+      const friendItemTotal = friendItems.reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
+      const allItemsSettled = friendItems.length > 0 && friendItems.every(i => i.settled || i.settlementId);
+
+      const b = friendBalance(db, friend.id);
+
+      let role: 'i_owe' | 'owes_me' | 'neutral' = 'neutral';
+      const isSettled = allItemsSettled;
+
+      if (hasByFriend && !hasForFriend) {
+        role = 'i_owe';
+      } else if (hasForFriend && !hasByFriend) {
+        role = 'owes_me';
+      } else if (b.net < -0.01) {
+        role = 'i_owe';
+      } else if (b.net > 0.01) {
+        role = 'owes_me';
+      } else if (isSettlement) {
+        role = isDebit ? 'i_owe' : 'owes_me';
+      }
+
+      let statusText = '';
+      if (isSettled) {
+        statusText = role === 'i_owe' ? 'Settled (Paid)' : (role === 'owes_me' ? 'Settled (Received)' : 'Settled');
+      } else {
+        statusText = role === 'i_owe' ? 'You owe' : (role === 'owes_me' ? 'Owes you' : 'Participant');
+      }
+
+      return {
+        friend,
+        role,
+        amount: friendItemTotal > 0 ? friendItemTotal : undefined,
+        statusText,
+        isSettled,
+      };
+    });
+  }, [friendsToShow, ge.items, isDebit, isSettlement, db]);
+
+  const friendsIOwe = categorizedFriends.filter(cf => cf.role === 'i_owe');
+  const friendsOweMe = categorizedFriends.filter(cf => cf.role === 'owes_me');
+  const friendsNeutral = categorizedFriends.filter(cf => cf.role === 'neutral');
+
+  const categoryColor = categoryObj?.color || 'var(--accent)';
+
+  const renderFriendChip = (cf: FriendRoleInfo, themeColor: string) => {
+    const { friend, isSettled } = cf;
+    const friendColor = friend.color || themeColor;
+    return (
+      <span
+        key={friend.id}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 7,
+          padding: '3px 10px 3px 4px',
+          borderRadius: 9999,
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          fontSize: 12.5,
+          fontWeight: 600,
+          color: 'var(--text)',
+          lineHeight: 1.2,
+          maxWidth: '100%',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
+        }}
+        title={friend.name}
+      >
+        <span
+          style={{
+            width: 22,
+            height: 22,
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 10,
+            fontWeight: 750,
+            color: '#ffffff',
+            flexShrink: 0,
+            background: friendColor,
+            boxShadow: `0 1px 4px ${friendColor}35`,
+          }}
+        >
+          {friendInitial(friend.name, friend.avatarNumber)}
+        </span>
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {friend.name}
+        </span>
+        {isSettled && (
+          <Check size={12} strokeWidth={2.8} style={{ color: '#10b981', flexShrink: 0, marginLeft: 1 }} />
+        )}
+      </span>
+    );
+  };
 
   return createPortal(
     <div
@@ -159,14 +285,12 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
                 {cleanSettlementDescription(ge.description)}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 3, color: 'var(--text-2)', fontSize: 12.5 }}>
-                <span>{ge.category}</span>
-                {friendsToShow.length > 0 && (
+                {!isSettlement && (
                   <>
+                    <span>{ge.category}</span>
                     <span style={{ color: 'var(--text-3)', fontSize: 10 }}>•</span>
-                    <span style={{ fontWeight: 600 }}>{friendsToShow.map(f => f.name).join(', ')}</span>
                   </>
                 )}
-                <span style={{ color: 'var(--text-3)', fontSize: 10 }}>•</span>
                 <span>📅 {fmtDate(ge.date)}</span>
               </div>
             </div>
@@ -196,51 +320,11 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
           </button>
         </div>
 
-        {/* Settlement / Multi-Item Progress Block (Image 2 style) */}
-        {hasMultipleParticipants && (
-          <div
-            style={{
-              padding: '12px 14px',
-              margin: '0 14px 6px',
-              background: 'var(--surface2)',
-              border: '1px solid var(--border)',
-              borderRadius: 16,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 7,
-              flexShrink: 0,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12.5 }}>
-              <span style={{ color: 'var(--text-2)', fontWeight: 500 }}>Progress</span>
-              <span style={{ color: 'var(--text)', fontWeight: 750 }}>{settledPercent}%</span>
-            </div>
-            {/* White progress bar on dark track */}
-            <div style={{ height: 6, background: '#232530', borderRadius: 9999, overflow: 'hidden' }}>
-              <div
-                style={{
-                  height: '100%',
-                  width: `${settledPercent}%`,
-                  background: '#ffffff',
-                  borderRadius: 9999,
-                  transition: 'width 0.3s ease',
-                }}
-              />
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11.5, color: 'var(--text-2)', paddingTop: 1 }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: settledPercent === 100 ? '#10b981' : 'var(--text-2)', fontWeight: 600 }}>
-                {settledPercent === 100 ? '✓ All completed' : (ge.isSplit ? 'Split tracking' : 'In progress')}
-              </span>
-              <span>{settledItemsCount}/{totalItemsCount} completed</span>
-            </div>
-          </div>
-        )}
-
         {/* Scrollable Content */}
         <div
           className="modal-body"
           style={{
-            padding: '2px 14px 10px',
+            padding: '2px 14px 6px',
             overflowY: 'auto',
             minHeight: 0,
             flex: 1,
@@ -310,98 +394,232 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
               </span>
 
               {/* Group / Settlement Status */}
-              {groupStatus.statusKey !== 'none' && groupStatus.statusLabel && (
-                <span
-                  style={{
-                    padding: '3px 9px',
-                    fontSize: 11,
-                    fontWeight: 600,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 4,
-                    borderRadius: 9999,
-                    background: groupStatus.statusKey === 'settled' ? 'var(--credit-bg)' : 'var(--debit-bg)',
-                    border: `1px solid ${groupStatus.statusKey === 'settled' ? 'var(--credit-border)' : 'var(--debit-border)'}`,
-                    color: groupStatus.statusKey === 'settled' ? 'var(--credit)' : 'var(--debit)',
-                  }}
-                >
-                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: groupStatus.statusKey === 'settled' ? 'var(--credit)' : 'var(--debit)' }} />
-                  {ge.isSplit && <Users size={10} />}
-                  <span>{groupStatus.statusLabel}</span>
-                </span>
-              )}
+              {groupStatus.statusKey !== 'none' && groupStatus.statusLabel && (() => {
+                const isPositiveStatus =
+                  groupStatus.statusKey === 'settled' ||
+                  groupStatus.statusKey === 'paid' ||
+                  groupStatus.statusKey === 'completed';
+                const isPartial = groupStatus.statusKey === 'partial';
+                const badgeBg = isPositiveStatus
+                  ? 'var(--credit-bg, rgba(16, 185, 129, 0.12))'
+                  : isPartial
+                  ? 'rgba(245, 158, 11, 0.15)'
+                  : 'var(--debit-bg, rgba(239, 68, 68, 0.12))';
+                const badgeBorder = isPositiveStatus
+                  ? 'var(--credit-border, rgba(16, 185, 129, 0.28))'
+                  : isPartial
+                  ? 'rgba(245, 158, 11, 0.3)'
+                  : 'var(--debit-border, rgba(239, 68, 68, 0.25))';
+                const badgeColor = isPositiveStatus
+                  ? 'var(--credit, #10b981)'
+                  : isPartial
+                  ? '#f59e0b'
+                  : 'var(--debit, #ef4444)';
+
+                return (
+                  <span
+                    style={{
+                      padding: '3px 9px',
+                      fontSize: 11,
+                      fontWeight: 600,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      borderRadius: 9999,
+                      background: badgeBg,
+                      border: `1px solid ${badgeBorder}`,
+                      color: badgeColor,
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 5,
+                        height: 5,
+                        borderRadius: '50%',
+                        background: badgeColor,
+                      }}
+                    />
+                    {ge.isSplit && <Users size={10} />}
+                    <span>{groupStatus.statusLabel}</span>
+                  </span>
+                );
+              })()}
             </div>
           </div>
 
-          {/* Details Grid Section */}
+          {/* Details Section Card */}
           <div
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(2, 1fr)',
-              gap: 10,
-              padding: '14px 16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 14,
+              padding: '16px 18px',
               background: 'var(--surface2)',
               border: '1px solid var(--border)',
-              borderRadius: 18,
+              borderRadius: 20,
             }}
           >
-            {/* Wallet */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: 4 }}>
-                <WalletIcon size={11} style={{ color: 'var(--text-3)' }} />
-                Wallet
-              </span>
-              <span style={{ fontSize: 12.5, fontWeight: 650, color: 'var(--text)', wordBreak: 'break-word', display: 'flex', alignItems: 'center', gap: 5 }}>
-                {walletObj ? (
-                  <>
-                    {renderWalletIcon(walletObj.icon || walletObj.name, 12, walletObj.color)}
-                    <span>{effectiveWalletName}</span>
-                  </>
-                ) : (
-                  <span style={{ color: 'var(--text-2)' }}>{effectiveWalletName}</span>
-                )}
-              </span>
-            </div>
+            {/* Top Row: Wallet and Category (Date is already displayed cleanly in the header) */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: 14,
+                alignItems: 'center',
+              }}
+            >
+              {/* Wallet */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.6px', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <WalletIcon size={11} style={{ color: 'var(--text-3)' }} />
+                  Wallet
+                </span>
+                <span style={{ fontSize: 13, fontWeight: 650, color: 'var(--text)', wordBreak: 'break-word', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {walletObj ? (
+                    <>
+                      {renderWalletIcon(walletObj.icon || walletObj.name, 13, walletObj.color)}
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{effectiveWalletName}</span>
+                    </>
+                  ) : (
+                    <span style={{ color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{effectiveWalletName}</span>
+                  )}
+                </span>
+              </div>
 
-            {/* Date */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: 4 }}>
-                <Calendar size={11} style={{ color: 'var(--text-3)' }} />
-                Date
-              </span>
-              <span style={{ fontSize: 12.5, fontWeight: 650, color: 'var(--text)' }}>
-                {fmtDate(ge.date)}
-              </span>
-            </div>
-
-            {/* Category */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: 4 }}>
-                <Tag size={11} style={{ color: 'var(--text-3)' }} />
-                Category
-              </span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}>
-                <CategoryBadge category={ge.category} color={categoryObj?.color} icon={categoryObj?.icon} size={12} />
+              {/* Category */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'flex-start' }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.6px', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <Tag size={11} style={{ color: 'var(--text-3)' }} />
+                  Category
+                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}>
+                  <CategoryBadge category={ge.category} color={categoryObj?.color} icon={categoryObj?.icon} size={11.5} />
+                </div>
               </div>
             </div>
 
-            {/* Vendor / Store if exists */}
-            {vendor && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <Store size={11} style={{ color: 'var(--text-3)' }} />
-                  Store / Vendor
+            {/* Vendor / Store Section if detected */}
+            {detectedVendor && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '10px 14px',
+                  borderRadius: 14,
+                  background: 'rgba(255, 255, 255, 0.035)',
+                  gap: 12,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                  <div
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: '50%',
+                      background: detectedVendor.color || 'var(--accent, #6366f1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#ffffff',
+                      fontWeight: 750,
+                      fontSize: 12,
+                      flexShrink: 0,
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.25)',
+                    }}
+                  >
+                    <Store size={15} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+                      Store / Vendor
+                    </span>
+                    <span style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {detectedVendor.name}
+                    </span>
+                  </div>
+                </div>
+                <span
+                  style={{
+                    fontSize: 10.5,
+                    fontWeight: 700,
+                    padding: '3px 10px',
+                    borderRadius: 9999,
+                    background: 'rgba(234, 179, 8, 0.14)',
+                    color: '#eab308',
+                    border: '1px solid rgba(234, 179, 8, 0.32)',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                  }}
+                >
+                  Vendor
                 </span>
-                <span style={{ fontSize: 12.5, fontWeight: 650, color: 'var(--text)' }}>
-                  {vendor.name}
-                </span>
+              </div>
+            )}
+
+            {/* Friends Categorized: "You Owe" vs "Owes You" vs "Participants" */}
+            {categorizedFriends.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
+                {/* 1. Friends the user owes ("I owe some") */}
+                {friendsIOwe.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 10, fontWeight: 750, color: 'var(--debit, #ef4444)', textTransform: 'uppercase', letterSpacing: '0.6px', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <ArrowDownLeft size={12} strokeWidth={2.5} />
+                        You Owe
+                      </span>
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 9999, background: 'rgba(239, 68, 68, 0.14)', color: '#ef4444' }}>
+                        {friendsIOwe.length}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      {friendsIOwe.map(cf => renderFriendChip(cf, 'var(--debit, #ef4444)'))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. Friends who owe the user ("Some owe me") */}
+                {friendsOweMe.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 10, fontWeight: 750, color: 'var(--credit, #10b981)', textTransform: 'uppercase', letterSpacing: '0.6px', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <ArrowUpRight size={12} strokeWidth={2.5} />
+                        Owes You
+                      </span>
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 9999, background: 'rgba(16, 185, 129, 0.14)', color: '#10b981' }}>
+                        {friendsOweMe.length}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      {friendsOweMe.map(cf => renderFriendChip(cf, 'var(--credit, #10b981)'))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. Neutral or general participants if any */}
+                {friendsNeutral.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.6px', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <Users size={12} />
+                        Participants
+                      </span>
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 9999, background: 'rgba(255, 255, 255, 0.08)', color: 'var(--text-2)' }}>
+                        {friendsNeutral.length}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      {friendsNeutral.map(cf => renderFriendChip(cf, 'var(--accent)'))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
             {/* Notes if exists */}
             {primaryItem.notes && (
-              <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 3, paddingTop: 4 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.6px', display: 'flex', alignItems: 'center', gap: 4 }}>
                   <FileText size={11} style={{ color: 'var(--text-3)' }} />
                   Notes
                 </span>
@@ -421,7 +639,7 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
           </div>
 
           {/* Split / Settlement Breakdown with Image 2 Circular Checkboxes */}
-          {!isTransfer && (ge.isSplit || ge.isSettlementGroup || (ge.items.length > 1 && ge.friendIds.length > 0)) && (
+          {!isTransfer && (ge.isSplit || ge.isSettlementGroup || ge.items.length > 1 || rawFriends.length > 1) && (
             <div
               style={{
                 background: 'var(--surface2)',
@@ -450,30 +668,50 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
                   .filter((item: Expense) => !(item.type === 'personal' && (Number(item.amount) || 0) <= 0))
                   .map((item: Expense, idx: number) => {
                     const itemFriend = item.friendId ? friendsMap.get(item.friendId) : null;
+                    const itemVendor = item.vendorId ? friendsMap.get(item.vendorId) : (itemFriend && isContactVendor(itemFriend) ? itemFriend : null);
                     const isMine = item.type === 'personal';
-                    const name = itemFriend?.name ?? 'Contact';
-
-                    let primaryName = name;
+                    const isVendorItem = Boolean(itemVendor || (itemFriend && isContactVendor(itemFriend)));
+                    
+                    let primaryName = itemFriend?.name ?? (itemVendor?.name ?? 'Contact');
                     let actionSubtitle = 'Split share';
+                    let roleBadge: { label: string; color: string; bg: string; border: string } | null = null;
                     const isSettled = item.settled || isMine || ge.isSettlementGroup;
 
-                    if (ge.isSettlementGroup) {
-                      const itemDesc = cleanExpenseDescription(item.description);
-                      const itemDateStr = fmtDate(item.originalDate || item.date);
-                      primaryName = itemDesc;
-                      actionSubtitle = `Date: ${itemDateStr}`;
+                    if (isVendorItem) {
+                      primaryName = itemVendor?.name || itemFriend?.name || 'Vendor';
+                      actionSubtitle = isSettled ? 'Vendor bill settled' : 'Vendor bill';
+                      roleBadge = { label: 'Vendor', color: '#eab308', bg: 'rgba(234, 179, 8, 0.12)', border: 'rgba(234, 179, 8, 0.28)' };
                     } else if (isMine) {
                       primaryName = 'You';
                       actionSubtitle = 'Your personal share';
+                      roleBadge = { label: 'You', color: 'var(--accent)', bg: 'var(--accent-soft)', border: 'var(--accent-border-soft)' };
                     } else if (item.type === 'for_friend') {
-                      primaryName = name;
+                      primaryName = itemFriend?.name || 'Friend';
                       actionSubtitle = item.settled ? 'Paid their share to you' : 'Owes you their share';
+                      roleBadge = { label: 'Owes You', color: '#10b981', bg: 'rgba(16, 185, 129, 0.12)', border: 'rgba(16, 185, 129, 0.28)' };
                     } else if (item.type === 'by_friend') {
-                      primaryName = name;
-                      actionSubtitle = item.settled ? 'Paid bill' : (vendor ? 'Vendor bill' : 'You owe them');
+                      primaryName = itemFriend?.name || 'Friend';
+                      actionSubtitle = item.settled ? 'Settled debt you owed' : 'You owe them';
+                      roleBadge = { label: 'You Owe', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.12)', border: 'rgba(239, 68, 68, 0.28)' };
+                    } else if (ge.isSettlementGroup) {
+                      const itemDesc = cleanExpenseDescription(item.description);
+                      if (itemFriend) {
+                        primaryName = itemFriend.name;
+                        const b = friendBalance(db, itemFriend.id);
+                        if (b.net < 0) {
+                          actionSubtitle = 'Settled debt you owed';
+                          roleBadge = { label: 'You Owe', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.12)', border: 'rgba(239, 68, 68, 0.28)' };
+                        } else {
+                          actionSubtitle = 'Settled share received';
+                          roleBadge = { label: 'Owes You', color: '#10b981', bg: 'rgba(16, 185, 129, 0.12)', border: 'rgba(16, 185, 129, 0.28)' };
+                        }
+                      } else {
+                        primaryName = itemDesc;
+                        actionSubtitle = `Date: ${fmtDate(item.originalDate || item.date)}`;
+                      }
                     }
 
-                    const isSubDebit = item.type === 'by_friend' || item.type === 'personal';
+                    const isSubDebit = item.type === 'by_friend' || (item.type === 'personal' && !isVendorItem);
                     const subSign = isSubDebit ? '-' : '+';
                     const subColor = isSubDebit ? 'var(--debit, #dc2626)' : 'var(--credit, #16a34a)';
 
@@ -492,7 +730,7 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                          {/* Circular Checkbox (Image 2 design) */}
+                          {/* Circular Checkbox */}
                           <div
                             style={{
                               width: 22,
@@ -511,37 +749,79 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
                             {isSettled && <Check size={13} strokeWidth={3} />}
                           </div>
 
-                          {/* Avatar if contact */}
-                          {!isMine && itemFriend && (
+                          {/* Avatar if vendor or contact */}
+                          {isVendorItem ? (
+                            <span
+                              style={{
+                                width: 24,
+                                height: 24,
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: 10,
+                                fontWeight: 750,
+                                color: '#ffffff',
+                                flexShrink: 0,
+                                background: itemVendor?.color || '#eab308',
+                              }}
+                            >
+                              <Store size={12} />
+                            </span>
+                          ) : !isMine && itemFriend ? (
                             <span
                               className="avatar avatar-sm"
                               style={{
-                                ...getAvatarStyle(itemFriend?.color),
-                                width: 26,
-                                height: 26,
+                                width: 24,
+                                height: 24,
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
                                 fontSize: 10,
-                                fontWeight: 700,
+                                fontWeight: 750,
+                                color: '#ffffff',
                                 flexShrink: 0,
+                                background: itemFriend?.color || 'var(--accent)',
+                                boxShadow: `0 1px 4px ${itemFriend?.color ? itemFriend.color + '40' : 'rgba(0,0,0,0.2)'}`,
                               }}
                             >
                               {friendInitial(itemFriend?.name ?? '?', itemFriend?.avatarNumber)}
                             </span>
-                          )}
+                          ) : null}
 
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-                            <span
-                              style={{
-                                fontWeight: 700,
-                                fontSize: 13.5,
-                                color: isSettled ? 'var(--text)' : 'var(--text)',
-                                textDecoration: isSettled && !isMine ? 'none' : 'none',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                              }}
-                            >
-                              {primaryName}
-                            </span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span
+                                style={{
+                                  fontWeight: 700,
+                                  fontSize: 13,
+                                  color: 'var(--text)',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {primaryName}
+                              </span>
+                              {roleBadge && (
+                                <span
+                                  style={{
+                                    fontSize: 10,
+                                    fontWeight: 700,
+                                    padding: '1px 6px',
+                                    borderRadius: 9999,
+                                    color: roleBadge.color,
+                                    background: roleBadge.bg,
+                                    border: `1px solid ${roleBadge.border}`,
+                                    whiteSpace: 'nowrap',
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  {roleBadge.label}
+                                </span>
+                              )}
+                            </div>
                             <span style={{ fontSize: 11, color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {actionSubtitle}
                             </span>
@@ -573,7 +853,7 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
         <div
           className="modal-footer"
           style={{
-            padding: '10px 16px calc(10px + env(safe-area-inset-bottom, 0px))',
+            padding: '6px 16px calc(24px + env(safe-area-inset-bottom, 0px))',
             background: 'transparent',
             borderTop: 'none',
             display: 'flex',
@@ -587,26 +867,28 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
               className="btn"
               style={{
                 flex: 1,
-                height: 42,
+                height: 44,
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 6,
+                gap: 7,
                 fontSize: 13.5,
                 fontWeight: 700,
                 borderRadius: 9999,
                 background: 'var(--surface2)',
                 border: '1px solid var(--border)',
-                color: 'var(--accent)',
+                color: 'var(--text)',
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
+                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)',
+                transition: 'all 0.15s ease',
               }}
               onClick={() => {
                 onClose();
                 onUndo(ge.settlementId || ge.id);
               }}
             >
-              <RotateCcw size={15} style={{ color: 'var(--accent)' }} />
+              <RotateCcw size={15} style={{ color: 'var(--text)' }} />
               <span>Undo</span>
             </button>
           )}
@@ -616,11 +898,11 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
               className="btn"
               style={{
                 flex: 1,
-                height: 42,
+                height: 44,
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 6,
+                gap: 7,
                 fontSize: 13.5,
                 fontWeight: 700,
                 borderRadius: 9999,
@@ -629,6 +911,8 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
                 color: 'var(--text)',
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
+                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)',
+                transition: 'all 0.15s ease',
               }}
               onClick={() => {
                 onClose();
@@ -644,11 +928,11 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
             className="btn"
             style={{
               flex: 1,
-              height: 42,
+              height: 44,
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 6,
+              gap: 7,
               fontSize: 13.5,
               fontWeight: 700,
               borderRadius: 9999,
@@ -657,6 +941,8 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
               color: 'var(--debit)',
               cursor: 'pointer',
               whiteSpace: 'nowrap',
+              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)',
+              transition: 'all 0.15s ease',
             }}
             onClick={() => {
               onClose();
