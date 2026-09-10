@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { useColorMode, ACCENT_PRESETS } from '../theme';
+import { useColorMode } from '../theme';
 import Switch from '@mui/material/Switch';
 import { Plus, X, RotateCcw, Tag, Upload, FlaskConical, Trash2, ChevronRight, ChevronDown, Edit2, Palette, ExternalLink, Sparkles, Zap, FileCode, Check, Database, Terminal, Download, RefreshCw, ArrowUpCircle, CheckCircle2, History, GitCommit, Plane, Send, HelpCircle, MessageSquarePlus, Bug, Lightbulb, GitPullRequest, Sliders, Moon, Sun, Compass, ShieldCheck, Fingerprint, Lock, KeyRound, Smartphone, EyeOff, Eye, ArrowLeft, Search, ScanFace, Keyboard as KeyboardIcon, Coins, Wallet, Layout } from 'lucide-react';
 import { useStore } from '../store';
@@ -298,7 +298,7 @@ export default function Settings({
   const [editColor, setEditColor] = useState('#F97362');
   const [editIcon, setEditIcon] = useState('other');
 
-  const { mode, toggleMode, accent, setAccent } = useColorMode();
+  const { mode, toggleMode, accent } = useColorMode();
   const isDark = mode === 'dark';
   const [appearanceSubView, setAppearanceSubView] = useState<'main' | 'more'>('main');
   const [categorySubView, setCategorySubView] = useState<'list' | 'add'>('list');
@@ -1373,51 +1373,47 @@ export default function Settings({
                     />
                   </div>
 
-                  {/* Accent Color Presets */}
-                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>
-                    Preset Accent Colors
-                  </div>
-                  <div className="accent-picker-grid">
-                    {ACCENT_PRESETS.map(preset => {
-                      const isSelected = accent === preset.id;
-                      const colorHex = isDark ? preset.swatchDark : preset.swatchLight;
-
-                      return (
-                        <button
-                          key={preset.id}
-                          type="button"
-                          onClick={() => {
-                            setAccent(preset.id);
-                            updateSettings({ accent: preset.id });
-                          }}
-                          className="accent-picker-btn"
-                          style={{
-                            border: isSelected ? '1px solid var(--border2)' : '1px solid var(--border)',
-                            background: isSelected ? 'var(--surface)' : 'var(--surface2)',
-                            boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
-                          }}
-                        >
-                          <div style={{
-                            width: 20,
-                            height: 20,
-                            borderRadius: '50%',
-                            background: preset.id === 'monochrome'
-                              ? (isDark ? '#ffffff' : '#111111')
-                              : colorHex,
-                            border: preset.id === 'monochrome' && isDark ? '1px solid #555' : '1px solid rgba(0,0,0,0.12)',
-                            boxShadow: '0 2px 5px rgba(0,0,0,0.15)',
-                            flexShrink: 0,
-                            display: 'grid',
-                            placeItems: 'center'
-                          }}>
-                            {isSelected && <Check size={12} style={{ color: preset.id === 'monochrome' && isDark ? '#000' : '#fff' }} />}
-                          </div>
-                          <span style={{ fontSize: 12, fontWeight: isSelected ? 600 : 500, color: 'var(--text)', lineHeight: 1.2 }}>
-                            {preset.name}
-                          </span>
-                        </button>
-                      );
-                    })}
+                  {/* Theme Palette (Monochrome Only) */}
+                  <div style={{
+                    padding: '14px 16px',
+                    borderRadius: 14,
+                    background: 'var(--surface2)',
+                    border: '1px solid var(--border)',
+                    marginTop: 12,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: 8,
+                        background: isDark ? '#ffffff' : '#111111',
+                        color: isDark ? '#000000' : '#ffffff',
+                        display: 'grid',
+                        placeItems: 'center',
+                        fontSize: 12,
+                        fontWeight: 800,
+                      }}>
+                        M
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>Theme Palette</div>
+                        <div style={{ fontSize: 11.5, color: 'var(--text-3)' }}>Monochrome (Default & Only)</div>
+                      </div>
+                    </div>
+                    <span style={{
+                      fontSize: 11,
+                      fontWeight: 650,
+                      padding: '3px 8px',
+                      borderRadius: 6,
+                      background: 'var(--surface3)',
+                      color: 'var(--text-2)',
+                      border: '1px solid var(--border)',
+                    }}>
+                      Monochrome
+                    </span>
                   </div>
 
                   {/* More Appearance Drawer Trigger */}

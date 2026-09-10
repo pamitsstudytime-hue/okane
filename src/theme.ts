@@ -1,7 +1,7 @@
 import React from 'react';
 import { createTheme } from '@mui/material/styles';
 
-export type AccentPreset = 'blue' | 'red' | 'monochrome' | 'emerald' | 'indigo' | 'rose' | 'teal' | 'sunset' | 'custom';
+export type AccentPreset = 'monochrome';
 
 export interface AccentDefinition {
   id: AccentPreset;
@@ -14,22 +14,6 @@ export interface AccentDefinition {
 
 export const ACCENT_PRESETS: AccentDefinition[] = [
   {
-    id: 'blue',
-    name: 'Classic Blue',
-    swatchLight: '#1976d2',
-    swatchDark: '#42a5f5',
-    light: { main: '#1976d2', soft: 'rgba(25, 118, 210, 0.12)', dark: '#1565c0', contrast: '#ffffff' },
-    dark: { main: '#42a5f5', soft: 'rgba(66, 165, 245, 0.16)', dark: '#1976d2', contrast: '#ffffff' },
-  },
-  {
-    id: 'red',
-    name: 'Crimson Red',
-    swatchLight: '#dc2626',
-    swatchDark: '#ef4444',
-    light: { main: '#dc2626', soft: 'rgba(220, 38, 38, 0.12)', dark: '#b91c1c', contrast: '#ffffff' },
-    dark: { main: '#ef4444', soft: 'rgba(239, 68, 68, 0.18)', dark: '#dc2626', contrast: '#ffffff' },
-  },
-  {
     id: 'monochrome',
     name: 'Monochrome',
     swatchLight: '#18181b',
@@ -37,52 +21,9 @@ export const ACCENT_PRESETS: AccentDefinition[] = [
     light: { main: '#18181b', soft: 'rgba(24, 24, 27, 0.08)', dark: '#09090b', contrast: '#ffffff' },
     dark: { main: '#f4f4f5', soft: 'rgba(244, 244, 245, 0.14)', dark: '#d4d4d8', contrast: '#09090b' },
   },
-  {
-    id: 'emerald',
-    name: 'Emerald Green',
-    swatchLight: '#059669',
-    swatchDark: '#34d399',
-    light: { main: '#059669', soft: 'rgba(5, 150, 105, 0.12)', dark: '#047857', contrast: '#ffffff' },
-    dark: { main: '#34d399', soft: 'rgba(52, 211, 153, 0.18)', dark: '#059669', contrast: '#ffffff' },
-  },
-  {
-    id: 'indigo',
-    name: 'Midnight Indigo',
-    swatchLight: '#4f46e5',
-    swatchDark: '#818cf8',
-    light: { main: '#4f46e5', soft: 'rgba(79, 70, 229, 0.12)', dark: '#4338ca', contrast: '#ffffff' },
-    dark: { main: '#818cf8', soft: 'rgba(129, 140, 248, 0.18)', dark: '#4f46e5', contrast: '#ffffff' },
-  },
-  {
-    id: 'teal',
-    name: 'Ocean Teal',
-    swatchLight: '#0d9488',
-    swatchDark: '#2dd4bf',
-    light: { main: '#0d9488', soft: 'rgba(13, 148, 136, 0.12)', dark: '#0f766e', contrast: '#ffffff' },
-    dark: { main: '#2dd4bf', soft: 'rgba(45, 212, 191, 0.18)', dark: '#0d9488', contrast: '#ffffff' },
-  },
-  {
-    id: 'rose',
-    name: 'Rose Pink',
-    swatchLight: '#e11d48',
-    swatchDark: '#fb7185',
-    light: { main: '#e11d48', soft: 'rgba(225, 29, 72, 0.12)', dark: '#be123c', contrast: '#ffffff' },
-    dark: { main: '#fb7185', soft: 'rgba(251, 113, 133, 0.18)', dark: '#e11d48', contrast: '#ffffff' },
-  },
-  {
-    id: 'sunset',
-    name: 'Sunset Orange',
-    swatchLight: '#ea580c',
-    swatchDark: '#fb923c',
-    light: { main: '#ea580c', soft: 'rgba(234, 88, 12, 0.12)', dark: '#c2410c', contrast: '#ffffff' },
-    dark: { main: '#fb923c', soft: 'rgba(251, 146, 60, 0.18)', dark: '#ea580c', contrast: '#ffffff' },
-  },
 ];
 
-function isValidHex(hex?: string): boolean {
-  if (!hex) return false;
-  return /^#([0-9A-F]{3}|[0-9A-F]{6})$/i.test(hex.trim());
-}
+
 
 function hexToRgba(hex: string, alpha: number): string {
   let clean = hex.trim().replace('#', '');
@@ -123,39 +64,16 @@ function getContrastTextColor(hex: string): string {
   return yiq >= 180 ? '#111111' : '#ffffff';
 }
 
-export function getAccentColors(accent: AccentPreset, mode: 'light' | 'dark', customHex?: string) {
-  let main: string;
-  let dark: string;
-  let light: string;
-  let soft: string;
-  let contrast: string;
-
-  if (accent === 'custom') {
-    const fallback = mode === 'dark' ? '#818cf8' : '#6366f1';
-    let hex = customHex ? customHex.trim() : '';
-    if (!hex.startsWith('#') && hex.length > 0) {
-      hex = `#${hex}`;
-    }
-    if (!isValidHex(hex)) {
-      hex = fallback;
-    }
-    if (hex.length === 4) {
-      hex = `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}`;
-    }
-    main = hex;
-    dark = adjustHexBrightness(hex, mode === 'dark' ? -15 : -22);
-    light = adjustHexBrightness(hex, mode === 'dark' ? +22 : +15);
-    soft = hexToRgba(hex, mode === 'dark' ? 0.18 : 0.12);
-    contrast = getContrastTextColor(hex);
-  } else {
-    const preset = ACCENT_PRESETS.find(p => p.id === accent) || ACCENT_PRESETS.find(p => p.id === 'monochrome') || ACCENT_PRESETS[0];
-    const pColors = preset[mode];
-    main = pColors.main;
-    dark = pColors.dark;
-    light = adjustHexBrightness(pColors.main, mode === 'dark' ? +20 : +14);
-    soft = pColors.soft;
-    contrast = pColors.contrast || getContrastTextColor(pColors.main);
-  }
+export function getAccentColors(accent?: AccentPreset | string, mode: 'light' | 'dark' = 'dark', customHex?: string) {
+  void accent;
+  void customHex;
+  const preset = ACCENT_PRESETS[0];
+  const pColors = preset[mode];
+  const main = pColors.main;
+  const dark = pColors.dark;
+  const light = adjustHexBrightness(pColors.main, mode === 'dark' ? +20 : +14);
+  const soft = pColors.soft;
+  const contrast = pColors.contrast || getContrastTextColor(pColors.main);
 
   const gradient = `linear-gradient(135deg, ${light} 0%, ${main} 50%, ${dark} 100%)`;
   const gradientSoft = mode === 'dark'
@@ -342,13 +260,13 @@ export function buildTheme(mode: 'light' | 'dark', accent: AccentPreset = 'monoc
                 transform: 'translateY(-1px)',
               },
             } : {
-              background: colors.gradient,
-              color: colors.contrast || '#ffffff',
-              boxShadow: `0 3px 10px ${colors.soft}`,
+              background: '#09090b',
+              color: '#ffffff',
+              fontWeight: 700,
+              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.15)',
               borderRadius: 9999,
               '&:hover': {
-                background: colors.gradient,
-                filter: 'brightness(1.08)',
+                background: '#27272a',
                 transform: 'translateY(-1px)',
               },
             }),

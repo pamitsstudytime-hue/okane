@@ -909,7 +909,7 @@ export default function SettleExpensePickerModal({
 
           <button
             type="button"
-            className="btn btn-primary active-accent"
+            className="btn btn-primary"
             onClick={onClose}
             style={{
               padding: '8px 22px',
@@ -917,9 +917,6 @@ export default function SettleExpensePickerModal({
               fontWeight: 650,
               borderRadius: 8,
               minWidth: 100,
-              backgroundColor: 'var(--accent)',
-              color: 'var(--accent-contrast, #ffffff)',
-              border: 'none',
               cursor: 'pointer',
             }}
           >

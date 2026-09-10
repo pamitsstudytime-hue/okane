@@ -37,7 +37,7 @@ import {
   Filter,
 } from 'lucide-react';
 import { StoreProvider, useStore } from './store';
-import { useColorMode, type AccentPreset } from './theme';
+import { useColorMode } from './theme';
 import type { ViewName } from './types';
 import { expenseFlow, friendBalance, todayISO, monthKey } from './db';
 import { fmtMoney } from './utils';
@@ -270,13 +270,16 @@ function AppInner() {
     if (db.settings?.colorMode && db.settings.colorMode !== mode) {
       setMode(db.settings.colorMode);
     }
-    if (db.settings?.accent && db.settings.accent !== accent) {
-      setAccent(db.settings.accent as AccentPreset);
+    if (accent !== 'monochrome') {
+      setAccent('monochrome');
+    }
+    if (db.settings?.accent && db.settings.accent !== 'monochrome') {
+      updateSettings({ accent: 'monochrome' });
     }
     if (db.settings?.customAccentColor && db.settings.customAccentColor !== customColor) {
       setCustomColor(db.settings.customAccentColor);
     }
-  }, [db.settings?.colorMode, db.settings?.accent, db.settings?.customAccentColor, mode, accent, customColor, setMode, setAccent, setCustomColor]);
+  }, [db.settings?.colorMode, db.settings?.accent, db.settings?.customAccentColor, mode, accent, customColor, setMode, setAccent, setCustomColor, updateSettings]);
 
   const isDevMode = db.settings?.devMode ?? true;
   const enableDevSQLConsole = isDevMode && (db.settings?.enableDevSQLConsole ?? true);

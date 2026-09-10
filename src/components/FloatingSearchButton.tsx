@@ -50,8 +50,8 @@ export default function FloatingSearchButton({ onClick, hasAIAssistant = false, 
           }}
           onMouseEnter={e => {
             e.currentTarget.style.backgroundColor = 'var(--surface3)';
-            e.currentTarget.style.borderColor = 'var(--accent)';
-            e.currentTarget.style.color = 'var(--accent)';
+            e.currentTarget.style.borderColor = 'var(--border2)';
+            e.currentTarget.style.color = 'var(--text)';
             e.currentTarget.style.transform = 'scale(1.08)';
           }}
           onMouseLeave={e => {
@@ -79,10 +79,10 @@ export default function FloatingSearchButton({ onClick, hasAIAssistant = false, 
             width: '48px',
             height: '48px',
             borderRadius: '50%',
-            backgroundColor: 'var(--accent)',
-            color: 'var(--accent-contrast, #ffffff)',
-            border: 'none',
-            boxShadow: '0 6px 20px var(--accent-soft), 0 2px 6px rgba(0, 0, 0, 0.3)',
+            backgroundColor: 'var(--surface)',
+            color: 'var(--text)',
+            border: '1px solid var(--border)',
+            boxShadow: '0 6px 20px rgba(0, 0, 0, 0.35)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

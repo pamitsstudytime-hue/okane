@@ -23,9 +23,10 @@ function getInitialMode(): 'light' | 'dark' {
 }
 
 function getInitialAccent(): AccentPreset {
-  const saved = localStorage.getItem('accent-color') as AccentPreset | null;
-  if (saved && ['blue', 'red', 'monochrome', 'emerald', 'indigo', 'rose', 'teal', 'sunset', 'custom'].includes(saved)) {
-    return saved;
+  try {
+    localStorage.setItem('accent-color', 'monochrome');
+  } catch {
+    /* ignore */
   }
   return 'monochrome';
 }
@@ -42,6 +43,7 @@ function getInitialCustomColor(): string {
     const initCustom = getInitialCustomColor();
 
     document.documentElement.setAttribute('data-color-scheme', initMode);
+    document.documentElement.setAttribute('data-theme', initMode);
     document.documentElement.setAttribute('data-accent', initAccent);
     const hideScroll = localStorage.getItem('hide_scrollbar');
     document.documentElement.setAttribute('data-hide-scrollbars', hideScroll !== null ? hideScroll : 'true');
@@ -83,6 +85,7 @@ function Root() {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-color-scheme', mode);
+    document.documentElement.setAttribute('data-theme', mode);
     try {
       localStorage.setItem('color-mode', mode);
     } catch (e) {

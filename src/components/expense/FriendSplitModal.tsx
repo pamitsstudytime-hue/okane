@@ -902,16 +902,13 @@ export function FriendSplitModal({
             </button>
             <button
               type="button"
-              className="btn btn-primary active-accent"
+              className="btn btn-primary"
               onClick={handleClose}
               style={{
                 borderRadius: 8,
                 fontSize: '13px',
                 fontWeight: 650,
                 padding: '9px 0',
-                backgroundColor: 'var(--accent)',
-                color: 'var(--accent-contrast, #ffffff)',
-                border: 'none',
                 cursor: 'pointer',
               }}
             >

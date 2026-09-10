@@ -247,7 +247,7 @@ export default function NotificationBell({ onNavigate }: Props) {
                         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                           <button
                             type="button"
-                            className="btn btn-sm btn-primary active-accent"
+                            className="btn btn-sm btn-primary"
                             style={{
                               fontSize: 12,
                               fontWeight: 650,
@@ -256,10 +256,6 @@ export default function NotificationBell({ onNavigate }: Props) {
                               display: 'inline-flex',
                               alignItems: 'center',
                               gap: 6,
-                              background: 'var(--accent-gradient, var(--accent))',
-                              color: 'var(--accent-contrast, #ffffff)',
-                              border: 'none',
-                              boxShadow: '0 2px 8px var(--accent-soft)',
                               cursor: 'pointer',
                             }}
                             onClick={() => {
@@ -267,7 +263,7 @@ export default function NotificationBell({ onNavigate }: Props) {
                               onNavigate('settings');
                             }}
                           >
-                            <ArrowUpCircle size={14} style={{ color: 'var(--accent-contrast, #ffffff)' }} />
+                            <ArrowUpCircle size={14} />
                             <span>Download in Settings</span>
                           </button>
                         </div>
@@ -388,7 +384,7 @@ export default function NotificationBell({ onNavigate }: Props) {
                               </div>
                               <button
                                 type="button"
-                                className="btn btn-sm btn-primary active-accent"
+                                className="btn btn-sm btn-primary"
                                 style={{
                                   fontSize: 12,
                                   fontWeight: 650,
@@ -399,17 +395,13 @@ export default function NotificationBell({ onNavigate }: Props) {
                                   display: 'inline-flex',
                                   alignItems: 'center',
                                   gap: 5,
-                                  background: 'var(--accent-gradient, var(--accent))',
-                                  color: 'var(--accent-contrast, #ffffff)',
-                                  border: 'none',
-                                  boxShadow: '0 2px 8px var(--accent-soft)',
                                   cursor: 'pointer',
                                 }}
                                 onClick={() => {
                                   quickLogRecurringRule(r.id);
                                 }}
                               >
-                                <Zap size={12} style={{ color: 'var(--accent-contrast, #ffffff)' }} />
+                                <Zap size={12} />
                                 <span>Log Expense</span>
                               </button>
                             </div>
