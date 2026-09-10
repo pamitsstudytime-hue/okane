@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { motion } from 'motion/react';
 import {
-  Users, Pencil, Trash2, X, Store, FileText, Wallet as WalletIcon, Tag, ArrowUpRight, ArrowDownLeft, Repeat, RotateCcw, Check
+  Users, User, Pencil, Trash2, X, Store, FileText, Wallet as WalletIcon, Tag, ArrowUpRight, ArrowDownLeft, Repeat, RotateCcw
 } from 'lucide-react';
 import CategoryIcon, { CategoryBadge } from './CategoryIcon';
 import {
@@ -166,30 +167,51 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
   const friendsOweMe = categorizedFriends.filter(cf => cf.role === 'owes_me');
   const friendsNeutral = categorizedFriends.filter(cf => cf.role === 'neutral');
 
+  const [selectedFriendFilter, setSelectedFriendFilter] = useState<string | null>(null);
+
+  const handleToggleFriendFilter = (friendId: string) => {
+    setSelectedFriendFilter(prev => (prev === friendId ? null : friendId));
+  };
+
   const categoryColor = categoryObj?.color || 'var(--accent)';
 
   const renderFriendChip = (cf: FriendRoleInfo, themeColor: string) => {
-    const { friend, isSettled } = cf;
+    const { friend } = cf;
     const friendColor = friend.color || themeColor;
+    const isSelected = selectedFriendFilter === friend.id;
+    const isDimmed = Boolean(selectedFriendFilter && selectedFriendFilter !== friend.id);
+
     return (
-      <span
+      <button
+        type="button"
         key={friend.id}
+        onClick={() => handleToggleFriendFilter(friend.id)}
         style={{
           display: 'inline-flex',
           alignItems: 'center',
           gap: 7,
           padding: '3px 10px 3px 4px',
           borderRadius: 9999,
-          background: 'var(--surface)',
-          border: '1px solid var(--border)',
+          background: isSelected ? 'var(--surface3, #242630)' : 'var(--surface)',
+          border: isSelected ? `1.5px solid ${friendColor}` : '1px solid var(--border)',
           fontSize: 12.5,
-          fontWeight: 600,
+          fontWeight: isSelected ? 750 : 600,
           color: 'var(--text)',
           lineHeight: 1.2,
           maxWidth: '100%',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
+          boxShadow: isSelected
+            ? `0 0 0 2px ${friendColor}33, 0 2px 8px rgba(0, 0, 0, 0.25)`
+            : '0 1px 3px rgba(0, 0, 0, 0.08)',
+          cursor: 'pointer',
+          opacity: isDimmed ? 0.45 : 1,
+          transform: isSelected ? 'scale(1.03)' : 'none',
+          transition: 'all 0.15s ease',
         }}
-        title={friend.name}
+        title={
+          isSelected
+            ? `Filtering breakdown by ${friend.name} (Click to clear)`
+            : `Click to filter settlement breakdown by ${friend.name}`
+        }
       >
         <span
           style={{
@@ -199,7 +221,7 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 10,
+            fontSize: (friend.avatarNumber && friend.avatarNumber.length > 2) ? 9 : 10,
             fontWeight: 750,
             color: '#ffffff',
             flexShrink: 0,
@@ -212,39 +234,52 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {friend.name}
         </span>
-        {isSettled && (
-          <Check size={12} strokeWidth={2.8} style={{ color: '#10b981', flexShrink: 0, marginLeft: 1 }} />
+        {isSelected && (
+          <X size={12} strokeWidth={2.8} style={{ color: friendColor, flexShrink: 0, marginLeft: -1 }} />
         )}
-      </span>
+      </button>
     );
   };
 
+  const [isMobileScreen, setIsMobileScreen] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 640);
+  useEffect(() => {
+    const handleResize = () => setIsMobileScreen(window.innerWidth <= 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return createPortal(
-    <div
-      className="modal-backdrop"
-      style={{ zIndex: 100050 }}
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      <div
-        className="modal expense-drawer-modal"
+    <div className="modal-backdrop-motion">
+      {/* Backdrop overlay */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="modal-backdrop-overlay"
+        onClick={onClose}
+      />
+
+      {/* Sheet panel / Desktop center dialog */}
+      <motion.div
+        initial={isMobileScreen ? { y: '100%' } : { opacity: 0, scale: 0.95, y: 16 }}
+        animate={isMobileScreen ? { y: 0 } : { opacity: 1, scale: 1, y: 0 }}
+        exit={isMobileScreen ? { y: '100%' } : { opacity: 0, scale: 0.95, y: 16 }}
+        transition={{ duration: isMobileScreen ? 0.32 : 0.2, ease: [0.22, 1, 0.36, 1] }}
+        className="modal expense-drawer-modal modal-dialog-panel"
         style={{
-          maxWidth: 440,
           maxHeight: 'min(92vh, 92dvh)',
           display: 'flex',
           flexDirection: 'column',
           background: 'var(--drawer-bg, #131418)',
           border: '1px solid var(--border)',
-          borderRadius: 24,
           overflow: 'hidden',
-          animation: 'slidein 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
-          boxShadow: '0 -10px 40px rgba(0, 0, 0, 0.7)',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.7)',
           color: 'var(--text)',
         }}
       >
-        {/* Top Drag Handle */}
-        <div className="modal-handle-bar" style={{ padding: '10px 0 2px', display: 'flex', justifyContent: 'center' }}>
-          <div className="modal-handle" style={{ width: 38, height: 4, background: '#323540', borderRadius: 9999 }} />
-        </div>
+        {/* Top Drag Handle Pill */}
+        <div className="modal-drag-handle" />
 
         {/* Drawer Header matching Image 2 reference */}
         <div
@@ -291,7 +326,7 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
                     <span style={{ color: 'var(--text-3)', fontSize: 10 }}>•</span>
                   </>
                 )}
-                <span>📅 {fmtDate(ge.date)}</span>
+                <span>{fmtDate(ge.date)}</span>
               </div>
             </div>
           </div>
@@ -638,215 +673,310 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
             )}
           </div>
 
-          {/* Split / Settlement Breakdown with Image 2 Circular Checkboxes */}
-          {!isTransfer && (ge.isSplit || ge.isSettlementGroup || ge.items.length > 1 || rawFriends.length > 1) && (
-            <div
-              style={{
-                background: 'var(--surface2)',
-                border: '1px solid var(--border)',
-                borderRadius: 18,
-                padding: '14px 16px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 10,
-              }}
-            >
-              {/* Header */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 700, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  <Users size={13} style={{ color: 'var(--text-2)' }} />
-                  <span>{ge.isSettlementGroup ? 'Settlement Breakdown' : 'Split Breakdown'}</span>
-                </div>
-                <span style={{ fontSize: 11.5, fontWeight: 650, color: 'var(--text-2)', background: 'var(--surface3)', border: '1px solid var(--border)', padding: '3px 9px', borderRadius: 9999 }}>
-                  Total {fmtMoney(ge.totalAmount, currency)}
-                </span>
-              </div>
+          {/* Split / Settlement Breakdown */}
+          {!isTransfer && (ge.isSplit || ge.isSettlementGroup || ge.items.length > 1 || rawFriends.length > 1) && (() => {
+            const allBreakdownItems = ge.items.filter((item: Expense) => !(item.type === 'personal' && (Number(item.amount) || 0) <= 0));
+            const filteredBreakdownItems = selectedFriendFilter
+              ? allBreakdownItems.filter((item: Expense) => item.friendId === selectedFriendFilter)
+              : allBreakdownItems;
+            const filteredFriendObj = selectedFriendFilter ? friendsMap.get(selectedFriendFilter) : null;
+            const displayTotal = selectedFriendFilter
+              ? filteredBreakdownItems.reduce((acc, i) => acc + (Number(i.amount) || 0), 0)
+              : ge.totalAmount;
 
-              {/* Participants Checklist Rows (matching Image 2 checklist items) */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {ge.items
-                  .filter((item: Expense) => !(item.type === 'personal' && (Number(item.amount) || 0) <= 0))
-                  .map((item: Expense, idx: number) => {
-                    const itemFriend = item.friendId ? friendsMap.get(item.friendId) : null;
-                    const itemVendor = item.vendorId ? friendsMap.get(item.vendorId) : (itemFriend && isContactVendor(itemFriend) ? itemFriend : null);
-                    const isMine = item.type === 'personal';
-                    const isVendorItem = Boolean(itemVendor || (itemFriend && isContactVendor(itemFriend)));
-                    
-                    let primaryName = itemFriend?.name ?? (itemVendor?.name ?? 'Contact');
-                    let actionSubtitle = 'Split share';
-                    let roleBadge: { label: string; color: string; bg: string; border: string } | null = null;
-                    const isSettled = item.settled || isMine || ge.isSettlementGroup;
+            return (
+              <div
+                style={{
+                  background: 'var(--surface2)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 18,
+                  padding: '14px 16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 10,
+                }}
+              >
+                {/* Header with Filter Pill & Total */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 700, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    <Users size={13} style={{ color: 'var(--text-2)' }} />
+                    <span>{ge.isSettlementGroup ? 'Settlement Breakdown' : 'Split Breakdown'}</span>
+                  </div>
 
-                    if (isVendorItem) {
-                      primaryName = itemVendor?.name || itemFriend?.name || 'Vendor';
-                      actionSubtitle = isSettled ? 'Vendor bill settled' : 'Vendor bill';
-                      roleBadge = { label: 'Vendor', color: '#eab308', bg: 'rgba(234, 179, 8, 0.12)', border: 'rgba(234, 179, 8, 0.28)' };
-                    } else if (isMine) {
-                      primaryName = 'You';
-                      actionSubtitle = 'Your personal share';
-                      roleBadge = { label: 'You', color: 'var(--accent)', bg: 'var(--accent-soft)', border: 'var(--accent-border-soft)' };
-                    } else if (item.type === 'for_friend') {
-                      primaryName = itemFriend?.name || 'Friend';
-                      actionSubtitle = item.settled ? 'Paid their share to you' : 'Owes you their share';
-                      roleBadge = { label: 'Owes You', color: '#10b981', bg: 'rgba(16, 185, 129, 0.12)', border: 'rgba(16, 185, 129, 0.28)' };
-                    } else if (item.type === 'by_friend') {
-                      primaryName = itemFriend?.name || 'Friend';
-                      actionSubtitle = item.settled ? 'Settled debt you owed' : 'You owe them';
-                      roleBadge = { label: 'You Owe', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.12)', border: 'rgba(239, 68, 68, 0.28)' };
-                    } else if (ge.isSettlementGroup) {
-                      const itemDesc = cleanExpenseDescription(item.description);
-                      if (itemFriend) {
-                        primaryName = itemFriend.name;
-                        const b = friendBalance(db, itemFriend.id);
-                        if (b.net < 0) {
-                          actionSubtitle = 'Settled debt you owed';
-                          roleBadge = { label: 'You Owe', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.12)', border: 'rgba(239, 68, 68, 0.28)' };
-                        } else {
-                          actionSubtitle = 'Settled share received';
-                          roleBadge = { label: 'Owes You', color: '#10b981', bg: 'rgba(16, 185, 129, 0.12)', border: 'rgba(16, 185, 129, 0.28)' };
-                        }
-                      } else {
-                        primaryName = itemDesc;
-                        actionSubtitle = `Date: ${fmtDate(item.originalDate || item.date)}`;
-                      }
-                    }
-
-                    const isSubDebit = item.type === 'by_friend' || (item.type === 'personal' && !isVendorItem);
-                    const subSign = isSubDebit ? '-' : '+';
-                    const subColor = isSubDebit ? 'var(--debit, #dc2626)' : 'var(--credit, #16a34a)';
-
-                    return (
-                      <div
-                        key={item.id || idx}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {selectedFriendFilter && filteredFriendObj && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedFriendFilter(null)}
                         style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
+                          fontSize: 10.5,
+                          fontWeight: 700,
+                          color: filteredFriendObj.color || 'var(--accent)',
+                          background: 'var(--surface3)',
+                          border: `1px solid ${filteredFriendObj.color ? filteredFriendObj.color + '44' : 'var(--border)'}`,
+                          padding: '2px 8px',
+                          borderRadius: 9999,
+                          display: 'inline-flex',
                           alignItems: 'center',
-                          padding: '10px 12px',
-                          borderRadius: 14,
+                          gap: 4,
+                          cursor: 'pointer',
+                        }}
+                        title="Clear contact filter"
+                      >
+                        <span>{filteredFriendObj.name}</span>
+                        <X size={11} strokeWidth={2.5} />
+                      </button>
+                    )}
+                    <span style={{ fontSize: 11.5, fontWeight: 650, color: 'var(--text-2)', background: 'var(--surface3)', border: '1px solid var(--border)', padding: '3px 9px', borderRadius: 9999 }}>
+                      Total {fmtMoney(displayTotal, currency)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Items List */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {filteredBreakdownItems.length === 0 ? (
+                    <div
+                      style={{
+                        padding: '18px 12px',
+                        textAlign: 'center',
+                        fontSize: 12.5,
+                        color: 'var(--text-3)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: 8,
+                        borderRadius: 12,
+                        background: 'rgba(255, 255, 255, 0.02)',
+                      }}
+                    >
+                      <span>No breakdown items found for this contact.</span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedFriendFilter(null)}
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 650,
+                          padding: '3px 10px',
+                          borderRadius: 9999,
                           background: 'var(--surface)',
                           border: '1px solid var(--border)',
-                          gap: 10,
+                          color: 'var(--text)',
+                          cursor: 'pointer',
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                          {/* Circular Checkbox */}
-                          <div
-                            style={{
-                              width: 22,
-                              height: 22,
-                              borderRadius: '50%',
-                              backgroundColor: isSettled ? '#10b981' : 'transparent',
-                              border: isSettled ? '2px solid #10b981' : '2px solid #525562',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              flexShrink: 0,
-                              color: '#ffffff',
-                              transition: 'all 0.15s ease',
-                            }}
-                          >
-                            {isSettled && <Check size={13} strokeWidth={3} />}
-                          </div>
+                        Show all items
+                      </button>
+                    </div>
+                  ) : (
+                    filteredBreakdownItems.map((item: Expense, idx: number) => {
+                      const itemFriend = item.friendId && item.friendId !== detectedVendor?.id ? friendsMap.get(item.friendId) : null;
+                      const isMine = item.type === 'personal' || (!itemFriend && (!item.friendId || item.friendId === detectedVendor?.id));
 
-                          {/* Avatar if vendor or contact */}
-                          {isVendorItem ? (
-                            <span
-                              style={{
-                                width: 24,
-                                height: 24,
-                                borderRadius: '50%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: 10,
-                                fontWeight: 750,
-                                color: '#ffffff',
-                                flexShrink: 0,
-                                background: itemVendor?.color || '#eab308',
-                              }}
-                            >
-                              <Store size={12} />
-                            </span>
-                          ) : !isMine && itemFriend ? (
-                            <span
-                              className="avatar avatar-sm"
-                              style={{
-                                width: 24,
-                                height: 24,
-                                borderRadius: '50%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: 10,
-                                fontWeight: 750,
-                                color: '#ffffff',
-                                flexShrink: 0,
-                                background: itemFriend?.color || 'var(--accent)',
-                                boxShadow: `0 1px 4px ${itemFriend?.color ? itemFriend.color + '40' : 'rgba(0,0,0,0.2)'}`,
-                              }}
-                            >
-                              {friendInitial(itemFriend?.name ?? '?', itemFriend?.avatarNumber)}
-                            </span>
-                          ) : null}
+                      // Title: show item title instead of vendor name
+                      let itemTitle = cleanExpenseDescription(item.description);
+                      if (!itemTitle || (detectedVendor && itemTitle.toLowerCase() === detectedVendor.name.toLowerCase())) {
+                        const geClean = cleanExpenseDescription(ge.description);
+                        if (geClean && (!detectedVendor || geClean.toLowerCase() !== detectedVendor.name.toLowerCase())) {
+                          itemTitle = geClean;
+                        } else {
+                          itemTitle = ge.category && ge.category !== 'Settlement' ? ge.category : 'Expense';
+                        }
+                      }
 
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <span
-                                style={{
-                                  fontWeight: 700,
-                                  fontSize: 13,
-                                  color: 'var(--text)',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap',
-                                }}
-                              >
-                                {primaryName}
-                              </span>
-                              {roleBadge && (
-                                <span
-                                  style={{
-                                    fontSize: 10,
-                                    fontWeight: 700,
-                                    padding: '1px 6px',
-                                    borderRadius: 9999,
-                                    color: roleBadge.color,
-                                    background: roleBadge.bg,
-                                    border: `1px solid ${roleBadge.border}`,
-                                    whiteSpace: 'nowrap',
-                                    flexShrink: 0,
-                                  }}
-                                >
-                                  {roleBadge.label}
-                                </span>
-                              )}
-                            </div>
-                            <span style={{ fontSize: 11, color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {actionSubtitle}
-                            </span>
-                          </div>
-                        </div>
+                      // Status Badge: show if settled or owed or what (NO vendor badge)
+                      const isItemSettled = Boolean(item.settled || isMine || ge.isSettlementGroup || ge.settlementId || item.vendorSettled);
+                      const isPartial = Boolean(item.settledAmount && item.settledAmount > 0 && !item.settled);
 
-                        <span
+                      let statusBadge: { label: string; color: string; bg: string; border: string };
+                      if (isPartial) {
+                        statusBadge = {
+                          label: 'Partially Settled',
+                          color: '#f59e0b',
+                          bg: 'rgba(245, 158, 11, 0.12)',
+                          border: 'rgba(245, 158, 11, 0.28)',
+                        };
+                      } else if (isItemSettled) {
+                        statusBadge = {
+                          label: 'Settled ✓',
+                          color: '#10b981',
+                          bg: 'rgba(16, 185, 129, 0.12)',
+                          border: 'rgba(16, 185, 129, 0.28)',
+                        };
+                      } else if (item.type === 'for_friend') {
+                        statusBadge = {
+                          label: 'Owes You',
+                          color: '#10b981',
+                          bg: 'rgba(16, 185, 129, 0.12)',
+                          border: 'rgba(16, 185, 129, 0.28)',
+                        };
+                      } else if (item.type === 'by_friend') {
+                        statusBadge = {
+                          label: 'You Owe',
+                          color: '#ef4444',
+                          bg: 'rgba(239, 68, 68, 0.12)',
+                          border: 'rgba(239, 68, 68, 0.28)',
+                        };
+                      } else if (item.status === 'paid') {
+                        statusBadge = {
+                          label: 'Paid',
+                          color: '#10b981',
+                          bg: 'rgba(16, 185, 129, 0.12)',
+                          border: 'rgba(16, 185, 129, 0.28)',
+                        };
+                      } else {
+                        statusBadge = {
+                          label: 'Unsettled',
+                          color: '#ef4444',
+                          bg: 'rgba(239, 68, 68, 0.12)',
+                          border: 'rgba(239, 68, 68, 0.28)',
+                        };
+                      }
+
+                      // Subtitle: Date taken (clean, no vendor repetition)
+                      const itemDate = fmtDate(item.originalDate || item.date);
+
+                      // Amount and sign
+                      const isSubDebit = item.type === 'personal' || item.type === 'by_friend';
+                      const subSign = isSubDebit ? '-' : '+';
+                      const subColor = isSubDebit ? 'var(--debit, #ef4444)' : 'var(--credit, #10b981)';
+
+                      return (
+                        <div
+                          key={item.id || idx}
                           style={{
-                            fontWeight: 750,
-                            fontSize: 13.5,
-                            marginLeft: 8,
-                            color: subColor,
-                            fontVariantNumeric: 'tabular-nums',
-                            whiteSpace: 'nowrap',
-                            flexShrink: 0,
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '10px 12px',
+                            borderRadius: 14,
+                            background: 'var(--surface)',
+                            border: '1px solid var(--border)',
+                            gap: 10,
                           }}
                         >
-                          {subSign}{fmtMoney(Number(item.amount) || 0, currency)}
-                        </span>
-                      </div>
-                    );
-                  })}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+                            {/* Avatar: Roll number / initial of person owing or User icon for personal share */}
+                            {isMine ? (
+                              <span
+                                style={{
+                                  width: 26,
+                                  height: 26,
+                                  borderRadius: '50%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: 'var(--text-2, #a1a1aa)',
+                                  flexShrink: 0,
+                                  background: 'rgba(255, 255, 255, 0.08)',
+                                  border: '1px solid rgba(255, 255, 255, 0.06)',
+                                }}
+                                title="You (Personal share)"
+                              >
+                                <User size={13} strokeWidth={2.2} />
+                              </span>
+                            ) : itemFriend ? (
+                              <span
+                                style={{
+                                  width: 26,
+                                  height: 26,
+                                  borderRadius: '50%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: (itemFriend.avatarNumber && itemFriend.avatarNumber.length > 2) ? 9 : 10.5,
+                                  fontWeight: 750,
+                                  color: '#ffffff',
+                                  flexShrink: 0,
+                                  background: itemFriend.color || 'var(--accent, #10b981)',
+                                  boxShadow: `0 1px 4px ${itemFriend.color ? itemFriend.color + '40' : 'rgba(0,0,0,0.2)'}`,
+                                  letterSpacing: '-0.3px',
+                                }}
+                                title={itemFriend.name}
+                              >
+                                {friendInitial(itemFriend.name, itemFriend.avatarNumber)}
+                              </span>
+                            ) : (
+                              <span
+                                style={{
+                                  width: 26,
+                                  height: 26,
+                                  borderRadius: '50%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: 'var(--text-2, #a1a1aa)',
+                                  flexShrink: 0,
+                                  background: 'rgba(255, 255, 255, 0.08)',
+                                }}
+                              >
+                                <User size={13} strokeWidth={2.2} />
+                              </span>
+                            )}
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 2.5, minWidth: 0, flex: 1 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flexWrap: 'wrap' }}>
+                                <span
+                                  style={{
+                                    fontWeight: 700,
+                                    fontSize: 13,
+                                    color: 'var(--text)',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                  title={itemTitle}
+                                >
+                                  {itemTitle}
+                                </span>
+                                {statusBadge && (
+                                  <span
+                                    style={{
+                                      fontSize: 10,
+                                      fontWeight: 700,
+                                      padding: '1px 6.5px',
+                                      borderRadius: 9999,
+                                      color: statusBadge.color,
+                                      background: statusBadge.bg,
+                                      border: `1px solid ${statusBadge.border}`,
+                                      whiteSpace: 'nowrap',
+                                      flexShrink: 0,
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: 3,
+                                    }}
+                                  >
+                                    {statusBadge.label}
+                                  </span>
+                                )}
+                              </div>
+                              <span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                Date: {itemDate}
+                              </span>
+                            </div>
+                          </div>
+
+                          <span
+                            style={{
+                              fontWeight: 750,
+                              fontSize: 13.5,
+                              marginLeft: 8,
+                              color: subColor,
+                              fontVariantNumeric: 'tabular-nums',
+                              whiteSpace: 'nowrap',
+                              flexShrink: 0,
+                            }}
+                          >
+                            {subSign}{fmtMoney(Number(item.amount) || 0, currency)}
+                          </span>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
 
         {/* Modal Footer with Clean Capsule Action Buttons */}
@@ -953,7 +1083,7 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
             <span>Delete</span>
           </button>
         </div>
-      </div>
+      </motion.div>
     </div>,
     document.body
   );

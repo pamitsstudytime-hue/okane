@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { motion } from 'motion/react';
 import { X, Wallet as WalletIcon, Plus, Check, CheckCircle2 } from 'lucide-react';
 import { useStore } from '../store';
 import type { Wallet } from '../types';
@@ -90,19 +91,36 @@ export default function WalletModal({ wallet, onClose }: Props) {
     onClose();
   };
 
+  const [isMobileScreen, setIsMobileScreen] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 640);
+  useEffect(() => {
+    const handleResize = () => setIsMobileScreen(window.innerWidth <= 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return createPortal(
-    <div
-      className="modal-backdrop"
-      style={{ zIndex: 100050 }}
-      onClick={e => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="modal" style={{ maxWidth: 440 }}>
-        {/* Drag Handle for Mobile */}
-        <div className="modal-handle-bar">
-          <div className="modal-handle" />
-        </div>
+    <div className="modal-backdrop-motion">
+      {/* Backdrop overlay */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="modal-backdrop-overlay"
+        onClick={onClose}
+      />
+
+      {/* Sheet panel / Desktop center dialog */}
+      <motion.div
+        initial={isMobileScreen ? { y: '100%' } : { opacity: 0, scale: 0.95, y: 16 }}
+        animate={isMobileScreen ? { y: 0 } : { opacity: 1, scale: 1, y: 0 }}
+        exit={isMobileScreen ? { y: '100%' } : { opacity: 0, scale: 0.95, y: 16 }}
+        transition={{ duration: isMobileScreen ? 0.32 : 0.2, ease: [0.22, 1, 0.36, 1] }}
+        className="modal wallet-drawer-modal modal-dialog-panel"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Top drag handle pill */}
+        <div className="modal-drag-handle" />
 
         {/* Themed Modal Header matching Transfer & Expense Drawers */}
         <div className="modal-header">
@@ -482,7 +500,7 @@ export default function WalletModal({ wallet, onClose }: Props) {
             </div>
           </div>
         </form>
-      </div>
+      </motion.div>
     </div>,
     document.body
   );

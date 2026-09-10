@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { motion } from 'motion/react';
 import { Fingerprint, Delete, Lock, AlertCircle } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
@@ -210,7 +211,11 @@ export default function SecurityLockModal({
   }, [handleKeyPress, handleDelete]);
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
       style={{
         position: 'fixed',
         inset: 0,
@@ -272,14 +277,13 @@ export default function SecurityLockModal({
 
         {/* Minimalist Dots Indicator */}
         <div
+          className={isShaking ? 'animate-shake' : ''}
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: 18,
             marginTop: 24,
-            transform: isShaking ? 'translateX(-8px)' : 'none',
-            transition: isShaking ? 'transform 0.08s ease' : 'transform 0.2s ease',
           }}
         >
           {[0, 1, 2, 3].map(idx => {
@@ -490,6 +494,6 @@ export default function SecurityLockModal({
           <Delete size={22} />
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 }

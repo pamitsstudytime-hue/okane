@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import AppBar from '@mui/material/AppBar';
@@ -1124,9 +1125,15 @@ function AppInner() {
       )}
 
       <main className={`main-content${isMobile ? ' mobile-layout' : ''}`}>
-        <div key={view} className="view-page-animate">
+        <motion.div
+          key={view}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.24, ease: "easeOut" }}
+          className="view-page-animate"
+        >
           {renderView()}
-        </div>
+        </motion.div>
       </main>
 
       {/* Mobile bottom navigation */}
@@ -1233,18 +1240,40 @@ function AppInner() {
               icon={
                 <Box
                   sx={{
+                    position: 'relative',
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    width: bottomNavValue === 'dashboard' ? 48 : 36,
+                    width: 50,
                     height: 28,
                     borderRadius: '999px',
-                    bgcolor: bottomNavValue === 'dashboard' ? (mode === 'dark' ? '#1f2127' : '#e4e4e7') : 'transparent',
-                    color: bottomNavValue === 'dashboard' ? (mode === 'dark' ? '#ffffff' : '#111111') : (mode === 'dark' ? '#71717a' : '#8e8e93'),
-                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                   }}
                 >
-                  <LayoutDashboard size={19} />
+                  {bottomNavValue === 'dashboard' && (
+                    <motion.div
+                      layoutId="nav-pill"
+                      className="absolute inset-0 bg-neutral-800 rounded-full"
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        borderRadius: 9999,
+                        backgroundColor: mode === 'dark' ? '#27272a' : '#e4e4e7',
+                      }}
+                      transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                    />
+                  )}
+                  <Box
+                    sx={{
+                      position: 'relative',
+                      zIndex: 10,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: bottomNavValue === 'dashboard' ? (mode === 'dark' ? '#ffffff' : '#111111') : (mode === 'dark' ? '#71717a' : '#8e8e93'),
+                    }}
+                  >
+                    <LayoutDashboard size={19} />
+                  </Box>
                 </Box>
               }
             />
@@ -1255,18 +1284,40 @@ function AppInner() {
               icon={
                 <Box
                   sx={{
+                    position: 'relative',
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    width: bottomNavValue === 'expenses' ? 48 : 36,
+                    width: 50,
                     height: 28,
                     borderRadius: '999px',
-                    bgcolor: bottomNavValue === 'expenses' ? (mode === 'dark' ? '#1f2127' : '#e4e4e7') : 'transparent',
-                    color: bottomNavValue === 'expenses' ? (mode === 'dark' ? '#ffffff' : '#111111') : (mode === 'dark' ? '#71717a' : '#8e8e93'),
-                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                   }}
                 >
-                  <ReceiptText size={19} />
+                  {bottomNavValue === 'expenses' && (
+                    <motion.div
+                      layoutId="nav-pill"
+                      className="absolute inset-0 bg-neutral-800 rounded-full"
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        borderRadius: 9999,
+                        backgroundColor: mode === 'dark' ? '#27272a' : '#e4e4e7',
+                      }}
+                      transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                    />
+                  )}
+                  <Box
+                    sx={{
+                      position: 'relative',
+                      zIndex: 10,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: bottomNavValue === 'expenses' ? (mode === 'dark' ? '#ffffff' : '#111111') : (mode === 'dark' ? '#71717a' : '#8e8e93'),
+                    }}
+                  >
+                    <ReceiptText size={19} />
+                  </Box>
                 </Box>
               }
             />
@@ -1287,10 +1338,10 @@ function AppInner() {
                     boxShadow: mode === 'dark' ? '0 4px 14px rgba(255, 255, 255, 0.16)' : '0 4px 12px rgba(0, 0, 0, 0.14)',
                     transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease',
                     '&:hover': {
-                      transform: 'scale(1.06)',
+                      transform: 'scale(1.05)',
                     },
                     '&:active': {
-                      transform: 'scale(0.94)',
+                      transform: 'scale(0.93)',
                     },
                   }}
                 >
@@ -1310,26 +1361,47 @@ function AppInner() {
               icon={
                 <Box
                   sx={{
+                    position: 'relative',
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    position: 'relative',
-                    width: bottomNavValue === 'friends' ? 48 : 36,
+                    width: 50,
                     height: 28,
                     borderRadius: '999px',
-                    bgcolor: bottomNavValue === 'friends' ? (mode === 'dark' ? '#1f2127' : '#e4e4e7') : 'transparent',
-                    color: bottomNavValue === 'friends' ? (mode === 'dark' ? '#ffffff' : '#111111') : (mode === 'dark' ? '#71717a' : '#8e8e93'),
-                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                   }}
                 >
-                  <Users size={19} />
-                  {pendingSettlements > 0 && (
-                    <Box sx={{
-                      position: 'absolute', top: 3, right: 5,
-                      width: 7, height: 7, borderRadius: '50%',
-                      bgcolor: 'error.main'
-                    }} />
+                  {bottomNavValue === 'friends' && (
+                    <motion.div
+                      layoutId="nav-pill"
+                      className="absolute inset-0 bg-neutral-800 rounded-full"
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        borderRadius: 9999,
+                        backgroundColor: mode === 'dark' ? '#27272a' : '#e4e4e7',
+                      }}
+                      transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                    />
                   )}
+                  <Box
+                    sx={{
+                      position: 'relative',
+                      zIndex: 10,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: bottomNavValue === 'friends' ? (mode === 'dark' ? '#ffffff' : '#111111') : (mode === 'dark' ? '#71717a' : '#8e8e93'),
+                    }}
+                  >
+                    <Users size={19} />
+                    {pendingSettlements > 0 && (
+                      <Box sx={{
+                        position: 'absolute', top: 3, right: -4,
+                        width: 7, height: 7, borderRadius: '50%',
+                        bgcolor: 'error.main'
+                      }} />
+                    )}
+                  </Box>
                 </Box>
               }
             />
@@ -1340,26 +1412,47 @@ function AppInner() {
               icon={
                 <Box
                   sx={{
+                    position: 'relative',
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    position: 'relative',
-                    width: bottomNavValue === 'more' ? 48 : 36,
+                    width: 50,
                     height: 28,
                     borderRadius: '999px',
-                    bgcolor: bottomNavValue === 'more' ? (mode === 'dark' ? '#1f2127' : '#e4e4e7') : 'transparent',
-                    color: bottomNavValue === 'more' ? (mode === 'dark' ? '#ffffff' : '#111111') : (mode === 'dark' ? '#71717a' : '#8e8e93'),
-                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                   }}
                 >
-                  <MoreHorizontal size={19} />
-                  {(dueAutopaysCount > 0 || pendingSettlements > 0) && (
-                    <Box sx={{
-                      position: 'absolute', top: 3, right: 5,
-                      width: 7, height: 7, borderRadius: '50%',
-                      bgcolor: dueAutopaysCount > 0 ? 'error.main' : 'primary.main'
-                    }} />
+                  {bottomNavValue === 'more' && (
+                    <motion.div
+                      layoutId="nav-pill"
+                      className="absolute inset-0 bg-neutral-800 rounded-full"
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        borderRadius: 9999,
+                        backgroundColor: mode === 'dark' ? '#27272a' : '#e4e4e7',
+                      }}
+                      transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                    />
                   )}
+                  <Box
+                    sx={{
+                      position: 'relative',
+                      zIndex: 10,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: bottomNavValue === 'more' ? (mode === 'dark' ? '#ffffff' : '#111111') : (mode === 'dark' ? '#71717a' : '#8e8e93'),
+                    }}
+                  >
+                    <MoreHorizontal size={19} />
+                    {(dueAutopaysCount > 0 || pendingSettlements > 0) && (
+                      <Box sx={{
+                        position: 'absolute', top: 3, right: -4,
+                        width: 7, height: 7, borderRadius: '50%',
+                        bgcolor: dueAutopaysCount > 0 ? 'error.main' : 'primary.main'
+                      }} />
+                    )}
+                  </Box>
                 </Box>
               }
             />
@@ -1573,45 +1666,51 @@ function AppInner() {
         onNavigate={navigate}
       />
 
-      {showAddExpense && (
-        <ExpenseModal
-          initialData={addExpenseInitialData || undefined}
-          isTutorialMode={isExpenseTutorial}
-          onClose={() => {
-            setShowAddExpense(false);
-            setAddExpenseInitialData(null);
-            setIsExpenseTutorial(false);
-          }}
-        />
-      )}
-      {showAIAssistant && (
-        <AIAssistantModal
-          open={showAIAssistant}
-          onClose={() => setShowAIAssistant(false)}
-          onOpenAddExpense={(initialData) => {
-            setAddExpenseInitialData(initialData || null);
-            setShowAddExpense(true);
-            setShowAIAssistant(false);
-          }}
-        />
-      )}
-      {showGuideModal && (
-        <UserGuideModal
-          open={showGuideModal}
-          onClose={() => setShowGuideModal(false)}
-          onNavigate={navigate}
-          onAddExpense={() => setShowAddExpense(true)}
-          onStartExpenseTutorial={handleStartExpenseTutorial}
-        />
-      )}
-      {isAppLocked && isSecurityLockActive && (
-        <SecurityLockModal
-          onUnlock={handleUnlock}
-          savedPin={db.settings?.securityPin || ''}
-          enableBiometricLock={db.settings?.enableBiometricLock ?? true}
-          autoUnlockOnFace={db.settings?.autoUnlockOnFace ?? false}
-        />
-      )}
+      <AnimatePresence>
+        {showAddExpense && (
+          <ExpenseModal
+            key="expense-modal"
+            initialData={addExpenseInitialData || undefined}
+            isTutorialMode={isExpenseTutorial}
+            onClose={() => {
+              setShowAddExpense(false);
+              setAddExpenseInitialData(null);
+              setIsExpenseTutorial(false);
+            }}
+          />
+        )}
+        {showAIAssistant && (
+          <AIAssistantModal
+            key="ai-assistant-modal"
+            open={showAIAssistant}
+            onClose={() => setShowAIAssistant(false)}
+            onOpenAddExpense={(initialData) => {
+              setAddExpenseInitialData(initialData || null);
+              setShowAddExpense(true);
+              setShowAIAssistant(false);
+            }}
+          />
+        )}
+        {showGuideModal && (
+          <UserGuideModal
+            key="user-guide-modal"
+            open={showGuideModal}
+            onClose={() => setShowGuideModal(false)}
+            onNavigate={navigate}
+            onAddExpense={() => setShowAddExpense(true)}
+            onStartExpenseTutorial={handleStartExpenseTutorial}
+          />
+        )}
+        {isAppLocked && isSecurityLockActive && (
+          <SecurityLockModal
+            key="security-lock-modal"
+            onUnlock={handleUnlock}
+            savedPin={db.settings?.securityPin || ''}
+            enableBiometricLock={db.settings?.enableBiometricLock ?? true}
+            autoUnlockOnFace={db.settings?.autoUnlockOnFace ?? false}
+          />
+        )}
+      </AnimatePresence>
       <Toast />
     </div>
   );

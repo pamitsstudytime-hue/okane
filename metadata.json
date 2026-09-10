@@ -1,6 +1,6 @@
 {
   "name": "Okane",
   "description": "Personal finance, expense tracking, and bill-splitting ledger app",
-  "requestFramePermissions": [],
+  "requestFramePermissions": ["microphone"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

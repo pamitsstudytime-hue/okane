@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'motion/react';
 import { X, ArrowLeftRight, ArrowRight, AlertCircle, FileText, Calendar, ChevronDown, Wallet as WalletIcon } from 'lucide-react';
 import { useStore } from '../store';
 import { walletBalance, todayISO } from '../db';
@@ -72,8 +73,6 @@ export default function TransferModal({ isOpen, onClose, defaultFromWalletId, de
     }
   }
 
-  if (!isOpen) return null;
-
   const fromWallet = wallets.find(w => w.id === fromWalletId);
   const toWallet = wallets.find(w => w.id === toWalletId);
 
@@ -127,13 +126,38 @@ export default function TransferModal({ isOpen, onClose, defaultFromWalletId, de
 
   const isInsufficient = Number(amount) > fromBalance && fromBalance >= 0;
 
+  const [isMobileScreen, setIsMobileScreen] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 640);
+  useEffect(() => {
+    const handleResize = () => setIsMobileScreen(window.innerWidth <= 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return createPortal(
-    <div className="modal-backdrop" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="modal" style={{ maxWidth: 440 }}>
-        {/* Mobile handle indicator */}
-        <div className="modal-handle-bar">
-          <div className="modal-handle" />
-        </div>
+    <AnimatePresence>
+      {isOpen && (
+        <div className="modal-backdrop-motion">
+          {/* Backdrop overlay */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="modal-backdrop-overlay"
+            onClick={onClose}
+          />
+
+          {/* Sheet panel / Desktop center dialog */}
+          <motion.div
+            initial={isMobileScreen ? { y: '100%' } : { opacity: 0, scale: 0.95, y: 16 }}
+            animate={isMobileScreen ? { y: 0 } : { opacity: 1, scale: 1, y: 0 }}
+            exit={isMobileScreen ? { y: '100%' } : { opacity: 0, scale: 0.95, y: 16 }}
+            transition={{ duration: isMobileScreen ? 0.32 : 0.2, ease: [0.22, 1, 0.36, 1] }}
+            className="modal modal-dialog-panel"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Drag Handle Pill */}
+            <div className="modal-drag-handle" />
 
         {/* Modal Header */}
         <div className="modal-header">
@@ -696,7 +720,7 @@ export default function TransferModal({ isOpen, onClose, defaultFromWalletId, de
             </div>
           </div>
         </form>
-      </div>
+      </motion.div>
 
       {/* Note Drawer Modal Dialog */}
       <NoteEditorModal
@@ -715,7 +739,9 @@ export default function TransferModal({ isOpen, onClose, defaultFromWalletId, de
           'Emergency Fund',
         ]}
       />
-    </div>,
+    </div>
+      )}
+    </AnimatePresence>,
     document.body
   );
 }

@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { motion } from 'motion/react';
 import { X, TrendingDown, TrendingUp, User, Users, HeartHandshake, FileText, Sparkles } from 'lucide-react';
 import { useStore } from '../store';
 import type { Expense, ExpenseType, ExpenseFlow, ExpenseStatus } from '../types';
@@ -93,6 +94,13 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
   const initialIncomeMode = (initialData?.flow === 'in' || expense?.flow === 'in')
     ? (initialData?.friendId || expense?.type === 'by_friend' || expense?.friendId ? 'friend' : 'direct')
     : 'direct';
+
+  const [isMobileScreen, setIsMobileScreen] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 640);
+  useEffect(() => {
+    const handleResize = () => setIsMobileScreen(window.innerWidth <= 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const [incomeMode, setIncomeMode] = useState<'direct' | 'friend'>(initialIncomeMode);
   const [desc, setDesc] = useState(initialDesc);
@@ -662,16 +670,27 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
   };
 
   return createPortal(
-    <div
-      className="modal-backdrop"
-      style={{ zIndex: 100060 }}
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      <div className="modal expense-drawer-modal">
+    <div className="modal-backdrop-motion">
+      {/* Backdrop overlay */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="modal-backdrop-overlay"
+        onClick={onClose}
+      />
+
+      {/* Sheet panel / Desktop center dialog */}
+      <motion.div
+        initial={isMobileScreen ? { y: '100%' } : { opacity: 0, scale: 0.95, y: 16 }}
+        animate={isMobileScreen ? { y: 0 } : { opacity: 1, scale: 1, y: 0 }}
+        exit={isMobileScreen ? { y: '100%' } : { opacity: 0, scale: 0.95, y: 16 }}
+        transition={{ duration: isMobileScreen ? 0.32 : 0.2, ease: [0.22, 1, 0.36, 1] }}
+        className="modal expense-drawer-modal modal-dialog-panel"
+      >
         {/* Drag Handle Indicator for Mobile Bottom Sheet */}
-        <div className="modal-handle-bar">
-          <div className="modal-handle" />
-        </div>
+        <div className="modal-drag-handle" />
 
         <div className="modal-header compact-expense-header">
           {expense ? (
@@ -1453,7 +1472,7 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
             </button>
           </div>
         </form>
-      </div>
+      </motion.div>
 
       {/* Friend Split Modal Dialog */}
       <FriendSplitModal

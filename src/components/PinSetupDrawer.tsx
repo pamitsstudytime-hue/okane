@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'motion/react';
 import { KeyRound, Delete, X, AlertCircle, RefreshCw } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
@@ -166,13 +167,38 @@ export default function PinSetupDrawer({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, handleDigitPress, handleBackspace, handleClose]);
 
-  if (!isOpen) return null;
+  const [isMobileScreen, setIsMobileScreen] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 640);
+  useEffect(() => {
+    const handleResize = () => setIsMobileScreen(window.innerWidth <= 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return createPortal(
-    <div className="sheet-backdrop" onClick={handleClose}>
-      <div className="sheet-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 400, margin: '0 auto' }}>
-        {/* Drag Handle */}
-        <div className="sheet-drag-handle" />
+    <AnimatePresence>
+      {isOpen && (
+        <div className="modal-backdrop-motion">
+          {/* Backdrop overlay */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="modal-backdrop-overlay"
+            onClick={handleClose}
+          />
+
+          {/* Sheet panel / Desktop center dialog */}
+          <motion.div
+            initial={isMobileScreen ? { y: '100%' } : { opacity: 0, scale: 0.95, y: 16 }}
+            animate={isMobileScreen ? { y: 0 } : { opacity: 1, scale: 1, y: 0 }}
+            exit={isMobileScreen ? { y: '100%' } : { opacity: 0, scale: 0.95, y: 16 }}
+            transition={{ duration: isMobileScreen ? 0.32 : 0.2, ease: [0.22, 1, 0.36, 1] }}
+            className="sheet-modal modal-dialog-panel"
+            style={{ maxWidth: 400, margin: '0 auto' }}
+          >
+            {/* Drag Handle Pill */}
+            <div className="modal-drag-handle" />
 
         {/* Drawer Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
@@ -305,13 +331,13 @@ export default function PinSetupDrawer({
 
           {/* Animated PIN Dots */}
           <div
+            className={isShaking ? 'animate-shake' : ''}
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: 18,
               marginTop: 22,
-              animation: isShaking ? 'shake 0.4s ease-in-out' : 'none',
             }}
           >
             {[0, 1, 2, 3].map(index => {
@@ -534,8 +560,10 @@ export default function PinSetupDrawer({
             <Delete size={22} strokeWidth={1.8} />
           </button>
         </div>
-      </div>
-    </div>,
-    document.body
+      </motion.div>
+    </div>
+  )}
+</AnimatePresence>,
+document.body
   );
 }

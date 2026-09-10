@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Layers, ArrowUpRight, ArrowDownLeft, ReceiptText, ChevronDown, Filter } from 'lucide-react';
 import { useStore } from '../store';
 import type { Expense, GroupedExpense } from '../types';
@@ -551,7 +552,13 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
               const relativeLabel = getRelativeDateLabel(group.date);
 
               return (
-                <div key={group.date} className="expense-date-card">
+                <motion.div
+                  key={group.date}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.24, ease: "easeOut" }}
+                  className="expense-date-card"
+                >
                   {/* Collapsible Date Card Header */}
                   <div
                     className={`expense-date-card-header ${isCollapsed ? 'is-collapsed' : 'is-expanded'}`}
@@ -590,22 +597,70 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
                   </div>
 
                   {/* Card Content when extended */}
-                  {!isCollapsed && (
-                    <div className="expense-date-card-body">
-                      {/* Desktop Table View */}
-                      <div className="table-wrapper desktop-only">
-                        <table className="modern-tx-table">
-                          <thead>
-                            <tr>
-                              <th style={{ width: '34%', textAlign: 'left' }}>Transaction</th>
-                              <th style={{ width: '15%', textAlign: 'left' }}>Amount</th>
-                              <th style={{ width: '13%', textAlign: 'left' }}>Type</th>
-                              <th style={{ width: '14%', textAlign: 'left' }}>Wallet</th>
-                              <th style={{ width: '13%', textAlign: 'left' }}>Status</th>
-                              <th style={{ textAlign: 'right', width: '11%', minWidth: '90px' }}>Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody>
+                  <AnimatePresence initial={false}>
+                    {!isCollapsed && (
+                      <motion.div
+                        key="content"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.25, ease: "easeInOut" }}
+                        className="overflow-hidden"
+                      >
+                        <div className="expense-date-card-body">
+                          {/* Desktop Table View */}
+                          <div className="table-wrapper desktop-only">
+                            <table className="modern-tx-table">
+                              <thead>
+                                <tr>
+                                  <th style={{ width: '34%', textAlign: 'left' }}>Transaction</th>
+                                  <th style={{ width: '15%', textAlign: 'left' }}>Amount</th>
+                                  <th style={{ width: '13%', textAlign: 'left' }}>Type</th>
+                                  <th style={{ width: '14%', textAlign: 'left' }}>Wallet</th>
+                                  <th style={{ width: '13%', textAlign: 'left' }}>Status</th>
+                                  <th style={{ textAlign: 'right', width: '11%', minWidth: '90px' }}>Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {group.items.map(ge => {
+                                  const cat = categoriesMap.get(ge.category);
+                                  const stl = ge.items.reduce<typeof db.settlements[0] | null | undefined>((found, item) => {
+                                    if (found) return found;
+                                    if (item.settlementId) return settlementsMap.get(item.settlementId);
+                                    return undefined;
+                                  }, null) || (ge.settlementId ? settlementsMap.get(ge.settlementId) : null);
+                                  const stlWallet = stl?.walletId ? walletsMap.get(stl.walletId) : undefined;
+                                  const wallet = ge.items.reduce<typeof db.wallets[0] | null | undefined>((found, item) => {
+                                    if (found) return found;
+                                    return item.walletId ? walletsMap.get(item.walletId) : null;
+                                  }, null) || walletsMap.get(ge.walletId) || stlWallet;
+
+                                  const groupStatus = getGroupSettlementStatus(ge);
+
+                                  return (
+                                    <ExpenseTableRow
+                                      key={ge.id}
+                                      ge={ge}
+                                      currency={currency}
+                                      onEdit={setEditExp}
+                                      onDelete={setDelId}
+                                      onUndo={setUndoExpId}
+                                      groupStatus={groupStatus}
+                                      categoryObj={cat}
+                                      walletObj={wallet}
+                                      friendsMap={friendsMap}
+                                      walletsMap={walletsMap}
+                                      settlementObj={stl}
+                                      onSelectDetail={setSelectedDetailGe}
+                                    />
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+
+                          {/* Mobile Expandable Cards View */}
+                          <div className="mobile-expense-list mobile-only">
                             {group.items.map(ge => {
                               const cat = categoriesMap.get(ge.category);
                               const stl = ge.items.reduce<typeof db.settlements[0] | null | undefined>((found, item) => {
@@ -622,10 +677,11 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
                               const groupStatus = getGroupSettlementStatus(ge);
 
                               return (
-                                <ExpenseTableRow
+                                <ExpenseMobileCard
                                   key={ge.id}
                                   ge={ge}
                                   currency={currency}
+                                  onSelectDetail={setSelectedDetailGe}
                                   onEdit={setEditExp}
                                   onDelete={setDelId}
                                   onUndo={setUndoExpId}
@@ -635,53 +691,15 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
                                   friendsMap={friendsMap}
                                   walletsMap={walletsMap}
                                   settlementObj={stl}
-                                  onSelectDetail={setSelectedDetailGe}
                                 />
                               );
                             })}
-                          </tbody>
-                        </table>
-                      </div>
-
-                      {/* Mobile Expandable Cards View */}
-                      <div className="mobile-expense-list mobile-only">
-                        {group.items.map(ge => {
-                          const cat = categoriesMap.get(ge.category);
-                          const stl = ge.items.reduce<typeof db.settlements[0] | null | undefined>((found, item) => {
-                            if (found) return found;
-                            if (item.settlementId) return settlementsMap.get(item.settlementId);
-                            return undefined;
-                          }, null) || (ge.settlementId ? settlementsMap.get(ge.settlementId) : null);
-                          const stlWallet = stl?.walletId ? walletsMap.get(stl.walletId) : undefined;
-                          const wallet = ge.items.reduce<typeof db.wallets[0] | null | undefined>((found, item) => {
-                            if (found) return found;
-                            return item.walletId ? walletsMap.get(item.walletId) : null;
-                          }, null) || walletsMap.get(ge.walletId) || stlWallet;
-
-                          const groupStatus = getGroupSettlementStatus(ge);
-
-                          return (
-                            <ExpenseMobileCard
-                              key={ge.id}
-                              ge={ge}
-                              currency={currency}
-                              onSelectDetail={setSelectedDetailGe}
-                              onEdit={setEditExp}
-                              onDelete={setDelId}
-                              onUndo={setUndoExpId}
-                              groupStatus={groupStatus}
-                              categoryObj={cat}
-                              walletObj={wallet}
-                              friendsMap={friendsMap}
-                              walletsMap={walletsMap}
-                              settlementObj={stl}
-                            />
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
               );
             })}
           </div>
@@ -701,51 +719,56 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
         </>
       )}
 
-      {showAdd && <ExpenseModal onClose={() => setShowAdd(false)} />}
-      {editExp && <ExpenseModal expense={editExp} onClose={() => setEditExp(null)} />}
-      {selectedDetailGe && (
-        <ExpenseDetailDrawer
-          ge={selectedDetailGe}
-          onClose={() => setSelectedDetailGe(null)}
-          onEdit={(exp) => {
-            setSelectedDetailGe(null);
-            setEditExp(exp);
-          }}
-          onDelete={(id) => {
-            setSelectedDetailGe(null);
-            setDelId(id);
-          }}
-          onUndo={(id) => {
-            setSelectedDetailGe(null);
-            setUndoExpId(id);
-          }}
-          currency={currency}
-          friends={db.friends}
-          wallets={db.wallets}
-          categories={db.settings.categories}
-          settlements={db.settlements}
-        />
-      )}
-      {delId && (
-        <ConfirmDialog
-          title="Delete Expense"
-          message="Are you sure? This will remove the expense, adjust wallet balances, and update friend accounts."
-          confirmLabel="Delete"
-          danger
-          onConfirm={() => handleDelete(delId)}
-          onClose={() => setDelId(null)}
-        />
-      )}
-      {undoExpId && (
-        <ConfirmDialog
-          title="Undo Settlement"
-          message="Are you sure you want to undo this settlement? The settled money will be deducted/restored to your wallet, and this friend's debt balance will become unpaid again."
-          confirmLabel="Undo Settlement"
-          danger
-          onConfirm={handleUnsettleConfirm}
-          onClose={() => setUndoExpId(null)}
-        />
-      )}
+      <AnimatePresence>
+        {showAdd && <ExpenseModal key="add-modal" onClose={() => setShowAdd(false)} />}
+        {editExp && <ExpenseModal key="edit-modal" expense={editExp} onClose={() => setEditExp(null)} />}
+        {selectedDetailGe && (
+          <ExpenseDetailDrawer
+            key="detail-drawer"
+            ge={selectedDetailGe}
+            onClose={() => setSelectedDetailGe(null)}
+            onEdit={(exp) => {
+              setSelectedDetailGe(null);
+              setEditExp(exp);
+            }}
+            onDelete={(id) => {
+              setSelectedDetailGe(null);
+              setDelId(id);
+            }}
+            onUndo={(id) => {
+              setSelectedDetailGe(null);
+              setUndoExpId(id);
+            }}
+            currency={currency}
+            friends={db.friends}
+            wallets={db.wallets}
+            categories={db.settings.categories}
+            settlements={db.settlements}
+          />
+        )}
+        {delId && (
+          <ConfirmDialog
+            key="delete-dialog"
+            title="Delete Expense"
+            message="Are you sure? This will remove the expense, adjust wallet balances, and update friend accounts."
+            confirmLabel="Delete"
+            danger
+            onConfirm={() => handleDelete(delId)}
+            onClose={() => setDelId(null)}
+          />
+        )}
+        {undoExpId && (
+          <ConfirmDialog
+            key="undo-dialog"
+            title="Undo Settlement"
+            message="Are you sure you want to undo this settlement? The settled money will be deducted/restored to your wallet, and this friend's debt balance will become unpaid again."
+            confirmLabel="Undo Settlement"
+            danger
+            onConfirm={handleUnsettleConfirm}
+            onClose={() => setUndoExpId(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

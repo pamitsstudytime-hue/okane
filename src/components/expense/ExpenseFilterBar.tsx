@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'motion/react';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import {
@@ -89,40 +90,30 @@ export const ExpenseFilterBar: React.FC<Props> = ({
     }
   }, [showFilters]);
 
-  if (!showFilters) return null;
-
   return createPortal(
-    <div
-      className="filter-drawer-overlay"
-      onClick={e => {
-        if (e.target === e.currentTarget) setShowFilters(false);
-      }}
-    >
-      <div className="filter-drawer-panel">
-        {/* Mobile Grab Handle */}
-        <div
-          className="mobile-only"
-          style={{
-            width: '100%',
-            paddingTop: '10px',
-            paddingBottom: '2px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'var(--surface)',
-          }}
-        >
-          <div
-            style={{
-              width: '36px',
-              height: '4px',
-              borderRadius: '999px',
-              backgroundColor: 'var(--text-3)',
-              opacity: 0.4,
-              margin: '0 auto',
-            }}
+    <AnimatePresence>
+      {showFilters && (
+        <div className="modal-backdrop-motion">
+          {/* Backdrop overlay */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="modal-backdrop-overlay"
+            onClick={() => setShowFilters(false)}
           />
-        </div>
+
+          {/* Sheet panel / Desktop center dialog */}
+          <motion.div
+            initial={isMobile ? { y: '100%' } : { opacity: 0, scale: 0.95, y: 16 }}
+            animate={isMobile ? { y: 0 } : { opacity: 1, scale: 1, y: 0 }}
+            exit={isMobile ? { y: '100%' } : { opacity: 0, scale: 0.95, y: 16 }}
+            transition={{ duration: isMobile ? 0.32 : 0.2, ease: [0.22, 1, 0.36, 1] }}
+            className="filter-drawer-panel modal-dialog-panel"
+          >
+            {/* Top Drag Handle Pill */}
+            <div className="modal-drag-handle" />
 
         {/* Drawer Header */}
         <div
@@ -606,9 +597,11 @@ export const ExpenseFilterBar: React.FC<Props> = ({
             Apply Filters
           </button>
         </div>
-      </div>
-    </div>,
-    document.body
+      </motion.div>
+    </div>
+  )}
+</AnimatePresence>,
+document.body
   );
 };
 export default ExpenseFilterBar;

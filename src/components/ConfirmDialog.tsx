@@ -1,4 +1,5 @@
 import { createPortal } from 'react-dom';
+import { motion } from 'motion/react';
 import { X, AlertTriangle, Trash2, HelpCircle } from 'lucide-react';
 
 interface Props {
@@ -14,12 +15,24 @@ export default function ConfirmDialog({ title, message, confirmLabel = 'Delete',
   const isDeleteAction = confirmLabel.toLowerCase().includes('delete') || confirmLabel.toLowerCase().includes('remove');
 
   return createPortal(
-    <div
-      className="modal-backdrop"
-      style={{ zIndex: 100095 }}
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      <div className="modal confirm-modal" onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)' }}>
+    <div className="modal-backdrop-motion" style={{ alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="modal-backdrop-overlay"
+        onClick={onClose}
+      />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 8 }}
+        transition={{ duration: 0.2 }}
+        className="modal confirm-modal modal-dialog-panel"
+        onClick={e => e.stopPropagation()}
+        style={{ background: 'var(--surface)' }}
+      >
         <div className="modal-header" style={{ padding: '18px 20px 10px', borderBottom: 'none', background: 'transparent' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div
@@ -87,7 +100,7 @@ export default function ConfirmDialog({ title, message, confirmLabel = 'Delete',
             {confirmLabel}
           </button>
         </div>
-      </div>
+      </motion.div>
     </div>,
     document.body
   );

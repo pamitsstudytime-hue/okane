@@ -1,5 +1,62 @@
 /* Okane App Styles */
 
+*, *::before, *::after {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Tactile Tap Feedback & Micro-Interactions */
+button:not(:disabled),
+[role="button"],
+.btn,
+.btn-icon,
+.memento-card,
+.chip,
+.pill,
+.floating-action-btn,
+.fab-btn {
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 150ms ease, background-color 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+}
+
+button:not(:disabled):active,
+[role="button"]:active,
+.btn:active,
+.btn-icon:active,
+.memento-card:active,
+.chip:active,
+.pill:active,
+.floating-action-btn:active,
+.fab-btn:active {
+  transform: scale(0.95);
+}
+
+.btn-primary,
+button[type="submit"] {
+  transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease, transform 150ms ease, box-shadow 200ms ease;
+}
+
+.btn-primary:active,
+button[type="submit"]:active {
+  transform: scale(0.97) !important;
+}
+
+/* Horizontal Shake Error Feedback */
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  20%, 60% {
+    transform: translateX(-6px);
+  }
+  40%, 80% {
+    transform: translateX(6px);
+  }
+}
+
+.animate-shake {
+  animation: shake 400ms ease-in-out;
+}
+
 :root {
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --bg: #f8f9fa;
@@ -2051,6 +2108,80 @@ input, textarea, [contenteditable="true"], .selectable-text {
 }
 
 /* Modal */
+.modal-backdrop-motion {
+  position: fixed !important;
+  inset: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  z-index: 1400 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 16px !important;
+  pointer-events: auto !important;
+  box-sizing: border-box !important;
+}
+
+.modal-backdrop-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  background: rgba(0, 0, 0, 0.65) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  z-index: 1400 !important;
+  pointer-events: auto !important;
+}
+
+.modal-dialog-panel {
+  position: relative !important;
+  z-index: 1401 !important;
+  width: 100% !important;
+  max-width: 440px !important;
+  margin: auto !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
+}
+
+.modal-drag-handle {
+  width: 42px !important;
+  height: 4.5px !important;
+  border-radius: 99px !important;
+  background: var(--border2, #444) !important;
+  margin: 10px auto 6px !important;
+  flex-shrink: 0 !important;
+  display: none !important;
+}
+
+@media (max-width: 640px) {
+  .modal-backdrop-motion {
+    align-items: flex-end !important;
+    justify-content: center !important;
+    padding: 0 !important;
+  }
+  .modal-dialog-panel {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+  }
+  .modal-drag-handle {
+    display: block !important;
+  }
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
