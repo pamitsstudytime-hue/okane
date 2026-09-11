@@ -63,6 +63,18 @@ export default function WalletModal({ wallet, onClose }: Props) {
     }
   };
 
+  const handleClear = () => {
+    setOpeningBalance('0');
+    setSelectedPresetId('gpay');
+    const defaultPreset = WALLET_PRESETS.find(p => p.id === 'gpay');
+    setName(defaultPreset ? defaultPreset.defaultName : 'Google Pay');
+    setIsDefault(false);
+    setError('');
+    if (nameInputRef.current) {
+      nameInputRef.current.focus();
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
@@ -122,7 +134,7 @@ export default function WalletModal({ wallet, onClose }: Props) {
         {/* Top drag handle pill */}
         <div className="modal-drag-handle" />
 
-        {/* Themed Modal Header matching Transfer & Expense Drawers */}
+        {/* Themed Modal Header */}
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div
@@ -130,23 +142,20 @@ export default function WalletModal({ wallet, onClose }: Props) {
                 width: 34,
                 height: 34,
                 borderRadius: 8,
-                background: 'var(--accent-soft)',
+                background: 'transparent',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'var(--accent)',
+                color: 'var(--text)',
                 flexShrink: 0,
               }}
             >
-              <WalletIcon size={18} />
+              <WalletIcon size={19} />
             </div>
             <div>
-              <span className="modal-title" style={{ fontSize: 16 }}>
+              <span className="modal-title" style={{ fontSize: 16, fontWeight: 700 }}>
                 {wallet ? 'Edit Wallet' : 'New Wallet'}
               </span>
-              <div style={{ fontSize: 11.5, color: 'var(--text-3)' }}>
-                {wallet ? 'Update wallet details and balance' : 'Add a new payment account or wallet'}
-              </div>
             </div>
           </div>
           <button
@@ -154,6 +163,15 @@ export default function WalletModal({ wallet, onClose }: Props) {
             className="btn-icon"
             onClick={onClose}
             aria-label="Close dialog"
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+            }}
           >
             <X size={18} />
           </button>
@@ -321,17 +339,16 @@ export default function WalletModal({ wallet, onClose }: Props) {
                         gap: 4,
                         padding: '8px 4px 6px',
                         borderRadius: 10,
-                        border: isSelected
-                          ? '1px solid var(--border2)'
-                          : '1px solid var(--border)',
+                        border: '1px solid var(--border)',
                         background: isSelected
-                          ? 'var(--surface)'
+                          ? 'var(--surface3)'
                           : 'var(--surface2)',
                         boxShadow: isSelected
-                          ? '0 1px 3px rgba(0, 0, 0, 0.1)'
+                          ? '0 2px 6px rgba(0, 0, 0, 0.12)'
                           : 'none',
                         cursor: 'pointer',
                         transition: 'all 0.15s ease',
+                        position: 'relative',
                       }}
                     >
                       <div
@@ -342,6 +359,8 @@ export default function WalletModal({ wallet, onClose }: Props) {
                           alignItems: 'center',
                           justifyContent: 'center',
                           flexShrink: 0,
+                          transform: isSelected ? 'scale(1.04)' : 'scale(1)',
+                          transition: 'transform 0.15s ease',
                         }}
                       >
                         {renderWalletIcon(preset.iconKey, 28, preset.color)}
@@ -350,7 +369,7 @@ export default function WalletModal({ wallet, onClose }: Props) {
                         style={{
                           fontSize: 10.5,
                           fontWeight: isSelected ? 700 : 500,
-                          color: isSelected ? 'var(--accent)' : 'var(--text-2)',
+                          color: isSelected ? 'var(--text)' : 'var(--text-2)',
                           textAlign: 'center',
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
@@ -373,49 +392,41 @@ export default function WalletModal({ wallet, onClose }: Props) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '11px 14px',
+                padding: '12px 14px',
                 borderRadius: 12,
-                background: isDefault ? 'var(--surface)' : 'var(--surface2)',
-                border: isDefault ? '1px solid var(--border2)' : '1px solid var(--border)',
-                boxShadow: isDefault ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+                background: 'var(--surface2)',
+                border: '1px solid var(--border)',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 userSelect: 'none',
                 gap: 12,
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 11, minWidth: 0, flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
                 <div
                   style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: 9,
-                    background: isDefault ? 'var(--surface2)' : 'var(--surface3)',
+                    width: 28,
+                    height: 28,
+                    background: 'transparent',
                     color: isDefault ? 'var(--text)' : 'var(--text-3)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     transition: 'all 0.2s ease',
                     flexShrink: 0,
-                    boxShadow: isDefault ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
                   }}
                 >
-                  <CheckCircle2 size={18} strokeWidth={isDefault ? 2.4 : 1.8} style={{ color: 'inherit' }} />
+                  <CheckCircle2 size={20} strokeWidth={isDefault ? 2.2 : 1.7} style={{ color: 'inherit' }} />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontSize: 13.5,
-                      fontWeight: 650,
-                      color: 'var(--text)',
-                      lineHeight: 1.25,
-                    }}
-                  >
-                    Set as Default Wallet
-                  </div>
-                  <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2, lineHeight: 1.25 }}>
-                    Auto-selected for new transactions and settlements
-                  </div>
+                <div
+                  style={{
+                    fontSize: 13.5,
+                    fontWeight: 650,
+                    color: 'var(--text)',
+                    lineHeight: 1.2,
+                  }}
+                >
+                  Set as Default Wallet
                 </div>
               </div>
 
@@ -449,56 +460,64 @@ export default function WalletModal({ wallet, onClose }: Props) {
               </div>
             </div>
 
-            {/* 5. ACTION BUTTONS: Cancel on Left, Confirm/Add on Right */}
+            {/* 5. ACTION BUTTONS: Clear on Left, Confirm/Add on Right */}
             <div
               style={{
                 display: 'flex',
-                gap: 8,
+                gap: 10,
                 justifyContent: 'flex-end',
-                marginTop: 4,
+                marginTop: 6,
               }}
             >
               <button
                 type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={onClose}
+                className="btn btn-secondary"
+                onClick={handleClear}
                 style={{
                   flex: 1,
-                  height: 36,
-                  borderRadius: 8,
-                  fontSize: 12.5,
-                  fontWeight: 600,
+                  height: 40,
+                  borderRadius: 9999,
+                  fontSize: 13,
+                  fontWeight: 650,
                   border: '1px solid var(--border)',
                   background: 'var(--surface2)',
-                  color: 'var(--text-2)',
+                  color: 'var(--text)',
                   cursor: 'pointer',
-                  padding: '6px 14px',
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="btn btn-primary btn-sm"
-                style={{
-                  flex: 1.2,
-                  height: 36,
-                  borderRadius: 8,
-                  fontSize: 12.5,
-                  fontWeight: 600,
-                  background: 'var(--accent)',
-                  color: 'var(--accent-contrast, #ffffff)',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '6px 16px',
-                  display: 'flex',
+                  padding: '0 16px',
+                  display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: 6,
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                  transition: 'all 0.15s ease',
                 }}
               >
-                {wallet ? <Check size={14} /> : <Plus size={14} />}
+                <X size={15} style={{ color: 'var(--text)' }} />
+                <span>Clear</span>
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                style={{
+                  flex: 1.35,
+                  height: 40,
+                  borderRadius: 9999,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  background: 'var(--text)',
+                  border: '1px solid var(--text)',
+                  color: 'var(--bg)',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+                  cursor: 'pointer',
+                  padding: '0 18px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {wallet ? <Check size={15} style={{ color: 'inherit' }} /> : <Plus size={15} style={{ color: 'inherit' }} />}
                 <span>{wallet ? 'Save Changes' : 'Add Wallet'}</span>
               </button>
             </div>
