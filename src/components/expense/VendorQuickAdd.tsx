@@ -21,24 +21,24 @@ export function VendorQuickAdd({
   return (
     <div className="form-group">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: 18, height: 18, marginBottom: 2 }}>
-        <label className="form-label" style={{ margin: 0, fontSize: 11, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-          <Store size={12} style={{ color: 'var(--text-3)' }} /> Vendor (Optional)
-        </label>
-        <button
-          type="button"
+        <label
+          className="form-label"
           style={{
-            background: 'none',
-            border: 'none',
-            fontSize: 10,
-            fontWeight: 600,
-            color: 'var(--accent)',
-            cursor: 'pointer',
-            padding: 0,
+            margin: 0,
+            fontSize: 10.5,
+            fontWeight: 750,
+            display: 'inline-flex',
+            alignItems: 'baseline',
+            gap: 4,
+            whiteSpace: 'nowrap',
           }}
-          onClick={() => setShowVendorModal(true)}
         >
-          + Add
-        </button>
+          <Store size={12} style={{ color: 'var(--text-3)', alignSelf: 'center' }} />
+          <span>Vendor</span>
+          <span style={{ fontSize: 8.5, fontWeight: 500, opacity: 0.65, letterSpacing: '0.2px', textTransform: 'lowercase' }}>
+            (optional)
+          </span>
+        </label>
       </div>
 
       <select
@@ -52,7 +52,7 @@ export function VendorQuickAdd({
           }
         }}
       >
-        <option value="">— None —</option>
+        <option value="">None</option>
         {vendorsList.map(v => (
           <option key={v.id} value={v.id}>{v.name}</option>
         ))}

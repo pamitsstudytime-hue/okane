@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
-import { X, TrendingDown, TrendingUp, User, Users, HeartHandshake, FileText, Sparkles } from 'lucide-react';
+import { X, TrendingDown, TrendingUp, User, Users, HeartHandshake, Sparkles, Feather, Plus, ChevronRight } from 'lucide-react';
 import { useStore } from '../store';
 import type { Expense, ExpenseType, ExpenseFlow, ExpenseStatus } from '../types';
 import { todayISO, uid, friendBalance, unsettledExpensesForFriend } from '../db';
@@ -782,7 +782,8 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                           setError('');
                         }}
                       >
-                        <User size={14} /> Just Me
+                        <User size={14} style={{ color: 'inherit' }} />
+                        <span>Just Me</span>
                       </button>
                       <button
                         type="button"
@@ -799,7 +800,8 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                           setError('');
                         }}
                       >
-                        <Users size={14} /> With Friends
+                        <Users size={14} style={{ color: 'inherit' }} />
+                        <span>With Friends</span>
                       </button>
                       <button
                         type="button"
@@ -810,7 +812,8 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                           setError('');
                         }}
                       >
-                        <HeartHandshake size={14} /> Someone Paid
+                        <HeartHandshake size={14} style={{ color: 'inherit' }} />
+                        <span>Someone Paid</span>
                       </button>
                     </div>
                   </div>
@@ -823,7 +826,8 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                         style={{
                           padding: '10px 14px',
                           background: 'var(--surface2)',
-                          borderRadius: 16,
+                          borderRadius: 14,
+                          border: '1px solid var(--border)',
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
@@ -856,45 +860,41 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                                 ? `Splitting with ${selectedFriendIds.length} Friend${selectedFriendIds.length > 1 ? 's' : ''}`
                                 : 'Tap to Select Friends & Split'}
                             </div>
-                            <div style={{ fontSize: 11, color: 'var(--text-2)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {selectedFriendIds.length > 0 ? (
-                                <>
-                                  Friends Owe: <strong style={{ color: 'var(--credit)' }}>{fmtMoney(totalFriendsShare, s.currency)}</strong>
-                                  {isYouSelected && ((parseFloat(amount) || 0) - totalFriendsShare) > 0.001 && (
-                                    <>
-                                      {' • '}
-                                      My Share: <strong style={{ color: 'var(--accent)' }}>{fmtMoney((parseFloat(amount) || 0) - totalFriendsShare, s.currency)}</strong>
-                                    </>
-                                  )}
-                                </>
-                              ) : (
-                                'Set who shared this expense & split rules'
-                              )}
-                            </div>
+                            {selectedFriendIds.length > 0 && (
+                              <div style={{ fontSize: 11, color: 'var(--text-2)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                Friends Owe: <strong style={{ color: 'var(--credit)' }}>{fmtMoney(totalFriendsShare, s.currency)}</strong>
+                                {isYouSelected && ((parseFloat(amount) || 0) - totalFriendsShare) > 0.001 && (
+                                  <>
+                                    {' • '}
+                                    My Share: <strong style={{ color: 'var(--accent)' }}>{fmtMoney((parseFloat(amount) || 0) - totalFriendsShare, s.currency)}</strong>
+                                  </>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
 
-                        <button
-                          type="button"
+                        <div
                           style={{
-                            background: 'var(--accent-gradient, var(--accent))',
-                            color: 'var(--accent-contrast, #ffffff)',
-                            border: 'none',
-                            padding: '4px 12px',
-                            borderRadius: 9999,
-                            fontSize: 11,
-                            fontWeight: 750,
-                            cursor: 'pointer',
-                            whiteSpace: 'nowrap',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 3,
+                            width: 28,
+                            height: 28,
+                            borderRadius: '50%',
+                            background: 'var(--surface3)',
+                            border: '1px solid var(--border)',
+                            color: 'var(--text)',
+                            display: 'grid',
+                            placeItems: 'center',
                             flexShrink: 0,
-                            boxShadow: '0 2px 6px var(--accent-soft)',
+                            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
+                            transition: 'all 0.15s ease',
                           }}
                         >
-                          {selectedFriendIds.length > 0 ? 'Edit' : '+ Add'}
-                        </button>
+                          {selectedFriendIds.length > 0 ? (
+                            <ChevronRight size={15} />
+                          ) : (
+                            <Plus size={14} strokeWidth={2.5} />
+                          )}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -906,7 +906,7 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                         Who Paid For You? *
                       </label>
                       <select className="form-select" value={friendId} onChange={e => setFriendId(e.target.value)}>
-                        <option value="">— select friend who paid —</option>
+                        <option value="">Select friend who paid</option>
                         {db.friends.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
                       </select>
                     </div>
@@ -920,23 +920,12 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                       </label>
                       <button
                         type="button"
-                        style={{
-                          background: notes ? 'var(--accent-soft)' : 'var(--surface2)',
-                          border: 'none',
-                          borderRadius: 9999,
-                          fontSize: 10.5,
-                          fontWeight: 700,
-                          color: notes ? 'var(--accent)' : 'var(--text-2)',
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 4,
-                          padding: '3px 10px',
-                          transition: 'all 0.15s ease',
-                        }}
+                        className={`btn-note-feather ${notes ? 'has-note' : ''}`}
                         onClick={() => setIsNoteModalOpen(true)}
+                        title={notes ? `Note: ${notes}` : "Add note"}
+                        aria-label={notes ? "Edit note" : "Add note"}
                       >
-                        <FileText size={11} /> {notes ? 'Note Added' : '+ Note'}
+                        <Feather size={13} strokeWidth={2.2} style={{ color: notes ? '#38bdf8' : 'var(--text-2)' }} />
                       </button>
                     </div>
                     <input
@@ -964,7 +953,7 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, overflow: 'hidden' }}>
-                          <FileText size={12} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+                          <Feather size={12} style={{ color: '#38bdf8', flexShrink: 0 }} />
                           <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {notes}
                           </span>
@@ -1047,10 +1036,10 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                                   height: 26,
                                   padding: '0 12px',
                                   borderRadius: 9999,
-                                  border: 'none',
-                                  background: isSelected ? 'var(--surface)' : 'var(--surface2)',
+                                  border: isSelected ? '1px solid var(--border)' : '1px solid transparent',
+                                  background: isSelected ? 'var(--surface2)' : 'var(--surface3)',
                                   color: isSelected ? 'var(--text)' : 'var(--text-2)',
-                                  boxShadow: isSelected ? '0 2px 8px rgba(0, 0, 0, 0.08)' : 'none',
+                                  boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.18)' : 'none',
                                   flexShrink: 0,
                                   display: 'inline-flex',
                                   alignItems: 'center',
@@ -1128,7 +1117,7 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                       <div className="form-group">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: 18, height: 18, marginBottom: 4 }}>
                           <label className="form-label" style={{ margin: 0, fontSize: 10.5, fontWeight: 750, letterSpacing: '0.6px', textTransform: 'uppercase', color: 'var(--text-3)' }}>
-                            {status === 'unpaid' ? 'Wallet (Debt)' : 'Paid From'}
+                            {status === 'unpaid' ? 'Wallet' : 'Paid From'}
                           </label>
                           <div
                             style={{
@@ -1147,8 +1136,8 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                               style={{
                                 display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: 4,
-                                padding: '2px 8px',
+                                justifyContent: 'center',
+                                padding: '2px 9px',
                                 borderRadius: 9999,
                                 border: 'none',
                                 fontSize: 10.5,
@@ -1161,15 +1150,6 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                               }}
                               onClick={() => setStatus('paid')}
                             >
-                              <span
-                                style={{
-                                  width: 5,
-                                  height: 5,
-                                  borderRadius: '50%',
-                                  background: status === 'paid' ? 'var(--credit, #10b981)' : 'var(--text-3)',
-                                  transition: 'background-color 0.15s ease',
-                                }}
-                              />
                               Paid
                             </button>
                             <button
@@ -1178,29 +1158,20 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                               style={{
                                 display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: 4,
-                                padding: '2px 8px',
+                                justifyContent: 'center',
+                                padding: '2px 9px',
                                 borderRadius: 9999,
                                 border: 'none',
                                 fontSize: 10.5,
                                 fontWeight: status === 'unpaid' ? 750 : 500,
                                 cursor: 'pointer',
-                                background: status === 'unpaid' ? 'var(--amber-bg, rgba(245, 158, 11, 0.14))' : 'transparent',
-                                color: status === 'unpaid' ? 'var(--amber, #f59e0b)' : 'var(--text-3)',
-                                boxShadow: status === 'unpaid' ? '0 1px 3px var(--amber-bg)' : 'none',
+                                background: status === 'unpaid' ? 'var(--debit-bg, rgba(239, 68, 68, 0.15))' : 'transparent',
+                                color: status === 'unpaid' ? 'var(--debit, #ef4444)' : 'var(--text-3)',
+                                boxShadow: status === 'unpaid' ? '0 1px 3px var(--debit-bg)' : 'none',
                                 transition: 'all 0.15s ease',
                               }}
                               onClick={() => setStatus('unpaid')}
                             >
-                              <span
-                                style={{
-                                  width: 5,
-                                  height: 5,
-                                  borderRadius: '50%',
-                                  background: status === 'unpaid' ? 'var(--amber, #f59e0b)' : 'var(--text-3)',
-                                  transition: 'background-color 0.15s ease',
-                                }}
-                              />
                               Debt
                             </button>
                           </div>
@@ -1236,7 +1207,8 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                           setError('');
                         }}
                       >
-                        <TrendingUp size={16} /> Income
+                        <TrendingUp size={16} style={{ color: 'inherit' }} />
+                        <span>Income</span>
                       </button>
                       <button
                         type="button"
@@ -1246,7 +1218,8 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                           setError('');
                         }}
                       >
-                        <HeartHandshake size={16} /> Debt Repayment
+                        <HeartHandshake size={16} style={{ color: 'inherit' }} />
+                        <span>Debt Repayment</span>
                       </button>
                     </div>
                   </div>
@@ -1258,23 +1231,12 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                           <label className="form-label" style={{ margin: 0, fontSize: 11.5, fontWeight: 600 }}>Income Source / Name *</label>
                           <button
                             type="button"
-                            style={{
-                              background: notes ? 'var(--accent-soft)' : 'transparent',
-                              border: notes ? '1px solid var(--accent-border-soft, rgba(236,72,153,0.25))' : 'none',
-                              borderRadius: 6,
-                              fontSize: 11,
-                              fontWeight: 650,
-                              color: notes ? 'var(--accent)' : 'var(--text-3)',
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: 4,
-                              padding: notes ? '2px 7px' : '2px 0',
-                              transition: 'all 0.15s ease',
-                            }}
+                            className={`btn-note-feather ${notes ? 'has-note' : ''}`}
                             onClick={() => setIsNoteModalOpen(true)}
+                            title={notes ? `Note: ${notes}` : "Add note"}
+                            aria-label={notes ? "Edit note" : "Add note"}
                           >
-                            <FileText size={12} /> {notes ? 'Note Added' : '+ Note'}
+                            <Feather size={13} strokeWidth={2.2} style={{ color: notes ? '#38bdf8' : 'var(--text-2)' }} />
                           </button>
                         </div>
                         <input
@@ -1301,7 +1263,7 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                             }}
                           >
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, overflow: 'hidden' }}>
-                              <FileText size={12} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+                              <Feather size={12} style={{ color: '#38bdf8', flexShrink: 0 }} />
                               <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                 {notes}
                               </span>
@@ -1328,7 +1290,19 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                           </div>
                         )}
                         {/* Quick Presets for Speed */}
-                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            overflowX: 'auto',
+                            whiteSpace: 'nowrap',
+                            scrollbarWidth: 'none',
+                            msOverflowStyle: 'none',
+                            marginTop: 8,
+                            paddingBottom: 2,
+                          }}
+                        >
                           {[
                             { label: 'Salary', value: 'Monthly Salary' },
                             { label: 'Parents / Pocket Money', value: 'Pocket Money from Parents' },
@@ -1340,21 +1314,30 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                               <button
                                 key={preset.value}
                                 type="button"
+                                title={preset.value}
                                 style={{
-                                  fontSize: 11,
-                                  fontWeight: isSelected ? 650 : 500,
-                                  padding: '3px 10px',
-                                  borderRadius: 999,
-                                  border: isSelected ? '1px solid var(--border2)' : '1px solid var(--border2)',
-                                  background: isSelected ? 'var(--surface)' : 'var(--surface2)',
+                                  fontSize: 11.5,
+                                  fontWeight: isSelected ? 750 : 600,
+                                  height: 26,
+                                  padding: '0 12px',
+                                  borderRadius: 9999,
+                                  border: isSelected ? '1px solid var(--border)' : '1px solid transparent',
+                                  background: isSelected ? 'var(--surface2)' : 'var(--surface3)',
                                   color: isSelected ? 'var(--text)' : 'var(--text-2)',
-                                  boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+                                  boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.18)' : 'none',
+                                  flexShrink: 0,
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  overflow: 'hidden',
+                                  whiteSpace: 'nowrap',
                                   cursor: 'pointer',
                                   transition: 'all 0.15s ease',
+                                  lineHeight: 1,
+                                  boxSizing: 'border-box',
                                 }}
                                 onClick={() => setDesc(preset.value)}
                               >
-                                {preset.label}
+                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{preset.label}</span>
                               </button>
                             );
                           })}
@@ -1409,7 +1392,7 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                             }
                           }}
                         >
-                          <option value="">— select friend who paid back —</option>
+                          <option value="">Select friend who paid back</option>
                           {db.friends.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
                         </select>
                       </div>
@@ -1467,7 +1450,7 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
             style={{
               padding: '8px 16px calc(14px + env(safe-area-inset-bottom, 0px))',
               background: 'var(--surface)',
-              borderTop: '1px solid var(--border)',
+              borderTop: 'none',
               display: 'flex',
               gap: 10,
               flexShrink: 0,
@@ -1479,18 +1462,18 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
               onClick={onClose}
               style={{
                 flex: 1,
-                height: 44,
+                height: 40,
                 borderRadius: 9999,
                 background: 'var(--surface2)',
                 border: '1px solid var(--border)',
                 color: 'var(--text)',
                 fontWeight: 700,
-                fontSize: 13.5,
+                fontSize: 13,
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 7,
-                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.05)',
+                gap: 6,
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
                 transition: 'all 0.15s ease',
@@ -1501,24 +1484,24 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
             </button>
             <button
               type="submit"
-              className={`btn ${flow === 'out' ? 'btn-drawer-debit' : 'btn-drawer-credit'}`}
+              className="btn btn-drawer-save-mono"
               style={{
                 flex: 1.25,
-                height: 44,
+                height: 40,
                 borderRadius: 9999,
                 fontWeight: 700,
-                fontSize: 13.5,
+                fontSize: 13,
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 7,
+                gap: 6,
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
                 transition: 'all 0.15s ease',
-                background: flow === 'out' ? 'var(--debit-bg)' : 'var(--credit-bg)',
-                border: flow === 'out' ? '1.5px solid var(--debit-border)' : '1.5px solid var(--credit-border)',
-                color: flow === 'out' ? 'var(--debit)' : 'var(--credit)',
-                boxShadow: flow === 'out' ? '0 2px 8px var(--debit-bg)' : '0 2px 8px var(--credit-bg)',
+                background: 'var(--text)',
+                border: '1px solid var(--text)',
+                color: 'var(--bg)',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
               }}
             >
               {flow === 'out' ? (

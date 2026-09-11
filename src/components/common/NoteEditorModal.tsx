@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { FileText, X, Check, Trash2 } from 'lucide-react';
+import { X, Check, Trash2 } from 'lucide-react';
 import { useBackButtonModal, BackPriority } from '../../utils/backHandler';
 import { showSoftKeyboard } from '../../utils/keyboard';
 
@@ -21,7 +21,7 @@ export function NoteEditorModal({
   initialNote = '',
   onSave,
   placeholder = 'Add optional notes or remarks...',
-  quickTags = ['Roommate', 'Family', 'Office colleague', 'Splitwise friend', 'UPI ID'],
+  quickTags,
 }: NoteEditorModalProps) {
   useBackButtonModal(isOpen, onClose, { priority: BackPriority.DIALOG });
 
@@ -47,7 +47,7 @@ interface ContentProps {
   initialNote: string;
   onSave: (note: string) => void;
   placeholder: string;
-  quickTags: string[];
+  quickTags?: string[];
 }
 
 function NoteEditorContent({
@@ -56,7 +56,6 @@ function NoteEditorContent({
   initialNote = '',
   onSave,
   placeholder,
-  quickTags,
 }: ContentProps) {
   const [tempNote, setTempNote] = useState(initialNote || '');
   const [isFocused, setIsFocused] = useState(false);
@@ -72,35 +71,16 @@ function NoteEditorContent({
     return () => clearTimeout(timer);
   }, []);
 
-  const handleTagClick = (tag: string) => {
-    const current = tempNote || '';
-    if (!current.trim()) {
-      setTempNote(tag);
-    } else if (current.includes(tag)) {
-      // Toggle off if only this tag or remove from note
-      const cleaned = current
-        .replace(new RegExp(`(^|,\\s*)${tag}(,\\s*|$)`, 'g'), ', ')
-        .replace(/^,\s*|,\s*$/g, '')
-        .trim();
-      setTempNote(cleaned);
-    } else {
-      setTempNote(prev => `${(prev || '').trim()}, ${tag}`);
-    }
-  };
-
   const handleClear = () => {
     setTempNote('');
-    onSave('');
-    onClose();
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+    }
   };
 
   const handleSave = () => {
     onSave((tempNote || '').trim());
     onClose();
-  };
-
-  const isTagActive = (tag: string) => {
-    return (tempNote || '').toLowerCase().includes(tag.toLowerCase());
   };
 
   return (
@@ -129,36 +109,15 @@ function NoteEditorContent({
         {/* Modal Header */}
         <div
           style={{
-            padding: '12px 18px 14px',
+            padding: '14px 20px 12px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: 12,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 8,
-                background: 'var(--accent-soft)',
-                color: 'var(--accent)',
-                display: 'grid',
-                placeItems: 'center',
-                flexShrink: 0,
-              }}
-            >
-              <FileText size={16} strokeWidth={2.2} />
-            </div>
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>
-                {title}
-              </div>
-              <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 1 }}>
-                Optional remarks or payment details
-              </div>
-            </div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.2px' }}>
+            {title}
           </div>
           <button
             type="button"
@@ -183,12 +142,12 @@ function NoteEditorContent({
         </div>
 
         {/* Modal Body */}
-        <div style={{ padding: '0 18px 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {/* Note Input with dynamic theme focus border */}
+        <div style={{ padding: '0 20px 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Note Input with clean neutral focus border - no accent color */}
           <div style={{ position: 'relative' }}>
             <textarea
               ref={textareaRef}
-              rows={3}
+              rows={4}
               placeholder={placeholder}
               value={tempNote}
               onFocus={() => setIsFocused(true)}
@@ -203,8 +162,8 @@ function NoteEditorContent({
               style={{
                 width: '100%',
                 background: 'var(--surface2)',
-                border: isFocused ? '1.5px solid var(--accent)' : '1px solid var(--border)',
-                borderRadius: 12,
+                border: isFocused ? '1px solid var(--border2)' : '1px solid var(--border)',
+                borderRadius: 14,
                 padding: '12px 14px',
                 fontSize: 13.5,
                 color: 'var(--text)',
@@ -213,109 +172,74 @@ function NoteEditorContent({
                 lineHeight: 1.5,
                 fontFamily: 'inherit',
                 boxSizing: 'border-box',
-                boxShadow: isFocused ? '0 0 0 3px var(--accent-soft)' : 'none',
+                boxShadow: isFocused ? '0 0 0 1px var(--border2)' : 'none',
                 transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
               }}
             />
           </div>
-
-          {/* Quick Tags Section */}
-          {quickTags && quickTags.length > 0 && (
-            <div>
-              <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 7, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Quick suggestions
-              </div>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {quickTags.map(tag => {
-                  const active = isTagActive(tag);
-                  return (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => handleTagClick(tag)}
-                      style={{
-                        background: active ? 'var(--surface)' : 'var(--surface2)',
-                        border: active ? '1px solid var(--border2)' : '1px solid var(--border)',
-                        color: active ? 'var(--text)' : 'var(--text-2)',
-                        fontSize: 11.5,
-                        fontWeight: active ? 650 : 500,
-                        padding: '4px 10px',
-                        borderRadius: 8,
-                        cursor: 'pointer',
-                        boxShadow: active ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
-                        transition: 'all 0.15s ease',
-                        whiteSpace: 'nowrap',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 4,
-                      }}
-                    >
-                      {active && <Check size={11} strokeWidth={2.5} />}
-                      <span>{tag}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* Modal Footer */}
+        {/* Modal Footer - Pill buttons matching Cancel & Record Expense */}
         <div
           style={{
-            padding: '12px 18px 18px',
+            padding: '8px 20px 18px',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
             gap: 10,
           }}
         >
           <button
             type="button"
+            className="btn btn-drawer-cancel"
             onClick={handleClear}
             style={{
+              flex: 1,
+              height: 44,
+              borderRadius: 9999,
               background: 'var(--surface2)',
               border: '1px solid var(--border)',
-              color: tempNote ? 'var(--danger, #ef4444)' : 'var(--text-3)',
-              borderRadius: 9,
-              padding: '8px 14px',
-              fontSize: 12.5,
-              fontWeight: 600,
-              cursor: tempNote ? 'pointer' : 'default',
-              transition: 'all 0.15s ease',
+              color: 'var(--text)',
+              fontWeight: 700,
+              fontSize: 13.5,
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 4.5,
-              opacity: tempNote ? 1 : 0.7,
+              justifyContent: 'center',
+              gap: 7,
+              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.05)',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              transition: 'all 0.15s ease',
             }}
           >
-            <Trash2 size={13} strokeWidth={2} />
+            <Trash2 size={15} style={{ color: 'var(--text-2)' }} />
             <span>Clear</span>
           </button>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              type="button"
-              onClick={handleSave}
-              style={{
-                background: 'var(--accent)',
-                color: 'var(--accent-contrast, #ffffff)',
-                border: 'none',
-                borderRadius: 9,
-                padding: '8px 16px',
-                fontSize: 12.5,
-                fontWeight: 650,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
-                transition: 'all 0.15s ease',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              }}
-            >
-              <Check size={14} strokeWidth={2.5} />
-              <span>Save Note</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            className="btn btn-drawer-save-mono"
+            onClick={handleSave}
+            style={{
+              flex: 1.25,
+              height: 44,
+              borderRadius: 9999,
+              background: 'var(--text)',
+              color: 'var(--bg)',
+              border: 'none',
+              fontWeight: 700,
+              fontSize: 13.5,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 7,
+              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <Check size={16} strokeWidth={2.4} style={{ color: 'var(--bg)' }} />
+            <span>Save Note</span>
+          </button>
         </div>
       </div>
     </div>

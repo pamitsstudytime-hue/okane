@@ -428,20 +428,20 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
       />
 
       {filtered.length === 0 ? (
-        <div className="card" style={{ border: '1px solid var(--border)' }}>
-          <div className="empty-state" style={{ padding: '48px 24px' }}>
-            <div className="empty-state-icon" style={{ opacity: 0.65, color: 'var(--text-3)' }}>
+        <div className="card empty-state-card">
+          <div className="empty-state">
+            <div className="empty-state-icon-badge">
               {hasActiveFilters ? (
-                <Filter size={40} />
+                <Filter size={24} strokeWidth={1.8} />
               ) : flowFilter === 'out' ? (
-                <ArrowUpRight size={40} />
+                <ArrowUpRight size={24} strokeWidth={1.8} />
               ) : flowFilter === 'in' ? (
-                <ArrowDownLeft size={40} />
+                <ArrowDownLeft size={24} strokeWidth={1.8} />
               ) : (
-                <ReceiptText size={40} />
+                <ReceiptText size={24} strokeWidth={1.8} />
               )}
             </div>
-            <div className="empty-state-title" style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text)' }}>
+            <div className="empty-state-title">
               {hasActiveFilters
                 ? 'No matching expenses'
                 : flowFilter === 'out'
@@ -450,7 +450,7 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
                 ? 'No income yet'
                 : 'No expenses yet'}
             </div>
-            <p style={{ maxWidth: '340px', margin: '0 auto 20px', color: 'var(--text-2)', fontSize: '13px', lineHeight: 1.5 }}>
+            <p className="empty-state-desc">
               {hasActiveFilters
                 ? 'No transactions match your active filters or search.'
                 : flowFilter === 'out'
@@ -460,12 +460,13 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
                 : 'Log daily purchases, bills, and income to start tracking.'}
             </p>
             {hasActiveFilters ? (
-              <button className="btn btn-ghost btn-sm" onClick={handleClearAllFilters}>
+              <button className="btn btn-secondary btn-sm" onClick={handleClearAllFilters}>
                 Clear Filters
               </button>
             ) : (
-              <button className="btn btn-primary btn-sm" onClick={() => setShowAdd(true)}>
-                <Plus size={15} /> Add Expense
+              <button className="empty-state-btn" onClick={() => setShowAdd(true)}>
+                <Plus size={16} strokeWidth={2.2} />
+                <span>Add Expense</span>
               </button>
             )}
           </div>

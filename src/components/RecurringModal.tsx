@@ -14,7 +14,7 @@ import {
   Store,
   Plus,
   Search,
-  FileText
+  Feather
 } from 'lucide-react';
 import { useStore } from '../store';
 import type { RecurringRule, RecurringKind, FrequencyType, ExpenseType } from '../types';
@@ -449,25 +449,12 @@ export default function RecurringModal({ rule, defaultKind = 'autopay', onClose 
                 </label>
                 <button
                   type="button"
+                  className={`btn-note-feather ${notes ? 'has-note' : ''}`}
                   onClick={() => setIsNoteModalOpen(true)}
                   title={notes ? `Note: "${notes}"` : 'Add a note'}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 3.5,
-                    background: notes ? 'var(--accent-soft)' : 'transparent',
-                    border: notes ? '1px solid var(--accent-border-soft, rgba(236,72,153,0.25))' : 'none',
-                    borderRadius: 6,
-                    padding: notes ? '2px 7px' : '2px 0',
-                    fontSize: 10.5,
-                    fontWeight: 650,
-                    color: notes ? 'var(--accent)' : 'var(--text-3)',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                  }}
+                  aria-label={notes ? "Edit note" : "Add note"}
                 >
-                  <FileText size={11.5} />
-                  <span>{notes ? 'Note added' : '+ Note'}</span>
+                  <Feather size={13} strokeWidth={2.2} style={{ color: notes ? '#38bdf8' : 'var(--text-2)' }} />
                 </button>
               </div>
 
@@ -507,7 +494,7 @@ export default function RecurringModal({ rule, defaultKind = 'autopay', onClose 
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0, overflow: 'hidden' }}>
-                    <FileText size={11} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+                    <Feather size={11} style={{ color: '#38bdf8', flexShrink: 0 }} />
                     <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {notes}
                     </span>

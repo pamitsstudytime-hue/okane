@@ -13,6 +13,7 @@ import {
   Tv,
   ChevronDown,
   ChevronUp,
+  Filter,
 } from 'lucide-react';
 import { useStore } from '../store';
 import type { Friend, Settlement, Expense } from '../types';
@@ -833,28 +834,34 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
         )}
 
         {sorted.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-state-icon">
-              <Handshake size={36} />
+          <div className="card empty-state-card">
+            <div className="empty-state">
+              <div className="empty-state-icon-badge">
+                <Handshake size={24} strokeWidth={1.8} />
+              </div>
+              <div className="empty-state-title">No settlements yet</div>
+              <p className="empty-state-desc">When you settle up with friends, detailed settlement records will appear here.</p>
             </div>
-            <div className="empty-state-title">No settlements yet</div>
-            <p>When you settle up with friends, detailed settlement records will appear here.</p>
           </div>
         ) : filteredSettlements.length === 0 ? (
-          <div className="empty-state" style={{ padding: '32px 16px' }}>
-            <div className="empty-state-title">No matching settlements</div>
-            <p>Try adjusting your search query or filters.</p>
-            <button
-              className="btn btn-secondary btn-sm"
-              onClick={() => {
-                setSearchQuery('');
-                setFriendFilter('all');
-                setTypeFilter('all');
-              }}
-              style={{ marginTop: 8 }}
-            >
-              Reset Filters
-            </button>
+          <div className="card empty-state-card">
+            <div className="empty-state" style={{ padding: '36px 20px' }}>
+              <div className="empty-state-icon-badge" style={{ marginBottom: 14 }}>
+                <Filter size={22} strokeWidth={1.8} />
+              </div>
+              <div className="empty-state-title" style={{ fontSize: '15px' }}>No matching settlements</div>
+              <p className="empty-state-desc" style={{ marginBottom: 16 }}>Try adjusting your search query or filters.</p>
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => {
+                  setSearchQuery('');
+                  setFriendFilter('all');
+                  setTypeFilter('all');
+                }}
+              >
+                Reset Filters
+              </button>
+            </div>
           </div>
         ) : (
           <div className="settlement-compact-list">

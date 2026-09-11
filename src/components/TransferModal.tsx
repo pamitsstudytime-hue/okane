@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, ArrowLeftRight, ArrowRight, AlertCircle, FileText, Calendar, ChevronDown, Wallet as WalletIcon } from 'lucide-react';
+import { X, ArrowLeftRight, ArrowRight, AlertCircle, Calendar, ChevronDown, Wallet as WalletIcon, Feather } from 'lucide-react';
 import { useStore } from '../store';
 import { walletBalance, todayISO } from '../db';
 import { fmtMoney, currencySymbol } from '../utils';
@@ -562,28 +562,18 @@ export default function TransferModal({ isOpen, onClose, defaultFromWalletId, de
                 {/* Note Drawer Button Trigger */}
                 <button
                   type="button"
+                  className={`btn-note-feather ${note ? 'has-note' : ''}`}
                   onClick={() => setIsNoteModalOpen(true)}
                   style={{
                     height: 38,
-                    padding: '0 12px',
+                    width: 38,
+                    minWidth: 38,
                     borderRadius: 10,
-                    background: note ? 'var(--surface)' : 'var(--surface2)',
-                    border: note ? '1px solid var(--border2)' : '1px solid var(--border)',
-                    color: note ? 'var(--text)' : 'var(--text-2)',
-                    boxShadow: note ? '0 1px 3px rgba(0, 0, 0, 0.08)' : 'none',
-                    fontSize: 12,
-                    fontWeight: note ? 650 : 500,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    transition: 'all 0.15s ease',
                   }}
-                  title="Add or edit transfer note"
+                  title={note ? `Note: "${note}"` : 'Add note'}
+                  aria-label={note ? 'Edit note' : 'Add note'}
                 >
-                  <FileText size={14} />
-                  <span>{note ? 'Note Added' : '+ Note'}</span>
+                  <Feather size={15} strokeWidth={2.2} style={{ color: note ? '#38bdf8' : 'var(--text-2)' }} />
                 </button>
               </div>
 
@@ -605,7 +595,7 @@ export default function TransferModal({ isOpen, onClose, defaultFromWalletId, de
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, overflow: 'hidden' }}>
-                    <FileText size={12} style={{ color: 'var(--text)', flexShrink: 0 }} />
+                    <Feather size={12} style={{ color: '#38bdf8', flexShrink: 0 }} />
                     <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--text)' }}>
                       {note}
                     </span>

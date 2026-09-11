@@ -12,6 +12,7 @@ import BottomNavigationAction from '@mui/material/BottomNavigationAction';
 import Drawer from '@mui/material/Drawer';
 import Box from '@mui/material/Box';
 import {
+  Home,
   LayoutDashboard,
   ReceiptText,
   Wallet,
@@ -25,7 +26,6 @@ import {
   Moon,
   Sun,
   RefreshCw,
-  PanelLeftClose,
   PanelLeft,
   Sparkles,
   Database,
@@ -439,7 +439,7 @@ function AppInner() {
     {
       title: 'Main',
       items: [
-        { id: 'dashboard' as ViewName, label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
+        { id: 'dashboard' as ViewName, label: 'Dashboard', icon: <Home size={19} /> },
         { id: 'expenses' as ViewName, label: 'Expenses', icon: <ReceiptText size={18} /> },
         ...(enableAutopay ? [{ id: 'recurring' as ViewName, label: 'Autopay', icon: <RefreshCw size={18} />, badge: dueAutopaysCount, badgeColor: '#d32f2f', badgeBg: 'rgba(239, 83, 80, 0.15)' }] : []),
         { id: 'wallets' as ViewName, label: 'Wallets', icon: <Wallet size={18} /> },
@@ -551,40 +551,43 @@ function AppInner() {
                 size="small"
                 onClick={toggleSidebar}
                 sx={{ 
-                  width: 36,
-                  height: 36,
-                  borderRadius: '12px',
-                  background: 'var(--surface2)',
-                  border: '1px solid var(--border)',
+                  width: 44,
+                  height: 44,
+                  borderRadius: '16px',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: 'none',
                   color: 'text.primary',
                   margin: '0 auto',
                   transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease',
                   '&:hover': {
-                    transform: 'scale(1.06)',
-                    bgcolor: 'var(--surface3)',
+                    transform: 'scale(1.04)',
+                    bgcolor: 'rgba(255, 255, 255, 0.12)',
                   },
                   '&:active': {
-                    transform: 'scale(0.94)',
+                    transform: 'scale(0.95)',
                   }
                 }}
                 title="Expand sidebar"
               >
-                <PanelLeft size={18} />
+                <PanelLeft size={20} strokeWidth={1.9} />
               </IconButton>
             ) : (
               <IconButton
                 size="small"
                 onClick={toggleSidebar}
                 sx={{ 
-                  color: 'var(--text-2)', 
-                  p: 0.8, 
-                  borderRadius: '10px',
-                  border: '1px solid var(--border)',
+                  color: 'var(--text-3)', 
+                  p: 0,
+                  width: 32,
+                  height: 32,
+                  borderRadius: '8px',
+                  border: 'none',
                   bgcolor: 'transparent',
+                  boxShadow: 'none',
                   transition: 'all 0.15s ease',
                   '&:hover': {
                     color: 'var(--text)',
-                    bgcolor: 'var(--surface2)',
+                    bgcolor: 'rgba(255, 255, 255, 0.05)',
                   },
                   '&:active': {
                     transform: 'scale(0.95)',
@@ -592,7 +595,7 @@ function AppInner() {
                 }}
                 title="Collapse sidebar"
               >
-                <PanelLeftClose size={17} />
+                <PanelLeft size={18} />
               </IconButton>
             )}
           </div>
@@ -663,22 +666,22 @@ function AppInner() {
             <button
               className="btn btn-primary"
               style={{
-                margin: sidebarCollapsed ? '10px auto 4px' : '10px 10px 4px',
-                width: sidebarCollapsed ? 38 : 'calc(100% - 20px)',
-                height: 42,
-                padding: sidebarCollapsed ? 0 : '8px 16px',
-                borderRadius: 12,
+                margin: sidebarCollapsed ? '4px auto 8px auto' : '8px 10px 4px',
+                width: sidebarCollapsed ? 44 : 'calc(100% - 20px)',
+                height: sidebarCollapsed ? 44 : 35,
+                padding: sidebarCollapsed ? 0 : '0 14px',
+                borderRadius: sidebarCollapsed ? 16 : 10,
                 background: mode === 'dark' ? '#ffffff' : '#111111',
                 color: mode === 'dark' ? '#000000' : '#ffffff',
-                border: mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid rgba(0, 0, 0, 0.1)',
+                border: 'none',
                 fontWeight: 650,
-                fontSize: 14,
+                fontSize: sidebarCollapsed ? 14 : 13.5,
                 letterSpacing: '-0.2px',
-                boxShadow: mode === 'dark' ? '0 2px 10px rgba(0, 0, 0, 0.4)' : '0 2px 8px rgba(0, 0, 0, 0.12)',
+                boxShadow: mode === 'dark' ? '0 4px 14px rgba(0, 0, 0, 0.35)' : '0 2px 8px rgba(0, 0, 0, 0.12)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: sidebarCollapsed ? 0 : 7,
+                gap: sidebarCollapsed ? 0 : 6,
                 flexShrink: 0,
                 cursor: 'pointer',
                 transition: 'transform 0.15s ease, opacity 0.15s ease',
@@ -686,12 +689,12 @@ function AppInner() {
               onClick={() => setShowAddExpense(true)}
               title={sidebarCollapsed ? "Add Expense" : undefined}
             >
-              <Plus size={18} strokeWidth={2.4} style={{ color: mode === 'dark' ? '#000000' : '#ffffff' }} />
+              <Plus size={sidebarCollapsed ? 22 : 17} strokeWidth={2.4} style={{ color: mode === 'dark' ? '#000000' : '#ffffff' }} />
               {!sidebarCollapsed && <span style={{ fontWeight: 650 }}>Add</span>}
             </button>
           </div>
 
-          <div className="sidebar-footer" style={{ padding: sidebarCollapsed ? '8px 4px 14px' : '10px 14px 14px', borderTop: 'none', background: 'transparent' }}>
+          <div className="sidebar-footer" style={{ padding: sidebarCollapsed ? '0 0 14px 0' : '10px 14px 14px', borderTop: 'none', background: 'transparent' }}>
             {!sidebarCollapsed ? (
               <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                 <span style={{ fontSize: 13, color: 'var(--text-2)', fontWeight: 500, whiteSpace: 'nowrap' }}>
@@ -703,18 +706,17 @@ function AppInner() {
                   onClick={handleToggleDark}
                   title={`Switch to ${mode === 'dark' ? 'Light' : 'Dark'} mode`}
                   style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 12,
-                    background: 'var(--surface2)',
-                    color: 'var(--text)',
-                    border: '1px solid var(--border)',
+                    width: 32,
+                    height: 32,
+                    borderRadius: 8,
+                    background: 'transparent',
+                    color: 'var(--text-2)',
+                    border: 'none',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
                     flexShrink: 0,
-                    boxShadow: 'var(--shadow)',
                     transition: 'all 0.18s ease',
                   }}
                 >
@@ -722,28 +724,28 @@ function AppInner() {
                 </button>
               </div>
             ) : (
-              <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
                 <button
                   type="button"
                   className="sidebar-theme-btn"
                   onClick={handleToggleDark}
                   title={`Switch to ${mode === 'dark' ? 'Light' : 'Dark'} mode`}
                   style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 12,
-                    background: 'var(--surface2)',
+                    width: 44,
+                    height: 44,
+                    borderRadius: 16,
+                    background: 'rgba(255, 255, 255, 0.08)',
                     color: 'var(--text)',
-                    border: '1px solid var(--border)',
+                    border: 'none',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
-                    boxShadow: 'var(--shadow)',
+                    boxShadow: 'none',
                     transition: 'all 0.18s ease',
                   }}
                 >
-                  {mode === 'dark' ? <Moon size={16} strokeWidth={2.1} /> : <Sun size={16} strokeWidth={2.1} />}
+                  {mode === 'dark' ? <Moon size={19} strokeWidth={2} /> : <Sun size={19} strokeWidth={2} />}
                 </button>
               </div>
             )}
@@ -1400,13 +1402,6 @@ function AppInner() {
                     }}
                   >
                     <Users size={19} />
-                    {pendingSettlements > 0 && (
-                      <Box sx={{
-                        position: 'absolute', top: 3, right: -4,
-                        width: 7, height: 7, borderRadius: '50%',
-                        bgcolor: 'error.main'
-                      }} />
-                    )}
                   </Box>
                 </Box>
               }
@@ -1451,13 +1446,6 @@ function AppInner() {
                     }}
                   >
                     <MoreHorizontal size={19} />
-                    {(dueAutopaysCount > 0 || pendingSettlements > 0) && (
-                      <Box sx={{
-                        position: 'absolute', top: 3, right: -4,
-                        width: 7, height: 7, borderRadius: '50%',
-                        bgcolor: dueAutopaysCount > 0 ? 'error.main' : 'primary.main'
-                      }} />
-                    )}
                   </Box>
                 </Box>
               }

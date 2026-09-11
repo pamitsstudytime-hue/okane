@@ -12,6 +12,7 @@ import {
   Tv,
   X,
   RotateCcw,
+  Filter,
 } from 'lucide-react';
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
@@ -474,25 +475,25 @@ export default function Friends({ onNavigate }: Props) {
 
       {/* Contacts List / Dedicated Subscriptions View */}
       {counts[typeFilter] === 0 ? (
-        <div className="card" style={{ border: '1px solid var(--border)' }}>
-          <div className="empty-state" style={{ padding: '48px 24px' }}>
-            <div className="empty-state-icon" style={{ opacity: 0.65, color: 'var(--text-3)' }}>
+        <div className="card empty-state-card">
+          <div className="empty-state">
+            <div className="empty-state-icon-badge">
               {typeFilter === 'vendor' ? (
-                <Store size={40} />
+                <Store size={24} strokeWidth={1.8} />
               ) : typeFilter === 'subscription' ? (
-                <Tv size={40} />
+                <Tv size={24} strokeWidth={1.8} />
               ) : (
-                <Users size={40} />
+                <Users size={24} strokeWidth={1.8} />
               )}
             </div>
-            <div className="empty-state-title" style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text)' }}>
+            <div className="empty-state-title">
               {typeFilter === 'friend'
                 ? 'No friends yet'
                 : typeFilter === 'vendor'
                 ? 'No vendors yet'
                 : 'No subscriptions yet'}
             </div>
-            <p style={{ maxWidth: '340px', margin: '0 auto 20px', color: 'var(--text-2)', fontSize: '13px', lineHeight: 1.5 }}>
+            <p className="empty-state-desc">
               {typeFilter === 'friend'
                 ? 'Add friends to track shared expenses and balances.'
                 : typeFilter === 'vendor'
@@ -500,34 +501,36 @@ export default function Friends({ onNavigate }: Props) {
                 : 'Add subscriptions to manage renewals and recurring bills.'}
             </p>
             <button
-              className="btn btn-primary btn-sm"
+              className="empty-state-btn"
               onClick={() => {
                 setAddDefaultType(typeFilter);
                 setShowAdd(true);
               }}
             >
-              <Plus size={15} />{' '}
-              {typeFilter === 'friend'
-                ? 'Add Friend'
-                : typeFilter === 'vendor'
-                ? 'Add Vendor'
-                : 'Add Subscription'}
+              <Plus size={16} strokeWidth={2.2} />
+              <span>
+                {typeFilter === 'friend'
+                  ? 'Add Friend'
+                  : typeFilter === 'vendor'
+                  ? 'Add Vendor'
+                  : 'Add Subscription'}
+              </span>
             </button>
           </div>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="card">
-          <div className="empty-state" style={{ padding: '32px' }}>
-            <p>
-              No{' '}
-              {typeFilter === 'friend'
-                ? 'friends'
-                : typeFilter === 'vendor'
-                ? 'vendors'
-                : 'subscriptions'}{' '}
-              match your current filter or search.
+        <div className="card empty-state-card">
+          <div className="empty-state" style={{ padding: '36px 20px' }}>
+            <div className="empty-state-icon-badge" style={{ marginBottom: 14 }}>
+              <Filter size={22} strokeWidth={1.8} />
+            </div>
+            <div className="empty-state-title" style={{ fontSize: '15px' }}>
+              No matching {typeFilter === 'friend' ? 'friends' : typeFilter === 'vendor' ? 'vendors' : 'subscriptions'}
+            </div>
+            <p className="empty-state-desc" style={{ marginBottom: 16 }}>
+              No {typeFilter === 'friend' ? 'friends' : typeFilter === 'vendor' ? 'vendors' : 'subscriptions'} match your current filter or search.
             </p>
-            <button className="btn btn-ghost btn-sm" onClick={handleClearAll}>
+            <button className="btn btn-secondary btn-sm" onClick={handleClearAll}>
               Clear Filters
             </button>
           </div>

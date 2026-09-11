@@ -137,7 +137,15 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
       const key = monthKey(e.date);
       if (key !== activeCatMonth) return;
       const catLower = (e.category || '').toLowerCase();
-      if (catLower.includes('refund') || catLower.includes('income') || catLower.includes('salary') || catLower.includes('cashback') || catLower.includes('deposit')) return;
+      if (
+        catLower.includes('refund') ||
+        catLower.includes('income') ||
+        catLower.includes('salary') ||
+        catLower.includes('cashback') ||
+        catLower.includes('deposit') ||
+        catLower.includes('transfer') ||
+        e.category === 'Transfer'
+      ) return;
       const amt = Number(e.amount) || 0;
       totals[e.category] = (totals[e.category] || 0) + amt;
       grandTotal += amt;
@@ -202,8 +210,8 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
                     </button>
                   )}
                 </div>
-                <span className="badge" style={{ background: 'var(--surface2)', color: 'var(--text-2)', fontSize: 11 }}>
-                  {visibleWallets.length} Active Wallet{visibleWallets.length !== 1 ? 's' : ''}
+                <span className="badge" style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text-2)', fontSize: 11, fontWeight: 600, borderRadius: 999, padding: '3px 9px' }}>
+                  {`${visibleWallets.length} ${visibleWallets.length === 1 ? 'Wallet' : 'Wallets'}`}
                 </span>
               </div>
 
@@ -398,8 +406,14 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
             </button>
           </div>
           {recentExpenses.length === 0 ? (
-            <div className="empty-state" style={{ padding: '24px' }}>
-              <p>No expenses yet.</p>
+            <div className="empty-state" style={{ padding: '32px 16px' }}>
+              <div className="empty-state-icon-badge" style={{ width: 44, height: 44, borderRadius: 14, marginBottom: 12 }}>
+                <ReceiptText size={20} strokeWidth={1.8} />
+              </div>
+              <div className="empty-state-title" style={{ fontSize: '14.5px', marginBottom: 4 }}>No expenses yet</div>
+              <p className="empty-state-desc" style={{ fontSize: '13px', marginBottom: 0 }}>
+                Transactions you log will show up here.
+              </p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: '100%', minWidth: 0 }}>
