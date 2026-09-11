@@ -46,15 +46,15 @@ export default function NotificationBell({ onNavigate }: Props) {
     <>
       <button
         type="button"
-        className={`btn-icon notification-bell-btn ${totalCount > 0 ? 'has-badge' : ''}`}
+        className={`btn-icon notification-bell-btn topbar-bell-btn ${totalCount > 0 ? 'has-badge' : ''}`}
         onClick={() => setOpen(true)}
         style={{
           position: 'relative',
           width: 36,
           height: 36,
           borderRadius: '50%',
-          background: open ? 'var(--surface3)' : 'var(--surface2)',
-          border: '1px solid var(--border)',
+          background: open ? 'var(--surface2)' : 'transparent',
+          border: `1px solid ${open ? 'var(--border)' : 'transparent'}`,
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',

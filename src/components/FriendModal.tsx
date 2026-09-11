@@ -7,7 +7,9 @@ import {
   Store,
   Tv,
   Pipette,
-  FileText,
+  Feather,
+  RotateCcw,
+  Plus,
   Calendar,
   Sparkles,
   Repeat,
@@ -157,6 +159,21 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
     setIsCycleModalOpen(false);
   };
 
+  const handleClear = () => {
+    setName('');
+    setType(defaultType);
+    setColor(friend?.color ?? FRIEND_PALETTE[0]);
+    setAvatarNumber('');
+    setShowNumberPicker(false);
+    setDefaultAmount('');
+    setBillingCycle('monthly');
+    setNotes('');
+    setError('');
+    if (nameInputRef.current) {
+      nameInputRef.current.focus();
+    }
+  };
+
   const handleNameChange = (val: string) => {
     setName(val);
     if (type === 'subscription' && !friend) {
@@ -245,161 +262,178 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
         onClick={e => e.stopPropagation()}
       >
         {/* Top drag handle pill */}
-        <div className="modal-drag-handle" />
+        <div
+          style={{
+            width: 36,
+            height: 4,
+            borderRadius: 2,
+            background: 'var(--border2)',
+            margin: '0 auto 16px',
+          }}
+        />
 
-        <div className="modal-header" style={{ padding: '14px 18px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: 'none' }}>
-          <span className="modal-title" style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>
-            {friend ? (type === 'subscription' ? 'Edit Subscription' : type === 'vendor' ? 'Edit Vendor' : 'Edit Friend') : type === 'subscription' ? 'Add Subscription' : type === 'vendor' ? 'Add Vendor' : 'Add Friend'}
-          </span>
+        {/* Themed Modal Header */}
+        <div
+          className="modal-header"
+          style={{
+            padding: '0 20px 14px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderBottom: 'none',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: 8,
+                background: 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--text)',
+                flexShrink: 0,
+              }}
+            >
+              {type === 'subscription' ? <Tv size={19} /> : type === 'vendor' ? <Store size={19} /> : <User size={19} />}
+            </div>
+            <div>
+              <span className="modal-title" style={{ fontSize: 16, fontWeight: 700 }}>
+                {friend
+                  ? (type === 'subscription' ? 'Edit Subscription' : type === 'vendor' ? 'Edit Vendor' : 'Edit Friend')
+                  : (type === 'subscription' ? 'New Subscription' : type === 'vendor' ? 'New Vendor' : 'New Contact')}
+              </span>
+            </div>
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <button
               type="button"
               className="btn-icon"
               onClick={openNoteModal}
               title={notes ? `Note: "${notes}"` : 'Add note'}
+              aria-label={notes ? 'Edit note' : 'Add note'}
               style={{
                 width: 32,
                 height: 32,
-                position: 'relative',
-                color: notes ? 'var(--accent)' : 'var(--text-2)',
-                background: notes ? 'var(--accent-soft)' : 'var(--surface2)',
-                border: notes ? '1px solid var(--accent-border-soft)' : '1px solid var(--border)',
-                borderRadius: 8,
+                borderRadius: 9999,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: notes ? 'var(--text)' : 'var(--text-3)',
+                background: notes ? 'var(--surface2)' : 'transparent',
+                border: notes ? '1px solid var(--border)' : 'none',
+                cursor: 'pointer',
                 transition: 'all 0.15s ease',
               }}
             >
-              <FileText size={16} />
-              {notes && (
-                <span
-                  style={{
-                    position: 'absolute',
-                    top: 5,
-                    right: 5,
-                    width: 6,
-                    height: 6,
-                    borderRadius: '50%',
-                    background: 'var(--accent)',
-                  }}
-                />
-              )}
+              <Feather size={16} strokeWidth={2} />
             </button>
             <button
               type="button"
-              className="btn-icon compact-close-btn"
+              className="btn-icon"
               onClick={onClose}
-              aria-label="Close modal"
-              style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text-2)' }}
+              aria-label="Close dialog"
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 9999,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+              }}
             >
-              <X size={16} />
+              <X size={18} />
             </button>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-          <div className="modal-body" style={{ flex: 1, overflowY: 'auto', padding: '10px 18px 16px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div className="modal-body" style={{ flex: 1, overflowY: 'auto', padding: '8px 20px 20px', gap: 14, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {/* Type Selector (Segmented 3-tab control) */}
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label" style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-2)', marginBottom: 5 }}>
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.4px',
+                    color: 'var(--text-3)',
+                    marginBottom: 6,
+                    textAlign: 'left',
+                  }}
+                >
                   Contact Type
                 </label>
                 <div
-                  className="segment-control"
                   style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(3, 1fr)',
                     gap: 4,
                     background: 'var(--surface2)',
-                    padding: 3,
+                    padding: 4,
                     borderRadius: 12,
                     border: '1px solid var(--border)',
                   }}
                 >
-                  <button
-                    type="button"
-                    className={`segment-btn ${type === 'friend' ? 'active' : ''}`}
-                    onClick={() => setType('friend')}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 6,
-                      padding: '8px 6px',
-                      borderRadius: 9,
-                      border: type === 'friend' ? '1px solid var(--border)' : '1px solid transparent',
-                      background: type === 'friend' ? 'var(--surface)' : 'transparent',
-                      color: type === 'friend' ? 'var(--text)' : 'var(--text-2)',
-                      fontWeight: type === 'friend' ? 650 : 500,
-                      fontSize: 12.5,
-                      cursor: 'pointer',
-                      boxShadow: type === 'friend' ? '0 1px 3px rgba(0, 0, 0, 0.12)' : 'none',
-                      minHeight: 38,
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    <User size={15} style={{ color: type === 'friend' ? 'var(--text)' : 'inherit' }} />
-                    <span>Friend</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    className={`segment-btn ${type === 'vendor' ? 'active' : ''}`}
-                    onClick={() => setType('vendor')}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 6,
-                      padding: '8px 6px',
-                      borderRadius: 9,
-                      border: type === 'vendor' ? '1px solid var(--border)' : '1px solid transparent',
-                      background: type === 'vendor' ? 'var(--surface)' : 'transparent',
-                      color: type === 'vendor' ? 'var(--text)' : 'var(--text-2)',
-                      fontWeight: type === 'vendor' ? 650 : 500,
-                      fontSize: 12.5,
-                      cursor: 'pointer',
-                      boxShadow: type === 'vendor' ? '0 1px 3px rgba(0, 0, 0, 0.12)' : 'none',
-                      minHeight: 38,
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    <Store size={15} style={{ color: type === 'vendor' ? 'var(--text)' : 'inherit' }} />
-                    <span>Vendor</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    className={`segment-btn ${type === 'subscription' ? 'active' : ''}`}
-                    onClick={() => setType('subscription')}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 6,
-                      padding: '8px 6px',
-                      borderRadius: 9,
-                      border: type === 'subscription' ? '1px solid var(--border)' : '1px solid transparent',
-                      background: type === 'subscription' ? 'var(--surface)' : 'transparent',
-                      color: type === 'subscription' ? 'var(--text)' : 'var(--text-2)',
-                      fontWeight: type === 'subscription' ? 650 : 500,
-                      fontSize: 12.5,
-                      cursor: 'pointer',
-                      boxShadow: type === 'subscription' ? '0 1px 3px rgba(0, 0, 0, 0.12)' : 'none',
-                      minHeight: 38,
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    <Tv size={15} style={{ color: type === 'subscription' ? 'var(--text)' : 'inherit' }} />
-                    <span>Subscription</span>
-                  </button>
+                  {[
+                    { id: 'friend' as const, label: 'Friend', icon: User },
+                    { id: 'vendor' as const, label: 'Vendor', icon: Store },
+                    { id: 'subscription' as const, label: 'Subscription', icon: Tv },
+                  ].map(tab => {
+                    const isSelected = type === tab.id;
+                    const Icon = tab.icon;
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setType(tab.id)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 6,
+                          padding: '8px 6px',
+                          borderRadius: 9,
+                          border: isSelected ? '1px solid var(--border2)' : '1px solid transparent',
+                          background: isSelected ? 'var(--surface)' : 'transparent',
+                          color: isSelected ? 'var(--text)' : 'var(--text-3)',
+                          fontWeight: isSelected ? 700 : 500,
+                          fontSize: 12.5,
+                          cursor: 'pointer',
+                          boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+                          minHeight: 38,
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <Icon size={15} style={{ color: isSelected ? 'var(--text)' : 'inherit' }} />
+                        <span>{tab.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               {/* Popular Subscription Presets */}
               {type === 'subscription' && (
-                <div className="form-group" style={{ marginBottom: 0 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
-                    <label className="form-label" style={{ fontSize: 11, fontWeight: 600, margin: 0, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: 11,
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.4px',
+                        color: 'var(--text-3)',
+                        margin: 0,
+                        textAlign: 'left',
+                      }}
+                    >
                       Popular Presets
                     </label>
                     <span style={{ fontSize: 10.5, color: 'var(--text-3)' }}>Tap to fill</span>
@@ -420,8 +454,8 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
                           type="button"
                           onClick={() => applyPreset(sub)}
                           style={{
-                            padding: '5px 11px',
-                            borderRadius: 8,
+                            padding: '5px 12px',
+                            borderRadius: 9999,
                             border: `1px solid ${isSelected ? 'var(--border2)' : 'var(--border)'}`,
                             background: isSelected ? 'var(--surface)' : 'var(--surface2)',
                             color: isSelected ? 'var(--text)' : 'var(--text-2)',
@@ -441,16 +475,42 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
               )}
 
               {/* Name Input */}
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label" style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-2)', marginBottom: 4 }}>
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.4px',
+                    color: 'var(--text-3)',
+                    marginBottom: 5,
+                    textAlign: 'left',
+                  }}
+                >
                   {type === 'vendor' ? 'Vendor Name *' : type === 'subscription' ? 'Subscription Name *' : 'Name *'}
                 </label>
                 <input
                   ref={nameInputRef}
                   className="form-input"
-                  style={{ height: 40, minHeight: 40, padding: '8px 12px', fontSize: 13, borderRadius: 10, background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)' }}
+                  style={{
+                    width: '100%',
+                    height: 40,
+                    borderRadius: 10,
+                    fontSize: 13.5,
+                    fontWeight: 500,
+                    textAlign: 'left',
+                    padding: '0 12px',
+                    border: error ? '1.5px solid var(--debit, #ef4444)' : '1px solid var(--border)',
+                    background: 'var(--surface2)',
+                    color: 'var(--text)',
+                    outline: 'none',
+                  }}
                   value={name}
-                  onChange={e => handleNameChange(e.target.value)}
+                  onChange={e => {
+                    handleNameChange(e.target.value);
+                    if (error) setError('');
+                  }}
                   placeholder={namePlaceholder}
                 />
               </div>
@@ -459,13 +519,35 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
               {type === 'subscription' ? (
                 <>
                   <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 10 }}>
-                    <div className="form-group" style={{ marginBottom: 0 }}>
-                      <label className="form-label" style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-2)', marginBottom: 4 }}>
+                    <div>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontSize: 11,
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.4px',
+                          color: 'var(--text-3)',
+                          marginBottom: 5,
+                          textAlign: 'left',
+                        }}
+                      >
                         Category
                       </label>
                       <select
                         className="form-select"
-                        style={{ height: 40, minHeight: 40, padding: '6px 10px', fontSize: 12.5, borderRadius: 10, background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)' }}
+                        style={{
+                          width: '100%',
+                          height: 40,
+                          borderRadius: 10,
+                          fontSize: 13,
+                          fontWeight: 500,
+                          padding: '0 10px',
+                          border: '1px solid var(--border)',
+                          background: 'var(--surface2)',
+                          color: 'var(--text)',
+                          outline: 'none',
+                        }}
                         value={category}
                         onChange={e => setCategory(e.target.value)}
                       >
@@ -475,13 +557,35 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
                       </select>
                     </div>
 
-                    <div className="form-group" style={{ marginBottom: 0 }}>
-                      <label className="form-label" style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-2)', marginBottom: 4 }}>
+                    <div>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontSize: 11,
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.4px',
+                          color: 'var(--text-3)',
+                          marginBottom: 5,
+                          textAlign: 'left',
+                        }}
+                      >
                         Cost ({db.settings.currency})
                       </label>
                       <input
                         className="form-input"
-                        style={{ height: 40, minHeight: 40, padding: '6px 10px', fontSize: 12.5, borderRadius: 10, background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)' }}
+                        style={{
+                          width: '100%',
+                          height: 40,
+                          borderRadius: 10,
+                          fontSize: 13.5,
+                          fontWeight: 500,
+                          padding: '0 12px',
+                          border: '1px solid var(--border)',
+                          background: 'var(--surface2)',
+                          color: 'var(--text)',
+                          outline: 'none',
+                        }}
                         type="number"
                         step="any"
                         value={defaultAmount}
@@ -492,7 +596,7 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
                   </div>
 
                   {/* Interactive Billing Cycle Banner Card */}
-                  <div className="form-group" style={{ marginBottom: 0 }}>
+                  <div>
                     <div
                       role="button"
                       tabIndex={0}
@@ -500,8 +604,8 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
                       style={{
                         background: 'var(--surface2)',
                         border: '1px solid var(--border)',
-                        borderRadius: 10,
-                        padding: '9px 12px',
+                        borderRadius: 12,
+                        padding: '10px 14px',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
@@ -541,34 +645,56 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
 
                       <div
                         style={{
-                          background: 'var(--accent-gradient, var(--accent))',
-                          color: 'var(--accent-contrast, #ffffff)',
+                          background: 'var(--text)',
+                          color: 'var(--bg)',
                           border: 'none',
                           padding: '4px 10px',
-                          borderRadius: 99,
+                          borderRadius: 9999,
                           fontSize: 11,
-                          fontWeight: 650,
+                          fontWeight: 700,
                           whiteSpace: 'nowrap',
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: 3,
                           flexShrink: 0,
-                          boxShadow: '0 1px 3px var(--accent-soft)',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
                         }}
                       >
-                        <span>+ {getCycleDisplayInfo(billingCycle, defaultAmount, db.settings.currency).badge}</span>
+                        <span>{getCycleDisplayInfo(billingCycle, defaultAmount, db.settings.currency).badge}</span>
                       </div>
                     </div>
                   </div>
                 </>
               ) : type === 'vendor' ? (
-                <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label" style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-2)', marginBottom: 4 }}>
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.4px',
+                      color: 'var(--text-3)',
+                      marginBottom: 5,
+                      textAlign: 'left',
+                    }}
+                  >
                     Category
                   </label>
                   <select
                     className="form-select"
-                    style={{ height: 40, minHeight: 40, padding: '6px 12px', fontSize: 12.5, borderRadius: 10, background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)' }}
+                    style={{
+                      width: '100%',
+                      height: 40,
+                      borderRadius: 10,
+                      fontSize: 13,
+                      fontWeight: 500,
+                      padding: '0 12px',
+                      border: '1px solid var(--border)',
+                      background: 'var(--surface2)',
+                      color: 'var(--text)',
+                      outline: 'none',
+                    }}
                     value={category}
                     onChange={e => setCategory(e.target.value)}
                   >
@@ -580,9 +706,19 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
               ) : null}
 
               {/* Minimized Avatar Theme Color Row */}
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <label className="form-label" style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-2)', margin: 0 }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
+                  <label
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.4px',
+                      color: 'var(--text-3)',
+                      margin: 0,
+                      textAlign: 'left',
+                    }}
+                  >
                     Avatar Color
                   </label>
                   {type === 'friend' && (
@@ -590,25 +726,25 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
                       type="button"
                       onClick={() => setShowNumberPicker(!showNumberPicker)}
                       style={{
-                        fontSize: 10.5,
+                        fontSize: 11,
                         fontWeight: showNumberPicker || avatarNumber ? 650 : 500,
                         color: showNumberPicker || avatarNumber ? 'var(--text)' : 'var(--text-2)',
                         background: showNumberPicker || avatarNumber ? 'var(--surface)' : 'var(--surface2)',
                         border: '1px solid ' + (showNumberPicker || avatarNumber ? 'var(--border2)' : 'var(--border)'),
                         boxShadow: showNumberPicker || avatarNumber ? '0 1px 3px rgba(0, 0, 0, 0.08)' : 'none',
-                        padding: '2px 8px',
-                        borderRadius: 10,
+                        padding: '3px 10px',
+                        borderRadius: 9999,
                         cursor: 'pointer',
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: 4,
+                        gap: 5,
                         transition: 'all 0.15s ease',
                       }}
                       title="Secret option: Use custom number badge instead of initial"
                     >
                       <span># Number Badge</span>
                       {avatarNumber ? (
-                        <span style={{ background: 'var(--accent)', color: 'var(--accent-contrast, #fff)', padding: '0 4px', borderRadius: 6, fontSize: 8.5, fontWeight: 700 }}>
+                        <span style={{ background: 'var(--accent)', color: 'var(--accent-contrast, #fff)', padding: '0 5px', borderRadius: 6, fontSize: 9, fontWeight: 700 }}>
                           {avatarNumber}
                         </span>
                       ) : null}
@@ -623,7 +759,7 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
                     gap: 8,
                     padding: '8px 12px',
                     background: 'var(--surface2)',
-                    borderRadius: 10,
+                    borderRadius: 12,
                     border: '1px solid var(--border)',
                   }}
                 >
@@ -808,35 +944,61 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
               </div>
 
               {error && <p className="form-error" style={{ margin: '2px 0 0' }}>{error}</p>}
-            </div>
-          </div>
 
-          <div className="modal-footer" style={{ padding: '12px 18px', display: 'flex', gap: 10, background: 'var(--surface)', borderTop: 'none' }}>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              style={{ flex: 1, height: 40, fontSize: 13, fontWeight: 600, borderRadius: 10, background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)' }}
-              onClick={onClose}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              style={{
-                flex: 1,
-                height: 40,
-                fontSize: 13,
-                fontWeight: 650,
-                borderRadius: 10,
-                background: 'var(--accent-gradient, var(--accent))',
-                color: 'var(--accent-contrast, #ffffff)',
-                border: '1px solid var(--accent-dark, var(--accent))',
-                boxShadow: '0 2px 8px var(--accent-soft)',
-              }}
-            >
-              {friend ? 'Save' : 'Add'}
-            </button>
+              {/* Action Buttons: Clear & Submit (Matching Transfer & Add Wallet Drawers) */}
+              <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  style={{
+                    flex: 1,
+                    height: 40,
+                    borderRadius: 9999,
+                    fontSize: 13,
+                    fontWeight: 650,
+                    border: '1px solid var(--border)',
+                    background: 'var(--surface2)',
+                    color: 'var(--text)',
+                    cursor: 'pointer',
+                    padding: '0 16px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <RotateCcw size={14} style={{ color: 'var(--text)' }} />
+                  <span>Clear</span>
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{
+                    flex: 1.35,
+                    height: 40,
+                    borderRadius: 9999,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    background: 'var(--text)',
+                    border: '1px solid var(--text)',
+                    color: 'var(--bg)',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+                    cursor: 'pointer',
+                    padding: '0 18px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {friend ? <Check size={15} style={{ color: 'inherit' }} /> : <Plus size={15} style={{ color: 'inherit' }} />}
+                  <span>{friend ? 'Save' : type === 'vendor' ? 'Add Vendor' : type === 'subscription' ? 'Add Subscription' : 'Add Contact'}</span>
+                </button>
+              </div>
+            </div>
           </div>
         </form>
 

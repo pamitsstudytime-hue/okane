@@ -645,6 +645,7 @@ export function defaultDB(): AppDB {
       autoOpenKeyboard: typeof localStorage !== 'undefined' ? (localStorage.getItem('auto_open_keyboard') !== null ? localStorage.getItem('auto_open_keyboard') === 'true' : true) : true,
       floatingSidebar: typeof localStorage !== 'undefined' ? localStorage.getItem('sidebar_floating') === 'true' : false,
       hideAmounts: typeof localStorage !== 'undefined' ? localStorage.getItem('hide_amounts') === 'true' : false,
+      hideNavLabels: typeof localStorage !== 'undefined' ? (localStorage.getItem('hide_nav_labels') !== null ? localStorage.getItem('hide_nav_labels') === 'true' : true) : true,
     },
     recurringRules: [],
   };
@@ -716,6 +717,7 @@ export function sanitizeLoadedDB(rawDB: unknown): AppDB {
     ...d.settings,
     ...(parsed.settings || {}),
     enableSplitTrips: parsed.settings?.enableSplitTrips ?? true,
+    hideNavLabels: parsed.settings?.hideNavLabels ?? (typeof localStorage !== 'undefined' && localStorage.getItem('hide_nav_labels') !== null ? localStorage.getItem('hide_nav_labels') === 'true' : true),
     categories: safeCategories,
     currency: parsed.settings?.currency || 'INR',
     defaultWalletId: parsed.settings?.defaultWalletId || safeWallets[0].id,

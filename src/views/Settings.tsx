@@ -1373,51 +1373,8 @@ export default function Settings({
                     />
                   </div>
 
-                  {/* Theme Palette (Monochrome Only) */}
-                  <div style={{
-                    padding: '14px 16px',
-                    borderRadius: 14,
-                    background: 'var(--surface2)',
-                    border: '1px solid var(--border)',
-                    marginTop: 12,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div style={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: 8,
-                        background: isDark ? '#ffffff' : '#111111',
-                        color: isDark ? '#000000' : '#ffffff',
-                        display: 'grid',
-                        placeItems: 'center',
-                        fontSize: 12,
-                        fontWeight: 800,
-                      }}>
-                        M
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>Theme Palette</div>
-                        <div style={{ fontSize: 11.5, color: 'var(--text-3)' }}>Monochrome (Default & Only)</div>
-                      </div>
-                    </div>
-                    <span style={{
-                      fontSize: 11,
-                      fontWeight: 650,
-                      padding: '3px 8px',
-                      borderRadius: 6,
-                      background: 'var(--surface3)',
-                      color: 'var(--text-2)',
-                      border: '1px solid var(--border)',
-                    }}>
-                      Monochrome
-                    </span>
-                  </div>
-
                   {/* More Appearance Drawer Trigger */}
-                  <div style={{ marginTop: 14 }}>
+                  <div style={{ marginTop: 0 }}>
                     <button
                       type="button"
                       onClick={() => setAppearanceSubView('more')}
@@ -1543,6 +1500,36 @@ export default function Settings({
                         const hide = e.target.checked;
                         updateSettings({ hideScrollbar: hide });
                         showToast(hide ? 'Scrollbars hidden (Clean mobile style)' : 'Scrollbars visible');
+                      }}
+                      color="primary"
+                    />
+                  </div>
+
+                  {/* Hide Nav Bar Text Toggle Row */}
+                  <div style={{
+                    padding: '14px 16px',
+                    borderRadius: 14,
+                    background: 'var(--surface2)',
+                    border: '1px solid var(--border)',
+                    marginTop: 12,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <Smartphone size={18} style={{ color: accent === 'monochrome' ? (isDark ? '#ffffff' : '#111111') : 'var(--accent)' }} />
+                      <div>
+                        <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>Hide Nav Bar Text</div>
+                        <div style={{ fontSize: 11.5, color: 'var(--text-3)' }}>Hide text labels under bottom navigation icons</div>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={settings.hideNavLabels ?? true}
+                      onChange={(e) => {
+                        const hide = e.target.checked;
+                        updateSettings({ hideNavLabels: hide });
+                        localStorage.setItem('hide_nav_labels', String(hide));
+                        showToast(hide ? 'Nav bar text hidden' : 'Nav bar text visible');
                       }}
                       color="primary"
                     />

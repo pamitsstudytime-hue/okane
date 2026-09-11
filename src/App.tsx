@@ -255,6 +255,7 @@ function AppInner() {
 
   const sidebarCollapsed = db.settings?.sidebarCollapsed ?? (localStorage.getItem('sidebar_collapsed') === 'true');
   const floatingSidebar = db.settings?.floatingSidebar ?? (localStorage.getItem('sidebar_floating') === 'true');
+  const hideNavLabels = db.settings?.hideNavLabels ?? (typeof localStorage !== 'undefined' && localStorage.getItem('hide_nav_labels') !== null ? localStorage.getItem('hide_nav_labels') === 'true' : true);
 
   useEffect(() => {
     const shouldHide = db.settings?.hideScrollbar ?? true;
@@ -1025,8 +1026,8 @@ function AppInner() {
                     width: 36,
                     height: 36,
                     borderRadius: '50%',
-                    background: 'var(--surface2)',
-                    border: '1px solid var(--border)',
+                    background: 'transparent',
+                    border: '1px solid transparent',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -1055,9 +1056,9 @@ function AppInner() {
                     width: 36,
                     height: 36,
                     borderRadius: '50%',
-                    background: topbarFilterCount > 0 ? 'var(--surface)' : 'var(--surface2)',
-                    border: `1px solid ${topbarFilterCount > 0 ? 'var(--border2)' : 'var(--border)'}`,
-                    boxShadow: topbarFilterCount > 0 ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+                    background: topbarFilterCount > 0 ? 'var(--surface2)' : 'transparent',
+                    border: topbarFilterCount > 0 ? '1px solid var(--border)' : '1px solid transparent',
+                    boxShadow: topbarFilterCount > 0 ? '0 1px 3px rgba(0, 0, 0, 0.08)' : 'none',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -1069,7 +1070,7 @@ function AppInner() {
                   title={topbarFilterCount > 0 ? `${topbarFilterCount} active filters` : "Filters & Sorting"}
                   aria-label="Filters & Sorting"
                 >
-                  <Filter size={17} />
+                  <Filter size={18} />
                   {topbarFilterCount > 0 && (
                     <span
                       style={{
@@ -1088,7 +1089,7 @@ function AppInner() {
                         justifyContent: 'center',
                         padding: '0 4px',
                         lineHeight: 1,
-                        border: '1.5px solid var(--surface)',
+                        border: '1.5px solid var(--bg)',
                       }}
                     >
                       {topbarFilterCount}
@@ -1101,16 +1102,16 @@ function AppInner() {
                 <button
                   type="button"
                   id="topbar-settings-search-btn"
-                  className={`btn-icon ${mobileSettingsSearchOpen ? 'active' : ''}`}
+                  className={`btn-icon topbar-settings-search-btn ${mobileSettingsSearchOpen ? 'active' : ''}`}
                   onClick={() => setMobileSettingsSearchOpen(prev => !prev)}
                   style={{
                     position: 'relative',
                     width: 36,
                     height: 36,
                     borderRadius: '50%',
-                    background: mobileSettingsSearchOpen ? 'var(--surface)' : 'var(--surface2)',
-                    border: `1px solid ${mobileSettingsSearchOpen ? 'var(--border2)' : 'var(--border)'}`,
-                    boxShadow: mobileSettingsSearchOpen ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+                    background: mobileSettingsSearchOpen ? 'var(--surface2)' : 'transparent',
+                    border: mobileSettingsSearchOpen ? '1px solid var(--border)' : '1px solid transparent',
+                    boxShadow: mobileSettingsSearchOpen ? '0 1px 3px rgba(0, 0, 0, 0.08)' : 'none',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -1122,7 +1123,7 @@ function AppInner() {
                   title="Search Settings"
                   aria-label="Search Settings"
                 >
-                  <Search size={17} />
+                  <Search size={20} />
                 </button>
               ) : (
                 <>
@@ -1137,8 +1138,8 @@ function AppInner() {
                         width: 36,
                         height: 36,
                         borderRadius: '50%',
-                        background: 'var(--surface2)',
-                        border: '1px solid var(--border)',
+                        background: 'transparent',
+                        border: '1px solid transparent',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
@@ -1150,7 +1151,7 @@ function AppInner() {
                       title="Search (Ctrl + K)"
                       aria-label="Search"
                     >
-                      <Search size={17} />
+                      <Search size={20} />
                     </button>
                   )}
 
@@ -1203,9 +1204,9 @@ function AppInner() {
                 navigate(newValue as ViewName);
               }
             }}
-            showLabels={true}
+            showLabels={!hideNavLabels}
             sx={{
-              height: 66,
+              height: hideNavLabels ? 56 : 66,
               bgcolor: 'var(--bg)',
               border: 'none',
               borderTop: 'none',
@@ -1217,7 +1218,7 @@ function AppInner() {
               '& .MuiBottomNavigationAction-root': {
                 minWidth: 'auto',
                 flex: 1,
-                padding: '6px 0 4px',
+                padding: hideNavLabels ? '0 !important' : '6px 0 4px',
                 bgcolor: 'transparent !important',
                 background: 'transparent !important',
                 WebkitTapHighlightColor: 'transparent !important',
@@ -1253,6 +1254,7 @@ function AppInner() {
                   display: 'none !important',
                 },
                 '& .MuiBottomNavigationAction-label': {
+                  display: hideNavLabels ? 'none !important' : 'block',
                   fontSize: '11px !important',
                   fontWeight: '500 !important',
                   lineHeight: 1.2,

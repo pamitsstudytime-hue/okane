@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
-import { X, Wallet as WalletIcon, Plus, Check, CheckCircle2 } from 'lucide-react';
+import { X, Wallet as WalletIcon, Plus, Check, CheckCircle2, RotateCcw } from 'lucide-react';
 import { useStore } from '../store';
 import type { Wallet } from '../types';
 import { WALLET_PRESETS, renderWalletIcon } from './WalletIconRenderer';
@@ -491,7 +491,7 @@ export default function WalletModal({ wallet, onClose }: Props) {
                   transition: 'all 0.15s ease',
                 }}
               >
-                <X size={15} style={{ color: 'var(--text)' }} />
+                <RotateCcw size={14} style={{ color: 'var(--text)' }} />
                 <span>Clear</span>
               </button>
               <button

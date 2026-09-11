@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, ArrowLeftRight, AlertCircle, Calendar, ChevronDown, Wallet as WalletIcon, Feather } from 'lucide-react';
+import { X, ArrowLeftRight, AlertCircle, Calendar, ChevronDown, Wallet as WalletIcon, Feather, RotateCcw } from 'lucide-react';
 import { useStore } from '../store';
 import { walletBalance, todayISO } from '../db';
 import { fmtMoney, currencySymbol } from '../utils';
@@ -633,7 +633,7 @@ export default function TransferModal({ isOpen, onClose, defaultFromWalletId, de
                   transition: 'all 0.15s ease',
                 }}
               >
-                <X size={15} style={{ color: 'var(--text)' }} />
+                <RotateCcw size={14} style={{ color: 'var(--text)' }} />
                 <span>Clear</span>
               </button>
               <button
