@@ -425,18 +425,11 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                       className={`wallet-badge-pill ${wSpend > 0 ? 'wallet-badge-spend-active' : 'wallet-badge-spend-zero'}`}
                       title={wSpend > 0 ? `Monthly spend: -${fmtMoney(wSpend, currency)}` : 'No expenses this month'}
                     >
-                      {wSpend > 0 ? (
-                        <>
-                          <TrendingDown size={11} style={{ color: 'var(--debit)', flexShrink: 0 }} />
-                          <span>
-                            {wSpend >= 1000
-                              ? `Spend: ~${currencySymbol(currency)}${Math.round(wSpend / 1000)}k`
-                              : `Spend: -${currencySymbol(currency)}${Math.round(wSpend)}`}
-                          </span>
-                        </>
-                      ) : (
-                        <span>Spend: {currencySymbol(currency)}0</span>
-                      )}
+                      <span>
+                        {wSpend >= 1000
+                          ? `Spend: ~${currencySymbol(currency)}${Math.round(wSpend / 1000)}k`
+                          : `Spend: -${currencySymbol(currency)}${Math.round(wSpend)}`}
+                      </span>
                     </span>
                   </div>
                 </div>
@@ -493,7 +486,7 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                   }}
                 >
                   <ReceiptText size={14} />
-                  Tx ({wExpCount})
+                  History ({wExpCount})
                 </button>
               </div>
             </div>
