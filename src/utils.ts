@@ -507,10 +507,35 @@ export function getAvatarStyle(color?: string): React.CSSProperties {
     };
   }
 
+  // CSS variables handling
+  if (color.includes('--credit')) {
+    return {
+      background: 'var(--credit-bg, rgba(16, 185, 129, 0.16))',
+      color: 'var(--credit, #10b981)',
+      border: '1px solid var(--credit-border, rgba(16, 185, 129, 0.35))',
+    };
+  }
+
+  if (color.includes('--debit')) {
+    return {
+      background: 'var(--debit-bg, rgba(239, 68, 68, 0.16))',
+      color: 'var(--debit, #ef4444)',
+      border: '1px solid var(--debit-border, rgba(239, 68, 68, 0.35))',
+    };
+  }
+
+  if (color.includes('--amber')) {
+    return {
+      background: 'var(--amber-bg, rgba(245, 158, 11, 0.16))',
+      color: 'var(--amber, #f59e0b)',
+      border: '1px solid var(--amber-border, rgba(245, 158, 11, 0.35))',
+    };
+  }
+
   return {
     background: 'var(--accent-soft)',
     color: color || 'var(--accent)',
-    border: '1px solid var(--border)',
+    border: '1px solid var(--accent-border-soft)',
   };
 }
 

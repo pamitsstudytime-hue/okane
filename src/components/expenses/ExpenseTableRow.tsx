@@ -1,10 +1,10 @@
 import React from 'react';
 import {
-  Users, User, CheckCircle2, RotateCcw, Edit2, Trash2,
-  Store, Wallet as WalletIcon
+  Users, RotateCcw, Edit2, Trash2,
+  Wallet as WalletIcon
 } from 'lucide-react';
 import CategoryIcon from '../CategoryIcon';
-import { fmtMoney, friendInitial, getAvatarStyle, typeLabel, resolveCategoryMeta, cleanSettlementDescription, type GroupedExpense } from '../../utils';
+import { fmtMoney, friendInitial, getAvatarStyle, resolveCategoryMeta, cleanSettlementDescription, type GroupedExpense } from '../../utils';
 import type { Expense, Friend, Wallet, Category, Settlement } from '../../types';
 import { renderWalletIcon } from '../WalletIconRenderer';
 
@@ -61,6 +61,7 @@ export const ExpenseTableRow: React.FC<Props> = React.memo(({
   const friendsInGroup = ge.friendIds.map((fid: string) => friendsMap.get(fid)).filter(Boolean);
   const vendorId = ge.vendorId || ge.items.find((i: Expense) => i.vendorId)?.vendorId;
   const vendor = vendorId ? friendsMap.get(vendorId) : null;
+  const friendsToShow = ge.isSettlementGroup ? friendsInGroup : (vendor ? friendsInGroup.filter(f => f?.id !== vendor.id) : friendsInGroup);
 
   const catMeta = resolveCategoryMeta(ge.category, categoryObj, ge.isSettlementGroup);
 
@@ -72,38 +73,33 @@ export const ExpenseTableRow: React.FC<Props> = React.memo(({
         style={{ cursor: onSelectDetail ? 'pointer' : 'default' }}
       >
         <td>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
             <div
               className="tx-squircle-icon"
               style={{
                 background: catMeta.bg || (categoryObj?.color && categoryObj.color.startsWith('#') ? `${categoryObj.color}20` : 'var(--accent-soft)'),
-                color: catMeta.color || categoryObj?.color || 'var(--accent)'
+                color: catMeta.color || categoryObj?.color || 'var(--accent)',
+                flexShrink: 0
               }}
             >
               <CategoryIcon category={ge.category} icon={catMeta.icon || categoryObj?.icon} size={20} />
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>{cleanSettlementDescription(ge.description)}</span>
-                {vendor && (
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: 20,
-                      height: 20,
-                      borderRadius: 6,
-                      background: 'var(--surface2)',
-                      color: 'var(--accent)',
-                      border: '1px solid var(--border)',
-                      flexShrink: 0
-                    }}
-                    title={`Vendor: ${vendor.name}`}
-                  >
-                    <Store size={12} />
-                  </span>
-                )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0, flex: 1, overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                <span
+                  style={{
+                    fontWeight: 600,
+                    fontSize: 14,
+                    color: 'var(--text)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    minWidth: 0,
+                  }}
+                  title={cleanSettlementDescription(ge.description)}
+                >
+                  {cleanSettlementDescription(ge.description)}
+                </span>
                 {!ge.isSettlementGroup && (ge.isSplit || ge.items.length > 1) && (
                   <span
                     style={{
@@ -124,17 +120,17 @@ export const ExpenseTableRow: React.FC<Props> = React.memo(({
                   </span>
                 )}
               </div>
-              <div style={{ fontSize: 11.5, color: 'var(--text-3)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
-                {!ge.isSettlementGroup && <span>{ge.category}</span>}
-                {!ge.isSettlementGroup && friendsInGroup.length > 0 && <span>•</span>}
-                {friendsInGroup.length > 0 && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--text-3)' }}>
-                    {friendsInGroup.map((f: Friend | undefined) => f && (
-                      <span key={f.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <div style={{ fontSize: 11.5, color: 'var(--text-3)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {!ge.isSettlementGroup && <span style={{ flexShrink: 0 }}>{ge.category}</span>}
+                {!ge.isSettlementGroup && friendsToShow.length > 0 && <span style={{ flexShrink: 0 }}>•</span>}
+                {friendsToShow.length > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--text-3)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {friendsToShow.map((f: Friend | undefined) => f && (
+                      <span key={f.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
                         <div className="avatar avatar-sm" style={{ ...getAvatarStyle(f.color), width: 16, height: 16, fontSize: 8, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-                          {f.type === 'vendor' ? <Store size={9} /> : friendInitial(f.name, f.avatarNumber)}
+                          {friendInitial(f.name, f.avatarNumber)}
                         </div>
-                        <span>{f.name}</span>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
                       </span>
                     ))}
                   </div>
@@ -144,7 +140,7 @@ export const ExpenseTableRow: React.FC<Props> = React.memo(({
           </div>
         </td>
         <td>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', whiteSpace: 'nowrap' }}>
             {(() => {
               if (ge.isSettlementGroup) {
                 return (
@@ -173,25 +169,13 @@ export const ExpenseTableRow: React.FC<Props> = React.memo(({
           </div>
         </td>
         <td>
-          <span className="tx-type-pill">
-            {ge.isSettlementGroup ? (
-              <CheckCircle2 size={11} style={{ color: '#10b981' }} />
-            ) : ge.isSplit ? (
-              <Users size={11} style={{ color: 'var(--accent)' }} />
-            ) : (
-              <User size={11} style={{ color: 'var(--text-3)' }} />
-            )}
-            <span>{ge.isSettlementGroup ? 'Settlement' : (ge.isSplit ? 'Split Expense' : typeLabel(primaryItem.type, undefined, primaryItem.category))}</span>
-          </span>
-        </td>
-        <td>
-          <span className="tx-wallet-pill">
+          <span className="tx-wallet-pill" style={{ maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {walletObj ? (
               renderWalletIcon(walletObj.icon || walletObj.name, 12, walletObj.color)
             ) : (
               <WalletIcon size={11} style={{ color: 'var(--text-3)' }} />
             )}
-            <span>{effectiveWalletName}</span>
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{effectiveWalletName}</span>
           </span>
         </td>
         <td>

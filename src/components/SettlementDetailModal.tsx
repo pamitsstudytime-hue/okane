@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom';
-import { X, Handshake, ArrowDownLeft, ArrowUpRight, RotateCcw, Calendar, Wallet as WalletIcon, FileText, CheckCircle2 } from 'lucide-react';
+import { X, Handshake, ArrowDownLeft, ArrowUpRight, RotateCcw, Calendar, Wallet as WalletIcon, FileText, CheckCircle2, Store } from 'lucide-react';
 import { useStore } from '../store';
 import type { Settlement, Expense } from '../types';
 import { fmtMoney, fmtDate, friendInitial, getAvatarStyle, cleanExpenseDescription } from '../utils';
@@ -48,8 +48,11 @@ export default function SettlementDetailModal({ settlement, onClose, onUndo }: S
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {friend ? (
-              <div className="avatar" style={getAvatarStyle(friend.color)}>
-                {friendInitial(friend.name, friend.avatarNumber)}
+              <div
+                className="avatar"
+                style={getAvatarStyle(friend.color || (friend.type === 'vendor' ? '#f59e0b' : 'var(--accent)'))}
+              >
+                {friend.type === 'vendor' ? <Store size={18} strokeWidth={2.2} /> : friendInitial(friend.name, friend.avatarNumber)}
               </div>
             ) : (
               <div
@@ -389,19 +392,25 @@ export default function SettlementDetailModal({ settlement, onClose, onUndo }: S
                                   >
                                     <span
                                       style={{
-                                        width: 12,
-                                        height: 12,
+                                        width: 14,
+                                        height: 14,
                                         borderRadius: '50%',
-                                        background: getAvatarStyle(expFriend.color).background,
-                                        color: '#ffffff',
+                                        aspectRatio: '1 / 1',
+                                        ...getAvatarStyle(expFriend.color || (expFriend.type === 'vendor' ? '#f59e0b' : 'var(--accent)')),
                                         fontSize: 7.5,
-                                        fontWeight: 700,
-                                        display: 'grid',
-                                        placeItems: 'center',
+                                        fontWeight: 750,
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
                                         lineHeight: 1,
+                                        flexShrink: 0,
                                       }}
                                     >
-                                      {friendInitial(expFriend.name, expFriend.avatarNumber)}
+                                      {expFriend.type === 'vendor' ? (
+                                        <Store size={8} strokeWidth={2.2} />
+                                      ) : (
+                                        friendInitial(expFriend.name, expFriend.avatarNumber)
+                                      )}
                                     </span>
                                     <span>{expFriend.name}</span>
                                   </span>

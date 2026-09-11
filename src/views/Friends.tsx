@@ -1,5 +1,4 @@
 import { useState, useMemo, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import {
   Plus,
   Edit2,
@@ -38,8 +37,6 @@ interface Props {
 export default function Friends({ onNavigate }: Props) {
   const { db, deleteFriend, showToast } = useStore();
   const { friends, settings: { currency } } = db;
-  const isDevMode = db.settings?.devMode ?? false;
-  const enableAIAssistant = isDevMode && (db.settings?.enableAIAssistant ?? true);
 
   const [editFriend, setEditFriend] = useState<Friend | null>(null);
   const [settleFriend, setSettleFriend] = useState<Friend | null>(null);
@@ -75,25 +72,6 @@ export default function Friends({ onNavigate }: Props) {
     setUserDensityOverride(newDensity);
   };
   const [showFilters, setShowFilters] = useState(false);
-  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(() => {
-    if (typeof document !== 'undefined') {
-      return document.getElementById('floating-extra-actions-slot');
-    }
-    return null;
-  });
-
-  useEffect(() => {
-    if (!portalTarget) {
-      const interval = setInterval(() => {
-        const slot = document.getElementById('floating-extra-actions-slot');
-        if (slot) {
-          setPortalTarget(slot);
-          clearInterval(interval);
-        }
-      }, 50);
-      return () => clearInterval(interval);
-    }
-  }, [portalTarget]);
 
   // Three-dot menu state
   const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null);
@@ -198,6 +176,16 @@ export default function Friends({ onNavigate }: Props) {
     return () => window.removeEventListener('app-open-filters', handleOpenFilters);
   }, []);
 
+  // Listen for top bar Add Contact button trigger
+  useEffect(() => {
+    const handleOpenAddContact = () => {
+      setAddDefaultType(typeFilter);
+      setShowAdd(true);
+    };
+    window.addEventListener('app-add-contact', handleOpenAddContact);
+    return () => window.removeEventListener('app-add-contact', handleOpenAddContact);
+  }, [typeFilter]);
+
   // Sync active filter count with top bar
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('app-filter-count-update', {
@@ -278,9 +266,22 @@ export default function Friends({ onNavigate }: Props) {
 
   return (
     <div className="view-container">
-      {/* Header Title */}
+      {/* Header Title & Desktop Action */}
       <div className="page-header" style={{ marginBottom: 12 }}>
-        <h1 className="page-title">Contacts</h1>
+        <div>
+          <h1 className="page-title">Contacts</h1>
+        </div>
+        <button
+          type="button"
+          id="desktop-add-contact-btn"
+          className="btn btn-primary desktop-only"
+          onClick={() => {
+            setAddDefaultType(typeFilter);
+            setShowAdd(true);
+          }}
+        >
+          <Plus size={16} /> Add Contact
+        </button>
       </div>
 
       {/* Clean Tab Segmented Switch & Filter Bar */}
@@ -905,105 +906,6 @@ export default function Friends({ onNavigate }: Props) {
         vendorAndSubSpend={vendorAndSubSpend}
         currency={currency}
       />
-
-      {/* Floating Add Contact Button - placed directly inside the floating action stack above search bar */}
-      {portalTarget ? (
-        createPortal(
-          <button
-            type="button"
-            id="floating-add-contact-btn"
-            className="floating-add-contact-btn"
-            onClick={() => {
-              setAddDefaultType(typeFilter);
-              setShowAdd(true);
-            }}
-            style={{
-              width: '46px',
-              height: '46px',
-              borderRadius: '50%',
-              backgroundColor: 'var(--surface2)',
-              color: 'var(--text)',
-              border: '1px solid var(--border)',
-              boxShadow: '0 8px 24px -4px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              pointerEvents: 'auto',
-              transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.backgroundColor = 'var(--surface3)';
-              e.currentTarget.style.borderColor = 'var(--accent)';
-              e.currentTarget.style.color = 'var(--accent)';
-              e.currentTarget.style.transform = 'scale(1.08)';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.backgroundColor = 'var(--surface2)';
-              e.currentTarget.style.borderColor = 'var(--border)';
-              e.currentTarget.style.color = 'var(--text)';
-              e.currentTarget.style.transform = 'none';
-            }}
-            onMouseDown={e => {
-              e.currentTarget.style.transform = 'scale(0.95)';
-            }}
-            title={typeFilter === 'friend' ? 'Add Friend' : typeFilter === 'vendor' ? 'Add Vendor' : 'Add Subscription'}
-            aria-label={typeFilter === 'friend' ? 'Add Friend' : typeFilter === 'vendor' ? 'Add Vendor' : 'Add Subscription'}
-          >
-            <Plus size={19} />
-          </button>,
-          portalTarget
-        )
-      ) : (
-        <button
-          type="button"
-          id="floating-add-contact-btn"
-          className="floating-add-contact-btn"
-          onClick={() => {
-            setAddDefaultType(typeFilter);
-            setShowAdd(true);
-          }}
-          style={{
-            position: 'fixed',
-            bottom: enableAIAssistant
-              ? 'calc(env(safe-area-inset-bottom, 0px) + 192px)'
-              : 'calc(env(safe-area-inset-bottom, 0px) + 134px)',
-            right: '16px',
-            width: '46px',
-            height: '46px',
-            borderRadius: '50%',
-            backgroundColor: 'var(--surface2)',
-            color: 'var(--text)',
-            border: '1px solid var(--border)',
-            boxShadow: '0 8px 24px -4px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            zIndex: 998,
-            transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.backgroundColor = 'var(--surface3)';
-            e.currentTarget.style.borderColor = 'var(--accent)';
-            e.currentTarget.style.color = 'var(--accent)';
-            e.currentTarget.style.transform = 'scale(1.08)';
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.backgroundColor = 'var(--surface2)';
-            e.currentTarget.style.borderColor = 'var(--border)';
-            e.currentTarget.style.color = 'var(--text)';
-            e.currentTarget.style.transform = 'none';
-          }}
-          onMouseDown={e => {
-            e.currentTarget.style.transform = 'scale(0.95)';
-          }}
-          title={typeFilter === 'friend' ? 'Add Friend' : typeFilter === 'vendor' ? 'Add Vendor' : 'Add Subscription'}
-          aria-label={typeFilter === 'friend' ? 'Add Friend' : typeFilter === 'vendor' ? 'Add Vendor' : 'Add Subscription'}
-        >
-          <Plus size={19} />
-        </button>
-      )}
 
       {/* Modals */}
       {showAdd && <FriendModal defaultType={addDefaultType} onClose={() => setShowAdd(false)} />}

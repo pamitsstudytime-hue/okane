@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, Store } from 'lucide-react';
+import { Users } from 'lucide-react';
 import CategoryIcon from '../CategoryIcon';
 import { fmtMoney, friendInitial, getAvatarStyle, resolveCategoryMeta, cleanSettlementDescription, type GroupedExpense } from '../../utils';
 import type { Expense, Friend, Wallet, Category, Settlement } from '../../types';
@@ -53,7 +53,7 @@ export const ExpenseMobileCard: React.FC<Props> = React.memo(({
       onClick={handleClick}
       role="button"
       tabIndex={0}
-      style={{ cursor: 'pointer' }}
+      style={{ cursor: 'pointer', outline: 'none' }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
@@ -83,8 +83,8 @@ export const ExpenseMobileCard: React.FC<Props> = React.memo(({
           </div>
 
           {/* Middle Info Column */}
-          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 3.5 }}>
-            {/* Top Row: Title + Vendor Icon + Unified Status Badge (for non-settlement) */}
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 3.5, paddingRight: 4 }}>
+            {/* Top Row: Title + Unified Status Badge (for non-settlement) */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
               <span
                 className="mobile-expense-title"
@@ -97,30 +97,11 @@ export const ExpenseMobileCard: React.FC<Props> = React.memo(({
                   lineHeight: 1.3,
                   fontWeight: 650,
                   fontSize: 13.5,
+                  minWidth: 0,
                 }}
               >
                 {cleanSettlementDescription(ge.description)}
               </span>
-
-              {vendor && (
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: 18,
-                    height: 18,
-                    borderRadius: 5,
-                    background: 'var(--surface2)',
-                    color: 'var(--accent)',
-                    border: '1px solid var(--border)',
-                    flexShrink: 0,
-                  }}
-                  title={`Vendor: ${vendor.name}`}
-                >
-                  <Store size={10} />
-                </span>
-              )}
 
               {!ge.isSettlementGroup && groupStatus.statusKey !== 'none' && groupStatus.statusLabel && (
                 <span
@@ -199,7 +180,7 @@ export const ExpenseMobileCard: React.FC<Props> = React.memo(({
                           justifyContent: 'center',
                         }}
                       >
-                        {friendsToShow[0].type === 'vendor' ? <Store size={8} /> : friendInitial(friendsToShow[0].name, friendsToShow[0].avatarNumber)}
+                        {friendInitial(friendsToShow[0].name, friendsToShow[0].avatarNumber)}
                       </span>
                       <span style={{ color: 'var(--text-2)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {friendsToShow[0].name}
@@ -227,7 +208,7 @@ export const ExpenseMobileCard: React.FC<Props> = React.memo(({
                             }}
                             title={f.name}
                           >
-                            {f.type === 'vendor' ? <Store size={8} /> : friendInitial(f.name, f.avatarNumber)}
+                            {friendInitial(f.name, f.avatarNumber)}
                           </span>
                         ))}
                       </span>
@@ -242,7 +223,7 @@ export const ExpenseMobileCard: React.FC<Props> = React.memo(({
           </div>
 
           {/* Right Amount Column */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 3, flexShrink: 0 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 3, flexShrink: 0, marginLeft: 'auto' }}>
             <div className="mobile-expense-amount" style={{ fontSize: 13.5, fontWeight: 700 }}>
               {(() => {
                 if (ge.isSettlementGroup) {

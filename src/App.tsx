@@ -1012,6 +1012,36 @@ function AppInner() {
                 </Box>
               )}
 
+              {view === 'friends' && (
+                <button
+                  type="button"
+                  id="topbar-add-contact-btn"
+                  className="btn-icon topbar-add-contact-btn"
+                  onClick={() => {
+                    window.dispatchEvent(new CustomEvent('app-add-contact'));
+                  }}
+                  style={{
+                    position: 'relative',
+                    width: 36,
+                    height: 36,
+                    borderRadius: '50%',
+                    background: 'var(--surface2)',
+                    border: '1px solid var(--border)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--text)',
+                    flexShrink: 0,
+                    transition: 'transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease',
+                  }}
+                  title="Add Contact"
+                  aria-label="Add Contact"
+                >
+                  <Plus size={18} />
+                </button>
+              )}
+
               {showFilterInTopbar && (
                 <button
                   type="button"

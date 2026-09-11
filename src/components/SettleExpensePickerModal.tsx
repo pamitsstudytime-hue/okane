@@ -824,16 +824,18 @@ export default function SettleExpensePickerModal({
                         >
                           <span
                             style={{
-                              width: 13,
-                              height: 13,
+                              width: 14,
+                              height: 14,
                               borderRadius: '50%',
-                              background: getAvatarStyle(fInfo.friend.color).background,
-                              color: '#ffffff',
+                              aspectRatio: '1 / 1',
+                              ...getAvatarStyle(fInfo.friend.color),
                               fontSize: 7.5,
-                              fontWeight: 700,
-                              display: 'grid',
-                              placeItems: 'center',
+                              fontWeight: 750,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
                               lineHeight: 1,
+                              flexShrink: 0,
                             }}
                           >
                             {friendInitial(fInfo.friend.name, fInfo.friend.avatarNumber)}

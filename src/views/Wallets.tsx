@@ -16,11 +16,14 @@ import {
   Search,
   Eye,
   EyeOff,
+  MoreVertical,
 } from 'lucide-react';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 import { useStore } from '../store';
 import type { Wallet, Expense, Settlement } from '../types';
 import { walletBalance, expenseFlow, monthKey } from '../db';
-import { fmtMoney, fmtDate, typeLabel, statusLabel, groupExpenses, resolveCategoryMeta, cleanSettlementDescription, type GroupedExpense } from '../utils';
+import { fmtMoney, fmtDate, typeLabel, statusLabel, groupExpenses, resolveCategoryMeta, cleanSettlementDescription, currencySymbol, type GroupedExpense } from '../utils';
 import WalletModal from '../components/WalletModal';
 import { renderWalletIcon } from '../components/WalletIconRenderer';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -49,6 +52,21 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
   const [selectedSettlement, setSelectedSettlement] = useState<Settlement | null>(null);
   const [editExp, setEditExp] = useState<Expense | null>(null);
   const [delExpId, setDelExpId] = useState<string | null>(null);
+
+  // Overflow menu state for wallet cards
+  const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null);
+  const [menuWallet, setMenuWallet] = useState<Wallet | null>(null);
+
+  const handleMenuOpen = (e: React.MouseEvent<HTMLElement>, wallet: Wallet) => {
+    e.stopPropagation();
+    setMenuAnchorEl(e.currentTarget);
+    setMenuWallet(wallet);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null);
+    setMenuWallet(null);
+  };
 
   useEffect(() => {
     if (!initialArg) {
@@ -215,25 +233,25 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
   return (
     <div className="view-container">
       {/* Page Header */}
-      <div className="page-header" style={{ marginTop: 8, marginBottom: 14 }}>
-        <div>
-          <h1 className="page-title">Wallets</h1>
-          <p className="page-subtitle desktop-only">
-            Manage your physical wallets and bank accounts.
-          </p>
-        </div>
-        <div className="page-header-actions" style={{ display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
+      <div className="page-header wallets-page-header">
+        <h1 className="page-title">Wallets</h1>
+        <div className="page-header-actions wallets-header-actions">
           <button
-            className="btn btn-secondary"
+            type="button"
+            className="btn wallet-action-btn"
             style={{
-              borderRadius: 10,
+              background: 'var(--surface2)',
+              border: '1px solid var(--border)',
+              color: 'var(--text)',
+              borderRadius: 9999,
+              fontWeight: 650,
+              fontSize: 13,
               padding: '9px 16px',
-              fontWeight: 600,
               display: 'inline-flex',
               alignItems: 'center',
-              justifyContent: 'center',
               gap: 8,
-              border: '1.5px solid var(--border)',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
             }}
             onClick={() => {
               setTransferFromId(undefined);
@@ -243,16 +261,8 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
             <ArrowLeftRight size={16} /> Transfer Funds
           </button>
           <button
-            className="btn btn-primary"
-            style={{
-              borderRadius: 10,
-              padding: '9px 20px',
-              fontWeight: 600,
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-            }}
+            type="button"
+            className="btn btn-primary wallet-action-btn"
             onClick={() => setShowAdd(true)}
           >
             <Plus size={16} /> Add Wallet
@@ -261,250 +271,230 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
       </div>
 
       {/* Wallet Cards Grid Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12, marginBottom: 24 }}>
+      <div
+        className="wallet-grid"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
+          gap: 16,
+          marginBottom: 28,
+        }}
+      >
         {walletCardsData.map(({ wallet: w, isDefault, bal, wExpCount, wSpend }) => {
           return (
             <div
               key={w.id}
+              className="wallet-item-card"
               style={{
                 background: 'var(--surface)',
-                border: '1.5px solid var(--border)',
+                border: '1px solid var(--border)',
                 borderRadius: 16,
-                padding: '20px',
-                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                padding: '18px 20px',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                boxShadow: 'var(--shadow)',
-                position: 'relative',
+                gap: 16,
+                boxSizing: 'border-box',
+                width: '100%',
+                minHeight: 200,
+                transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
               }}
             >
               <div>
-                {/* Top Card Row */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                {/* Top Card Row: Icon, Title, Subtitle, and Action Icons */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 14 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
                     <div
                       style={{
                         width: 44,
                         height: 44,
+                        borderRadius: 12,
+                        background: 'var(--surface2)',
+                        border: '1px solid var(--border)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         flexShrink: 0,
+                        overflow: 'hidden',
                       }}
                     >
                       {renderWalletIcon(w.icon || w.name, 44, w.color || 'var(--accent)')}
                     </div>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                        <span style={{ fontWeight: 700, fontSize: 18, color: 'var(--text)' }}>{w.name}</span>
-                        {isDefault && (
-                          <span
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              padding: '2px 8px',
-                              borderRadius: 999,
-                              background: 'var(--surface2)',
-                              color: 'var(--text)',
-                              fontSize: 10.5,
-                              fontWeight: 650,
-                              border: '1px solid var(--border)',
-                              letterSpacing: '0.2px',
-                            }}
-                          >
-                            Default
-                          </span>
-                        )}
-                        {w.isHidden && (
-                          <span
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: 3,
-                              padding: '2px 8px',
-                              borderRadius: 999,
-                              background: 'rgba(239, 68, 68, 0.12)',
-                              color: 'var(--debit)',
-                              fontSize: 10.5,
-                              fontWeight: 700,
-                              border: '1px solid rgba(239, 68, 68, 0.2)',
-                              letterSpacing: '0.2px',
-                            }}
-                            title="Hidden from Dashboard & Total Net Worth"
-                          >
-                            <EyeOff size={11} /> Hidden
-                          </span>
-                        )}
+                    <div style={{ minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontWeight: 700,
+                          fontSize: 17,
+                          color: 'var(--text)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          lineHeight: 1.25,
+                        }}
+                        title={w.name}
+                      >
+                        {w.name}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 12,
+                          color: 'var(--text-3)',
+                          fontWeight: 500,
+                          marginTop: 3,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        Opening: <span style={{ color: 'var(--text-2)', fontWeight: 600 }}>{fmtMoney(w.openingBalance, currency)}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: 6 }}>
+                  {/* Top Right More Options Button */}
+                  <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
                     <button
-                      className="btn-icon"
-                      style={{
-                        padding: 7,
-                        borderRadius: 8,
-                        border: '1px solid var(--border)',
-                        background: 'var(--surface2)',
-                        color: 'var(--text-2)',
-                      }}
-                      onClick={() => setEditW(w)}
-                      title="Edit Wallet"
+                      type="button"
+                      className="wallet-more-btn"
+                      onClick={(e) => handleMenuOpen(e, w)}
+                      title="Wallet options"
                     >
-                      <Edit2 size={16} />
-                    </button>
-                    {!isDefault && (
-                      <button
-                        className="btn-icon"
-                        style={{
-                          padding: 7,
-                          borderRadius: 8,
-                          border: w.isHidden ? '1px solid var(--debit)' : '1px solid var(--border)',
-                          background: w.isHidden ? 'rgba(239, 68, 68, 0.12)' : 'var(--surface2)',
-                          color: w.isHidden ? 'var(--debit)' : 'var(--text-2)',
-                        }}
-                        onClick={() => {
-                          const nextState = !w.isHidden;
-                          updateWallet(w.id, { isHidden: nextState });
-                          showToast(nextState ? `Wallet "${w.name}" is now hidden` : `Wallet "${w.name}" is now visible`);
-                        }}
-                        title={w.isHidden ? 'Unhide Wallet (Show in Dashboard/Totals)' : 'Hide Wallet (Hide from Dashboard/Totals)'}
-                      >
-                        {w.isHidden ? <Eye size={16} /> : <EyeOff size={16} />}
-                      </button>
-                    )}
-                    <button
-                      className="btn-icon"
-                      style={{
-                        padding: 7,
-                        borderRadius: 8,
-                        border: '1px solid rgba(239, 68, 68, 0.25)',
-                        background: 'var(--surface2)',
-                        color: 'var(--debit)',
-                      }}
-                      onClick={() => setDelId(w.id)}
-                      disabled={wallets.length <= 1}
-                      title="Delete Wallet"
-                    >
-                      <Trash2 size={16} />
+                      <MoreVertical size={17} />
                     </button>
                   </div>
                 </div>
 
-                {/* Total Balance Block */}
-                <div style={{ marginBottom: 16 }}>
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: 'var(--text-3)',
-                      fontWeight: 700,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.6px',
-                      marginBottom: 4,
-                    }}
-                  >
-                    TOTAL WALLET BALANCE
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 32,
-                      fontWeight: 800,
-                      color: bal < 0 ? 'var(--debit)' : 'var(--text)',
-                      lineHeight: 1.2,
-                      letterSpacing: '-0.5px',
-                    }}
-                  >
-                    {fmtMoney(bal, currency)}
-                  </div>
-
-                  {/* Opening Balance Badge Pill */}
-                  <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-                    <span
+                {/* Inner Balance Section inspired by image 1 */}
+                <div
+                  style={{
+                    background: 'var(--surface2)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 13,
+                    padding: '14px 16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                  }}
+                >
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div
                       style={{
-                        padding: '4px 10px',
-                        borderRadius: 8,
-                        background: 'var(--surface2)',
-                        border: '1px solid var(--border)',
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: 'var(--text-2)',
-                        display: 'inline-flex',
-                        alignItems: 'center',
+                        fontSize: 10.5,
+                        color: 'var(--text-3)',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.6px',
+                        marginBottom: 4,
                       }}
                     >
-                      Opening Balance: <strong style={{ color: 'var(--text)', marginLeft: 4 }}>{fmtMoney(w.openingBalance, currency)}</strong>
+                      TOTAL BALANCE
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 25,
+                        fontWeight: 800,
+                        color: bal < 0 ? 'var(--debit)' : 'var(--text)',
+                        lineHeight: 1.15,
+                        letterSpacing: '-0.4px',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {fmtMoney(bal, currency)}
+                    </div>
+                  </div>
+
+                  {/* Badges / Pill Tags on the Right */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
+                    {isDefault && (
+                      <span className="wallet-badge-pill wallet-badge-default">
+                        Default
+                      </span>
+                    )}
+                    {w.isHidden && (
+                      <span
+                        className="wallet-badge-pill wallet-badge-hidden"
+                        title="Hidden from Dashboard"
+                      >
+                        <EyeOff size={11} /> Hidden
+                      </span>
+                    )}
+                    <span
+                      className={`wallet-badge-pill ${wSpend > 0 ? 'wallet-badge-spend-active' : 'wallet-badge-spend-zero'}`}
+                      title={wSpend > 0 ? `Monthly spend: -${fmtMoney(wSpend, currency)}` : 'No expenses this month'}
+                    >
+                      {wSpend > 0 ? (
+                        <>
+                          <TrendingDown size={11} style={{ color: 'var(--debit)', flexShrink: 0 }} />
+                          <span>
+                            {wSpend >= 1000
+                              ? `Spend: ~${currencySymbol(currency)}${Math.round(wSpend / 1000)}k`
+                              : `Spend: -${currencySymbol(currency)}${Math.round(wSpend)}`}
+                          </span>
+                        </>
+                      ) : (
+                        <span>Spend: {currencySymbol(currency)}0</span>
+                      )}
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div>
-                {/* Monthly Spend Row - Clean spacing without splitting border lines */}
-                <div
+              {/* Bottom Action Buttons */}
+              <div style={{ display: 'flex', gap: 8, width: '100%' }}>
+                <button
+                  type="button"
+                  className="btn"
                   style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    fontSize: 13.5,
-                    color: 'var(--text-2)',
-                    marginBottom: 14,
-                    marginTop: 8,
+                    flex: 1,
+                    justifyContent: 'center',
+                    gap: 6,
+                    fontSize: 13,
+                    fontWeight: 650,
+                    padding: '9px 12px',
+                    borderRadius: 9999,
+                    background: 'var(--surface2)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text)',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onClick={() => {
+                    setTransferFromId(w.id);
+                    setShowTransfer(true);
+                  }}
+                  title="Transfer funds from this wallet"
+                >
+                  <ArrowLeftRight size={14} />
+                  Transfer
+                </button>
+                <button
+                  type="button"
+                  className="btn"
+                  style={{
+                    flex: 1,
+                    justifyContent: 'center',
+                    gap: 6,
+                    fontSize: 13,
+                    fontWeight: 650,
+                    padding: '9px 12px',
+                    borderRadius: 9999,
+                    background: 'var(--surface2)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text)',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onClick={() => {
+                    setSelectedWalletForTx(w);
+                    setSearchQuery('');
                   }}
                 >
-                  <span style={{ fontWeight: 500 }}>Monthly Spend</span>
-                  <span style={{ fontWeight: 700, color: 'var(--debit)' }}>-{fmtMoney(wSpend, currency)}</span>
-                </div>
-
-                {/* Bottom Action Buttons */}
-                <div style={{ display: 'flex', gap: 10 }}>
-                  <button
-                    className="btn btn-secondary"
-                    style={{
-                      flex: 1,
-                      justifyContent: 'center',
-                      gap: 8,
-                      fontSize: 13,
-                      fontWeight: 600,
-                      padding: '9px 14px',
-                      borderRadius: 10,
-                      border: '1px solid var(--border)',
-                      background: 'var(--surface2)',
-                      color: 'var(--text)',
-                    }}
-                    onClick={() => {
-                      setTransferFromId(w.id);
-                      setShowTransfer(true);
-                    }}
-                    title="Transfer funds from this wallet"
-                  >
-                    <ArrowLeftRight size={15} />
-                    Transfer
-                  </button>
-                  <button
-                    className="btn btn-secondary"
-                    style={{
-                      flex: 1,
-                      justifyContent: 'center',
-                      gap: 8,
-                      fontSize: 13,
-                      fontWeight: 600,
-                      padding: '9px 14px',
-                      borderRadius: 10,
-                      border: '1px solid var(--border)',
-                      background: 'var(--surface2)',
-                      color: 'var(--text)',
-                    }}
-                    onClick={() => {
-                      setSelectedWalletForTx(w);
-                      setSearchQuery('');
-                    }}
-                  >
-                    <ReceiptText size={15} />
-                    Tx ({wExpCount})
-                  </button>
-                </div>
+                  <ReceiptText size={14} />
+                  Tx ({wExpCount})
+                </button>
               </div>
             </div>
           );
@@ -1026,6 +1016,103 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
           onClose={() => setDelExpId(null)}
         />
       )}
+
+      {/* Overflow Menu for Edit / Hide / Delete */}
+      <Menu
+        anchorEl={menuAnchorEl}
+        open={Boolean(menuAnchorEl)}
+        onClose={handleMenuClose}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '12px',
+              minWidth: 160,
+              boxShadow: 'var(--shadow)',
+              bgcolor: 'var(--surface)',
+              border: '1px solid var(--border)',
+              backgroundImage: 'none',
+              p: 0.5,
+            },
+          },
+        }}
+      >
+        <MenuItem
+          onClick={() => {
+            if (menuWallet) setEditW(menuWallet);
+            handleMenuClose();
+          }}
+          sx={{
+            fontSize: 13,
+            py: 1,
+            px: 1.5,
+            borderRadius: '8px',
+            color: 'var(--text)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+        >
+          <Edit2 size={15} style={{ color: 'var(--text-2)', flexShrink: 0 }} />
+          <span style={{ fontSize: 13, fontWeight: 500 }}>Edit Wallet</span>
+        </MenuItem>
+        {menuWallet && menuWallet.id !== settings.defaultWalletId && (
+          <MenuItem
+            onClick={() => {
+              if (menuWallet) {
+                const nextState = !menuWallet.isHidden;
+                updateWallet(menuWallet.id, { isHidden: nextState });
+                showToast(nextState ? `Wallet "${menuWallet.name}" is now hidden` : `Wallet "${menuWallet.name}" is now visible`);
+              }
+              handleMenuClose();
+            }}
+            sx={{
+              fontSize: 13,
+              py: 1,
+              px: 1.5,
+              borderRadius: '8px',
+              color: 'var(--text)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
+            {menuWallet.isHidden ? (
+              <Eye size={15} style={{ color: 'var(--text-2)', flexShrink: 0 }} />
+            ) : (
+              <EyeOff size={15} style={{ color: 'var(--text-2)', flexShrink: 0 }} />
+            )}
+            <span style={{ fontSize: 13, fontWeight: 500 }}>
+              {menuWallet.isHidden ? 'Unhide Wallet' : 'Hide Wallet'}
+            </span>
+          </MenuItem>
+        )}
+        <MenuItem
+          disabled={wallets.length <= 1}
+          onClick={() => {
+            if (menuWallet) setDelId(menuWallet.id);
+            handleMenuClose();
+          }}
+          sx={{
+            fontSize: 13,
+            py: 1,
+            px: 1.5,
+            borderRadius: '8px',
+            color: 'var(--debit)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            '&.Mui-disabled': {
+              opacity: 0.5,
+              color: 'var(--debit)',
+            },
+          }}
+        >
+          <Trash2 size={15} style={{ color: 'var(--debit)', flexShrink: 0 }} />
+          <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--debit)' }}>Delete Wallet</span>
+        </MenuItem>
+      </Menu>
     </div>
   );
 }

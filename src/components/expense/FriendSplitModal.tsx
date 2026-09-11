@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { X, Users, Search, Plus, Store, Check, ArrowLeft, ArrowRight, RotateCcw } from 'lucide-react';
 import type { AppDB } from '../../types';
-import { fmtMoney, currencySymbol, getAvatarStyle } from '../../utils';
+import { fmtMoney, currencySymbol, getAvatarStyle, friendInitial } from '../../utils';
 import { useBackButtonModal, BackPriority } from '../../utils/backHandler';
 
 interface FriendSplitModalProps {
@@ -591,15 +591,17 @@ export function FriendSplitModal({
                                 width: 28,
                                 height: 28,
                                 borderRadius: '50%',
+                                aspectRatio: '1 / 1',
                                 ...getAvatarStyle(f.color),
-                                fontSize: 11,
-                                fontWeight: 700,
+                                fontSize: f.avatarNumber && f.avatarNumber.length > 2 ? 9 : 11,
+                                fontWeight: 750,
                                 display: 'grid',
                                 placeItems: 'center',
                                 flexShrink: 0,
+                                letterSpacing: '-0.2px',
                               }}
                             >
-                              {f.type === 'vendor' ? <Store size={13} /> : (f.name[0]?.toUpperCase() || 'F')}
+                              {f.type === 'vendor' ? <Store size={13} /> : friendInitial(f.name, f.avatarNumber)}
                             </div>
                             <span
                               style={{
@@ -1053,15 +1055,17 @@ export function FriendSplitModal({
                             width: 34,
                             height: 34,
                             borderRadius: '50%',
+                            aspectRatio: '1 / 1',
                             ...getAvatarStyle(friendObj?.color),
-                            fontSize: 12.5,
-                            fontWeight: 700,
+                            fontSize: friendObj?.avatarNumber && friendObj.avatarNumber.length > 2 ? 10 : 12.5,
+                            fontWeight: 750,
                             display: 'grid',
                             placeItems: 'center',
                             flexShrink: 0,
+                            letterSpacing: '-0.2px',
                           }}
                         >
-                          {friendObj?.type === 'vendor' ? <Store size={15} /> : (friendObj?.name[0]?.toUpperCase() || 'F')}
+                          {friendObj?.type === 'vendor' ? <Store size={15} /> : friendInitial(friendObj?.name, friendObj?.avatarNumber)}
                         </div>
                         <div style={{ minWidth: 0 }}>
                           <div

@@ -423,8 +423,6 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
                 const catMeta = resolveCategoryMeta(ge.category, cat, isSettlement);
                 const isIn = ge.flow === 'in' && ge.category !== 'Transfer';
                 const friendsInGroup = ge.friendIds.map(fid => db.friends.find(f => f.id === fid)).filter(Boolean);
-                const vendorId = ge.vendorId || ge.items.find(i => i.vendorId)?.vendorId;
-                const vendor = vendorId ? db.friends.find(f => f.id === vendorId) : null;
                 return (
                   <div
                     key={ge.id}
@@ -457,26 +455,6 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
                       <div style={{ minWidth: 0, flex: '1 1 auto', overflow: 'hidden' }}>
                         <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, width: '100%' }}>
                           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0, flex: '0 1 auto' }}>{cleanSettlementDescription(ge.description)}</span>
-                          {vendor && (
-                            <span
-                              style={{
-                                fontSize: 10,
-                                fontWeight: 600,
-                                padding: '1px 5px',
-                                borderRadius: 4,
-                                background: 'var(--surface2)',
-                                color: 'var(--text-2)',
-                                border: '1px solid var(--border)',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                flexShrink: 0
-                              }}
-                              title={`Vendor: ${vendor.name}`}
-                            >
-                              <Store size={10} style={{ color: 'var(--accent)', flexShrink: 0 }} />
-                            </span>
-                          )}
                           {!isSettlement && ge.isSplit && (
                             <span style={{
                               fontSize: 10,

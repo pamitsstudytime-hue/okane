@@ -690,9 +690,15 @@ export function sanitizeLoadedDB(rawDB: unknown): AppDB {
     : d.settings.categories;
   const safeCategories = categories.length > 0 ? categories : d.settings.categories;
 
-  const friends = Array.isArray(parsed.friends)
+  const rawFriends = Array.isArray(parsed.friends)
     ? parsed.friends.filter(f => f && typeof f === 'object' && f.id && f.name)
     : [];
+  const friends = rawFriends.map(f => {
+    if (f.type === 'vendor' && (f.color === '#6366f1' || !f.color)) {
+      return { ...f, color: '#f59e0b' };
+    }
+    return f;
+  });
 
   const expenses = Array.isArray(parsed.expenses)
     ? parsed.expenses.filter(e => e && typeof e === 'object' && e.id && e.description !== undefined)
@@ -2631,7 +2637,7 @@ export function seedSampleData(db: AppDB): AppDB {
       type: 'vendor',
       category: 'Food',
       notes: 'Daily home-style tiffin & grocery meals',
-      color: '#6366f1',
+      color: '#f59e0b',
     });
     current = res.db;
     vendor = res.friend;

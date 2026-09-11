@@ -9,6 +9,7 @@ import {
   fmtMoney,
   fmtDate,
   friendInitial,
+  getAvatarStyle,
   cleanExpenseDescription,
   cleanSettlementDescription,
   getGroupSettlementStatus,
@@ -87,8 +88,7 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
     if (f.type === 'vendor') return true;
     if (f.category?.toLowerCase() === 'vendor' || f.category?.toLowerCase() === 'store') return true;
     if (ge.vendorId === f.id || ge.items.some((i: Expense) => i.vendorId === f.id)) return true;
-    const n = (f.name || '').toLowerCase();
-    return /tiffin|aunty|vendor|store|merchant|canteen|mess|hotel|shop|restaurant|mart|supermarket|bazaar|swiggy|zomato|grocer/i.test(n);
+    return false;
   };
 
   const allFriendIds = Array.from(new Set([
@@ -96,22 +96,25 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
     ...ge.items.map(i => i.friendId).filter(Boolean) as string[],
     ...(ge.settlementId ? [settlementsMap.get(ge.settlementId)?.friendId].filter(Boolean) as string[] : []),
   ]));
-  const rawFriends = allFriendIds.map((fid: string) => friendsMap.get(fid)).filter((f): f is Friend => Boolean(f));
+  const rawFriends = useMemo(() => {
+    return allFriendIds.map((fid: string) => friendsMap.get(fid)).filter((f): f is Friend => Boolean(f));
+  }, [allFriendIds, friendsMap]);
   
   const explicitVendorId = ge.vendorId || ge.items.find((i: Expense) => i.vendorId)?.vendorId;
   const explicitVendor = explicitVendorId ? friendsMap.get(explicitVendorId) : null;
   const detectedVendor = explicitVendor || rawFriends.find(isContactVendor) || null;
 
   // Filter out vendor so friends and vendor are never lumped together
-  const nonVendorFriends = rawFriends.filter(f => f.id !== detectedVendor?.id);
-
-  let friendsToShow = nonVendorFriends;
-  if (friendsToShow.length === 0 && isSettlement && !detectedVendor) {
-    const m = ge.description.match(/^Settlement:\s*(Paid\s+to|Received\s+from)\s+(.+?)(?:\s*\((.*?)\))?$/i);
-    if (m && m[2]) {
-      friendsToShow = [{ id: 'synthetic_friend', name: m[2].trim() } as Friend];
+  const friendsToShow = useMemo(() => {
+    const list = rawFriends.filter(f => f.id !== detectedVendor?.id);
+    if (list.length === 0 && isSettlement && !detectedVendor) {
+      const m = ge.description.match(/^Settlement:\s*(Paid\s+to|Received\s+from)\s+(.+?)(?:\s*\((.*?)\))?$/i);
+      if (m && m[2]) {
+        return [{ id: 'synthetic_friend', name: m[2].trim() } as Friend];
+      }
     }
-  }
+    return list;
+  }, [rawFriends, detectedVendor, isSettlement, ge.description]);
 
   interface FriendRoleInfo {
     friend: Friend;
@@ -180,6 +183,7 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
     const friendColor = friend.color || themeColor;
     const isSelected = selectedFriendFilter === friend.id;
     const isDimmed = Boolean(selectedFriendFilter && selectedFriendFilter !== friend.id);
+    const badgeStyle = getAvatarStyle(friendColor);
 
     return (
       <button
@@ -190,12 +194,12 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
           display: 'inline-flex',
           alignItems: 'center',
           gap: 7,
-          padding: '3px 10px 3px 4px',
+          padding: '3px 10px 3px 3.5px',
           borderRadius: 9999,
-          background: isSelected ? 'var(--surface3, #242630)' : 'var(--surface)',
+          background: isSelected ? 'var(--surface3, #242630)' : 'var(--surface, #141416)',
           border: isSelected ? `1.5px solid ${friendColor}` : '1px solid var(--border)',
           fontSize: 12.5,
-          fontWeight: isSelected ? 750 : 600,
+          fontWeight: isSelected ? 750 : 650,
           color: 'var(--text)',
           lineHeight: 1.2,
           maxWidth: '100%',
@@ -218,18 +222,24 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
             width: 22,
             height: 22,
             borderRadius: '50%',
-            display: 'flex',
+            aspectRatio: '1 / 1',
+            display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: (friend.avatarNumber && friend.avatarNumber.length > 2) ? 9 : 10,
+            fontSize: (friend.avatarNumber && friend.avatarNumber.length > 2) ? 8.5 : 10,
             fontWeight: 750,
-            color: '#ffffff',
             flexShrink: 0,
-            background: friendColor,
-            boxShadow: `0 1px 4px ${friendColor}35`,
+            ...badgeStyle,
+            boxShadow: `0 1px 3px ${friendColor}22`,
+            letterSpacing: '-0.3px',
+            lineHeight: 1,
           }}
         >
-          {friendInitial(friend.name, friend.avatarNumber)}
+          {friend.type === 'vendor' ? (
+            <Store size={11} strokeWidth={2.2} />
+          ) : (
+            friendInitial(friend.name, friend.avatarNumber)
+          )}
         </span>
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {friend.name}
@@ -466,14 +476,6 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
                       color: badgeColor,
                     }}
                   >
-                    <span
-                      style={{
-                        width: 5,
-                        height: 5,
-                        borderRadius: '50%',
-                        background: badgeColor,
-                      }}
-                    />
                     {ge.isSplit && <Users size={10} />}
                     <span>{groupStatus.statusLabel}</span>
                   </span>
@@ -534,63 +536,70 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
             </div>
 
             {/* Vendor / Store Section if detected */}
-            {detectedVendor && (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '10px 14px',
-                  borderRadius: 14,
-                  background: 'rgba(255, 255, 255, 0.035)',
-                  gap: 12,
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                  <div
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: '50%',
-                      background: detectedVendor.color || 'var(--accent, #6366f1)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#ffffff',
-                      fontWeight: 750,
-                      fontSize: 12,
-                      flexShrink: 0,
-                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.25)',
-                    }}
-                  >
-                    <Store size={15} />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
-                    <span style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
-                      Store / Vendor
-                    </span>
-                    <span style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {detectedVendor.name}
-                    </span>
-                  </div>
-                </div>
-                <span
+            {detectedVendor && (() => {
+              const vendorColor = (detectedVendor.color && detectedVendor.color !== '#6366f1')
+                ? detectedVendor.color
+                : 'var(--amber, #f59e0b)';
+              const vendorBadgeStyle = getAvatarStyle(vendorColor);
+
+              return (
+                <div
                   style={{
-                    fontSize: 10.5,
-                    fontWeight: 700,
-                    padding: '3px 10px',
-                    borderRadius: 9999,
-                    background: 'rgba(234, 179, 8, 0.14)',
-                    color: '#eab308',
-                    border: '1px solid rgba(234, 179, 8, 0.32)',
-                    whiteSpace: 'nowrap',
-                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '10px 14px',
+                    borderRadius: 14,
+                    background: 'var(--surface)',
+                    border: '1px solid var(--border)',
+                    gap: 12,
                   }}
                 >
-                  Vendor
-                </span>
-              </div>
-            )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                    <div
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: '50%',
+                        aspectRatio: '1 / 1',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        ...vendorBadgeStyle,
+                        flexShrink: 0,
+                        lineHeight: 1,
+                      }}
+                    >
+                      <Store size={15} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
+                      <span style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+                        Store / Vendor
+                      </span>
+                      <span style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {detectedVendor.name}
+                      </span>
+                    </div>
+                  </div>
+                  <span
+                    className="app-contact-badge vendor"
+                    style={{
+                      fontSize: 10.5,
+                      fontWeight: 700,
+                      padding: '3px 10px',
+                      borderRadius: 9999,
+                      background: 'var(--amber-bg, rgba(245, 158, 11, 0.14))',
+                      color: 'var(--amber, #fbbf24)',
+                      border: '1px solid var(--amber-border, rgba(245, 158, 11, 0.28))',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                    }}
+                  >
+                    Vendor
+                  </span>
+                </div>
+              );
+            })()}
 
             {/* Friends Categorized: "You Owe" vs "Owes You" vs "Participants" */}
             {categorizedFriends.length > 0 && (
@@ -603,7 +612,23 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
                         <ArrowDownLeft size={12} strokeWidth={2.5} />
                         You Owe
                       </span>
-                      <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 9999, background: 'rgba(239, 68, 68, 0.14)', color: '#ef4444' }}>
+                      <span
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 750,
+                          minWidth: 18,
+                          height: 18,
+                          borderRadius: '50%',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '0 4px',
+                          background: 'rgba(239, 68, 68, 0.16)',
+                          color: 'var(--debit, #ef4444)',
+                          border: '1px solid rgba(239, 68, 68, 0.3)',
+                          lineHeight: 1,
+                        }}
+                      >
                         {friendsIOwe.length}
                       </span>
                     </div>
@@ -621,7 +646,23 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
                         <ArrowUpRight size={12} strokeWidth={2.5} />
                         Owes You
                       </span>
-                      <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 9999, background: 'rgba(16, 185, 129, 0.14)', color: '#10b981' }}>
+                      <span
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 750,
+                          minWidth: 18,
+                          height: 18,
+                          borderRadius: '50%',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '0 4px',
+                          background: 'rgba(16, 185, 129, 0.16)',
+                          color: 'var(--credit, #10b981)',
+                          border: '1px solid rgba(16, 185, 129, 0.3)',
+                          lineHeight: 1,
+                        }}
+                      >
                         {friendsOweMe.length}
                       </span>
                     </div>
@@ -639,7 +680,23 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
                         <Users size={12} />
                         Participants
                       </span>
-                      <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 9999, background: 'rgba(255, 255, 255, 0.08)', color: 'var(--text-2)' }}>
+                      <span
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 750,
+                          minWidth: 18,
+                          height: 18,
+                          borderRadius: '50%',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '0 4px',
+                          background: 'var(--accent-soft)',
+                          color: 'var(--text-2)',
+                          border: '1px solid var(--border)',
+                          lineHeight: 1,
+                        }}
+                      >
                         {friendsNeutral.length}
                       </span>
                     </div>
@@ -770,8 +827,16 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
                     </div>
                   ) : (
                     filteredBreakdownItems.map((item: Expense, idx: number) => {
-                      const itemFriend = item.friendId && item.friendId !== detectedVendor?.id ? friendsMap.get(item.friendId) : null;
-                      const isMine = item.type === 'personal' || (!itemFriend && (!item.friendId || item.friendId === detectedVendor?.id));
+                      const directFriend = item.friendId ? friendsMap.get(item.friendId) : null;
+                      const isDirectFriendVendor = Boolean(directFriend && directFriend.type === 'vendor');
+                      const itemVendor = item.vendorId ? friendsMap.get(item.vendorId) : (isDirectFriendVendor ? directFriend : null);
+                      const isVendorItem = Boolean(
+                        isDirectFriendVendor || 
+                        (itemVendor && itemVendor.type === 'vendor') ||
+                        (detectedVendor && item.friendId === detectedVendor.id && detectedVendor.type === 'vendor')
+                      );
+                      const isFriendContact = Boolean(directFriend && directFriend.type !== 'vendor');
+                      const isMine = item.type === 'personal' || (!directFriend && !item.vendorId);
 
                       // Title: show item title instead of vendor name
                       let itemTitle = cleanExpenseDescription(item.description);
@@ -841,6 +906,10 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
                       const subSign = isSubDebit ? '-' : '+';
                       const subColor = isSubDebit ? 'var(--debit, #ef4444)' : 'var(--credit, #10b981)';
 
+                      // Vendor avatar styling synced with above icon and contacts
+                      const vendorColor = itemVendor?.color || detectedVendor?.color || directFriend?.color || '#f59e0b';
+                      const vendorAvatarStyle = getAvatarStyle(vendorColor);
+
                       return (
                         <div
                           key={item.id || idx}
@@ -856,8 +925,48 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
-                            {/* Avatar: Roll number / initial of person owing or User icon for personal share */}
-                            {isMine ? (
+                            {/* Avatar: Friend avatar (e.g. 05), Vendor store icon with synced color, or User icon */}
+                            {isFriendContact && directFriend ? (
+                              <span
+                                style={{
+                                  width: 26,
+                                  height: 26,
+                                  borderRadius: '50%',
+                                  aspectRatio: '1 / 1',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: (directFriend.avatarNumber && directFriend.avatarNumber.length > 2) ? 9 : 10.5,
+                                  fontWeight: 750,
+                                  flexShrink: 0,
+                                  ...getAvatarStyle(directFriend.color || 'var(--accent, #10b981)'),
+                                  boxShadow: `0 1px 3px ${directFriend.color ? directFriend.color + '22' : 'rgba(0,0,0,0.1)'}`,
+                                  letterSpacing: '-0.3px',
+                                  lineHeight: 1,
+                                }}
+                                title={directFriend.name}
+                              >
+                                {friendInitial(directFriend.name, directFriend.avatarNumber)}
+                              </span>
+                            ) : isVendorItem ? (
+                              <span
+                                style={{
+                                  width: 26,
+                                  height: 26,
+                                  borderRadius: '50%',
+                                  aspectRatio: '1 / 1',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  ...vendorAvatarStyle,
+                                  boxShadow: `0 1px 3px ${vendorColor}22`,
+                                  flexShrink: 0,
+                                }}
+                                title={itemVendor?.name || detectedVendor?.name || directFriend?.name || 'Vendor'}
+                              >
+                                <Store size={13} strokeWidth={2.2} />
+                              </span>
+                            ) : (
                               <span
                                 style={{
                                   width: 26,
@@ -872,43 +981,6 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
                                   border: '1px solid rgba(255, 255, 255, 0.06)',
                                 }}
                                 title="You (Personal share)"
-                              >
-                                <User size={13} strokeWidth={2.2} />
-                              </span>
-                            ) : itemFriend ? (
-                              <span
-                                style={{
-                                  width: 26,
-                                  height: 26,
-                                  borderRadius: '50%',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  fontSize: (itemFriend.avatarNumber && itemFriend.avatarNumber.length > 2) ? 9 : 10.5,
-                                  fontWeight: 750,
-                                  color: '#ffffff',
-                                  flexShrink: 0,
-                                  background: itemFriend.color || 'var(--accent, #10b981)',
-                                  boxShadow: `0 1px 4px ${itemFriend.color ? itemFriend.color + '40' : 'rgba(0,0,0,0.2)'}`,
-                                  letterSpacing: '-0.3px',
-                                }}
-                                title={itemFriend.name}
-                              >
-                                {friendInitial(itemFriend.name, itemFriend.avatarNumber)}
-                              </span>
-                            ) : (
-                              <span
-                                style={{
-                                  width: 26,
-                                  height: 26,
-                                  borderRadius: '50%',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  color: 'var(--text-2, #a1a1aa)',
-                                  flexShrink: 0,
-                                  background: 'rgba(255, 255, 255, 0.08)',
-                                }}
                               >
                                 <User size={13} strokeWidth={2.2} />
                               </span>
@@ -950,8 +1022,18 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
                                   </span>
                                 )}
                               </div>
-                              <span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                Date: {itemDate}
+                              <span
+                                style={{
+                                  fontSize: 11.5,
+                                  color: 'var(--text-2, #a1a1aa)',
+                                  fontWeight: 500,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                  letterSpacing: '0.1px',
+                                }}
+                              >
+                                {itemDate}
                               </span>
                             </div>
                           </div>

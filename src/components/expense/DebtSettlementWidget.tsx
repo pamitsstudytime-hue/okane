@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ReceiptText } from 'lucide-react';
 import type { Friend, Expense, AppDB } from '../../types';
-import { fmtMoney, getAvatarStyle } from '../../utils';
+import { fmtMoney, getAvatarStyle, friendInitial } from '../../utils';
 import SettleExpensePickerModal from '../SettleExpensePickerModal';
 
 interface DebtSettlementWidgetProps {
@@ -71,15 +71,18 @@ export function DebtSettlementWidget({
               width: 28,
               height: 28,
               borderRadius: '50%',
+              aspectRatio: '1 / 1',
               ...getAvatarStyle(friend.color),
-              fontSize: 12,
-              fontWeight: 700,
+              fontSize: friend.avatarNumber && friend.avatarNumber.length > 2 ? 9.5 : 11,
+              fontWeight: 750,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              letterSpacing: '-0.2px',
+              flexShrink: 0,
             }}
           >
-            {friend.name[0]?.toUpperCase()}
+            {friendInitial(friend.name, friend.avatarNumber)}
           </div>
           <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
             {friend.name}

@@ -37,7 +37,7 @@ export default function FloatingSearchButton({ onClick, hasAIAssistant = false, 
             width: '48px',
             height: '48px',
             borderRadius: '50%',
-            backgroundColor: 'var(--surface2)',
+            backgroundColor: 'var(--bg)',
             color: 'var(--text)',
             border: '1px solid var(--border)',
             boxShadow: '0 8px 24px -4px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.25)',
@@ -49,13 +49,13 @@ export default function FloatingSearchButton({ onClick, hasAIAssistant = false, 
             transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease',
           }}
           onMouseEnter={e => {
-            e.currentTarget.style.backgroundColor = 'var(--surface3)';
+            e.currentTarget.style.backgroundColor = 'var(--surface)';
             e.currentTarget.style.borderColor = 'var(--border2)';
             e.currentTarget.style.color = 'var(--text)';
             e.currentTarget.style.transform = 'scale(1.08)';
           }}
           onMouseLeave={e => {
-            e.currentTarget.style.backgroundColor = 'var(--surface2)';
+            e.currentTarget.style.backgroundColor = 'var(--bg)';
             e.currentTarget.style.borderColor = 'var(--border)';
             e.currentTarget.style.color = 'var(--text)';
             e.currentTarget.style.transform = 'none';
@@ -79,7 +79,7 @@ export default function FloatingSearchButton({ onClick, hasAIAssistant = false, 
             width: '48px',
             height: '48px',
             borderRadius: '50%',
-            backgroundColor: 'var(--surface)',
+            backgroundColor: 'var(--bg)',
             color: 'var(--text)',
             border: '1px solid var(--border)',
             boxShadow: '0 6px 20px rgba(0, 0, 0, 0.35)',
@@ -88,12 +88,14 @@ export default function FloatingSearchButton({ onClick, hasAIAssistant = false, 
             justifyContent: 'center',
             cursor: 'pointer',
             pointerEvents: 'auto',
-            transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease',
+            transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background-color 0.2s ease',
           }}
           onMouseEnter={e => {
+            e.currentTarget.style.backgroundColor = 'var(--surface)';
             e.currentTarget.style.transform = 'scale(1.08) rotate(10deg)';
           }}
           onMouseLeave={e => {
+            e.currentTarget.style.backgroundColor = 'var(--bg)';
             e.currentTarget.style.transform = 'none';
           }}
           onMouseDown={e => {
