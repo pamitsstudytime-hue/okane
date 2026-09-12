@@ -273,10 +273,10 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
           marginBottom: 28,
         }}
       >
-        {walletCardsData.map(({ wallet: w, isDefault, bal, wExpCount, wSpend }) => {
+        {walletCardsData.map(({ wallet: w, isDefault, bal, wExpCount, wSpend }, idx) => {
           return (
             <div
-              key={w.id}
+              key={`${w.id}-${idx}`}
               className="wallet-item-card"
               style={{
                 background: 'var(--surface)',
@@ -703,7 +703,7 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {filteredTx.map(tx => {
+                  {filteredTx.map((tx, idx) => {
                     const catMeta = resolveCategoryMeta(tx.category, categoriesMap.get(tx.category), tx.isSettlement, categoriesMap);
                     const isIn = tx.flow === 'in';
                     const rawExpense = !tx.isSettlement ? tx.rawExpense : undefined;
@@ -728,7 +728,7 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
 
                     return (
                       <div
-                        key={tx.id}
+                        key={`${tx.id}-${idx}`}
                         onClick={handleRowClick}
                         role="button"
                         tabIndex={0}

@@ -11,6 +11,8 @@ import {
   Zap,
   Play,
   X,
+  History,
+  ArrowRight,
 } from 'lucide-react';
 import { useStore } from '../store';
 import { friendBalance, expenseFlow, contactTotalSpent } from '../db';
@@ -56,7 +58,10 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
   const [undoExpId, setUndoExpId] = useState<string | null>(null);
   const [selectedDetailGe, setSelectedDetailGe] = useState<GroupedExpense | null>(null);
   const [showRecurringModal, setShowRecurringModal] = useState(false);
+  const [showTxDrawer, setShowTxDrawer] = useState(false);
   const [tab, setTab] = useState<'active' | 'settled'>('active');
+
+  useBackButtonModal(showTxDrawer, () => setShowTxDrawer(false), { priority: BackPriority.MODAL });
 
   const [isMobileScreen, setIsMobileScreen] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 640);
   useEffect(() => {
@@ -229,7 +234,7 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
             }}
           />
 
-          {/* Drawer Card Header (Image.png style) */}
+          {/* Drawer Card Header */}
           <div
             style={{
               padding: '12px 16px 8px',
@@ -242,21 +247,21 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
               background: 'transparent',
             }}
           >
-            {/* Contact Avatar & Title */}
+            {/* Contact Avatar & Title (Image 2 style) */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
               <div
                 style={{
                   ...getAvatarStyle(friend.color),
-                  width: 42,
-                  height: 42,
-                  fontSize: 16,
+                  width: 44,
+                  height: 44,
+                  fontSize: 17,
                   fontWeight: 750,
                   flexShrink: 0,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  borderRadius: 13,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                  borderRadius: 14,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.14)',
                 }}
               >
                 {contactType === 'subscription' ? (
@@ -269,15 +274,28 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
               </div>
 
               <div style={{ minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-                  <h2 style={{ fontSize: 17, fontWeight: 750, margin: 0, lineHeight: 1.25, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                  <h2 style={{ fontSize: 20, fontWeight: 800, margin: 0, lineHeight: 1.2, color: 'var(--text)', letterSpacing: '-0.3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {friend.name}
                   </h2>
-                  <span className={`app-contact-badge ${contactType}`} style={{ textTransform: 'uppercase', fontSize: 9, letterSpacing: '0.4px', fontWeight: 700, flexShrink: 0 }}>
+                  <span
+                    style={{
+                      textTransform: 'uppercase',
+                      fontSize: 10,
+                      letterSpacing: '0.5px',
+                      fontWeight: 750,
+                      flexShrink: 0,
+                      background: contactType === 'friend' ? 'rgba(99, 102, 241, 0.22)' : contactType === 'vendor' ? 'rgba(236, 72, 153, 0.22)' : 'rgba(16, 185, 129, 0.22)',
+                      color: contactType === 'friend' ? '#a5b4fc' : contactType === 'vendor' ? '#f472b6' : '#6ee7b7',
+                      borderRadius: 6,
+                      padding: '2px 8px',
+                      border: contactType === 'friend' ? '1px solid rgba(165, 180, 252, 0.25)' : contactType === 'vendor' ? '1px solid rgba(244, 114, 182, 0.25)' : '1px solid rgba(110, 231, 183, 0.25)',
+                    }}
+                  >
                     {contactType}
                   </span>
                 </div>
-                <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2, fontWeight: 500 }}>
+                <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 3, fontWeight: 500 }}>
                   {contactType === 'friend'
                     ? `${allExps.length} transaction${allExps.length !== 1 ? 's' : ''}`
                     : contactType === 'vendor'
@@ -348,7 +366,7 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
               gap: 12,
             }}
           >
-            {/* Card 1: TOTAL AMOUNT / NET BALANCE STATUS Card (Image.png inspired) */}
+            {/* Card 1: TOTAL AMOUNT / NET BALANCE STATUS Card */}
             {contactType === 'friend' ? (
               <div
                 style={{
@@ -361,72 +379,70 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
                   gap: 10,
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-                  <div>
-                    <div style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-3)' }}>
-                      TOTAL NET BALANCE
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 24,
-                        fontWeight: 800,
-                        letterSpacing: '-0.4px',
-                        color: bal.net > 0.004 ? 'var(--credit)' : bal.net < -0.004 ? 'var(--debit)' : 'var(--text)',
-                        marginTop: 2,
-                      }}
-                    >
-                      {bal.net > 0.004
-                        ? `+${fmtMoney(bal.net, currency)}`
-                        : bal.net < -0.004
-                        ? `-${fmtMoney(Math.abs(bal.net), currency)}`
-                        : fmtMoney(0, currency)}
-                    </div>
-                    <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 1, fontWeight: 500 }}>
-                      {bal.net > 0.004
-                        ? `${friend.name} owes you in total`
-                        : bal.net < -0.004
-                        ? `You owe ${friend.name} in total`
-                        : 'All shared bills are settled up'}
-                    </div>
+                <div>
+                  <div style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-3)' }}>
+                    TOTAL NET BALANCE
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 24,
+                      fontWeight: 800,
+                      letterSpacing: '-0.4px',
+                      color: bal.net > 0.004 ? 'var(--credit)' : bal.net < -0.004 ? 'var(--debit)' : 'var(--text)',
+                      marginTop: 2,
+                    }}
+                  >
+                    {bal.net > 0.004
+                      ? `+${fmtMoney(bal.net, currency)}`
+                      : bal.net < -0.004
+                      ? `-${fmtMoney(Math.abs(bal.net), currency)}`
+                      : fmtMoney(0, currency)}
+                  </div>
+                  <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 1, fontWeight: 500 }}>
+                    {bal.net > 0.004
+                      ? `${friend.name} owes you in total`
+                      : bal.net < -0.004
+                      ? `You owe ${friend.name} in total`
+                      : 'All shared bills are settled up'}
+                  </div>
+                </div>
+
+                {/* OWES YOU / YOU OWE Pills */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', paddingTop: 2 }}>
+                  <div
+                    style={{
+                      padding: '3px 9px',
+                      borderRadius: 9999,
+                      background: 'rgba(16, 185, 129, 0.12)',
+                      border: '1px solid rgba(16, 185, 129, 0.25)',
+                      color: 'var(--credit)',
+                      fontSize: 10.5,
+                      fontWeight: 750,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
+                  >
+                    <span>OWES YOU</span>
+                    <span>{fmtMoney(bal.owedToMe, currency)}</span>
                   </div>
 
-                  {/* OWES YOU / YOU OWE Pills (Image.png badge style) */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                    <div
-                      style={{
-                        padding: '4px 10px',
-                        borderRadius: 9999,
-                        background: 'rgba(16, 185, 129, 0.12)',
-                        border: '1px solid rgba(16, 185, 129, 0.25)',
-                        color: 'var(--credit)',
-                        fontSize: 10.5,
-                        fontWeight: 750,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 4,
-                      }}
-                    >
-                      <span>OWES YOU</span>
-                      <span>{fmtMoney(bal.owedToMe, currency)}</span>
-                    </div>
-
-                    <div
-                      style={{
-                        padding: '4px 10px',
-                        borderRadius: 9999,
-                        background: 'rgba(239, 68, 68, 0.12)',
-                        border: '1px solid rgba(239, 68, 68, 0.25)',
-                        color: 'var(--debit)',
-                        fontSize: 10.5,
-                        fontWeight: 750,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 4,
-                      }}
-                    >
-                      <span>YOU OWE</span>
-                      <span>{fmtMoney(bal.owedByMe, currency)}</span>
-                    </div>
+                  <div
+                    style={{
+                      padding: '3px 9px',
+                      borderRadius: 9999,
+                      background: 'rgba(239, 68, 68, 0.12)',
+                      border: '1px solid rgba(239, 68, 68, 0.25)',
+                      color: 'var(--debit)',
+                      fontSize: 10.5,
+                      fontWeight: 750,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
+                  >
+                    <span>YOU OWE</span>
+                    <span>{fmtMoney(bal.owedByMe, currency)}</span>
                   </div>
                 </div>
               </div>
@@ -448,14 +464,6 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
                   </span>
                   <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', marginTop: 2 }}>
                     {fmtMoney(totalSpent, currency)}
-                  </div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-3)', letterSpacing: '0.5px' }}>
-                    Orders
-                  </span>
-                  <div style={{ fontSize: 18, fontWeight: 750, color: 'var(--text)', marginTop: 2 }}>
-                    {allExps.length}
                   </div>
                 </div>
               </div>
@@ -625,191 +633,485 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
               </div>
             )}
 
-            {/* Segmented Control for Active & Settled Tabs (Dark subtle elevated style) */}
+            {/* Transactions Section Card */}
             <div
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-                padding: 4,
-                borderRadius: 14,
-                background: 'rgba(255, 255, 255, 0.04)',
+                background: 'var(--surface2)',
                 border: '1px solid var(--border)',
-                width: '100%',
-                marginTop: 2,
+                borderRadius: 18,
+                padding: '12px 14px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
               }}
             >
-              <button
-                type="button"
-                onClick={() => setTab('active')}
-                style={{
-                  flex: 1,
-                  height: 38,
-                  borderRadius: 10,
-                  fontWeight: 700,
-                  fontSize: 13,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  border: tab === 'active' ? '1px solid rgba(255, 255, 255, 0.14)' : '1px solid transparent',
-                  cursor: 'pointer',
-                  transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
-                  background: tab === 'active' ? 'var(--surface2, rgba(255, 255, 255, 0.09))' : 'transparent',
-                  color: tab === 'active' ? 'var(--text)' : 'var(--text-3)',
-                  boxShadow: tab === 'active' ? '0 2px 8px rgba(0, 0, 0, 0.35)' : 'none',
-                }}
-              >
-                <span>Active</span>
-                <span
-                  style={{
-                    fontSize: 10.5,
-                    fontWeight: 800,
-                    padding: '1px 7px',
-                    borderRadius: 9999,
-                    background: tab === 'active' ? 'rgba(255, 255, 255, 0.14)' : 'rgba(255, 255, 255, 0.05)',
-                    color: tab === 'active' ? 'var(--text)' : 'var(--text-3)',
-                  }}
-                >
-                  {activeExps.length}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setTab('settled')}
-                style={{
-                  flex: 1,
-                  height: 38,
-                  borderRadius: 10,
-                  fontWeight: 700,
-                  fontSize: 13,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  border: tab === 'settled' ? '1px solid rgba(255, 255, 255, 0.14)' : '1px solid transparent',
-                  cursor: 'pointer',
-                  transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
-                  background: tab === 'settled' ? 'var(--surface2, rgba(255, 255, 255, 0.09))' : 'transparent',
-                  color: tab === 'settled' ? 'var(--text)' : 'var(--text-3)',
-                  boxShadow: tab === 'settled' ? '0 2px 8px rgba(0, 0, 0, 0.35)' : 'none',
-                }}
-              >
-                <span>Settled</span>
-                <span
-                  style={{
-                    fontSize: 10.5,
-                    fontWeight: 800,
-                    padding: '1px 7px',
-                    borderRadius: 9999,
-                    background: tab === 'settled' ? 'rgba(255, 255, 255, 0.14)' : 'rgba(255, 255, 255, 0.05)',
-                    color: tab === 'settled' ? 'var(--text)' : 'var(--text-3)',
-                  }}
-                >
-                  {settledExps.length}
-                </span>
-              </button>
-            </div>
-
-            {/* Transactions List */}
-            {shown.length === 0 ? (
+              {/* Header with History Icon & Transactions Title */}
               <div
                 style={{
-                  padding: '24px 16px',
-                  borderRadius: 16,
-                  textAlign: 'center',
-                  border: '1px solid var(--border)',
-                  background: 'var(--surface2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '2px 2px 4px',
                 }}
               >
-                <p style={{ color: 'var(--text-3)', margin: 0, fontSize: 12.5, fontWeight: 500 }}>
-                  {contactType === 'friend'
-                    ? tab === 'active'
-                      ? 'No active expenses with this friend.'
-                      : 'No settled expenses yet.'
-                    : 'No recorded transactions yet.'}
-                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: 9999,
+                      background: 'transparent',
+                      display: 'grid',
+                      placeItems: 'center',
+                      color: 'var(--text-2, #a1a1aa)',
+                    }}
+                  >
+                    <History size={18} />
+                  </div>
+                  <div style={{ fontSize: 14.5, fontWeight: 750, color: 'var(--text)' }}>
+                    Transactions
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowTxDrawer(true)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--text-3)',
+                    fontSize: 11.5,
+                    fontWeight: 600,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    cursor: 'pointer',
+                    padding: 0,
+                  }}
+                  className="hover:text-[var(--text)] transition-colors"
+                  title="View all transactions"
+                >
+                  <span>View all</span>
+                  <ArrowRight size={12} />
+                </button>
               </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {shown.map((e, idx) => {
-                  const cat = db.settings.categories.find(c => c.name === e.category);
-                  const isIn = expenseFlow(e) === 'in';
 
-                  const isVendorView = e.vendorId === friendId;
-                  const isIncome = expenseFlow(e) === 'in' && e.type === 'personal';
-                  const isSettled = isVendorView
-                    ? Boolean(e.vendorSettled || (e.status === 'paid' && e.vendorSettled !== false))
-                    : Boolean(e.settled);
-                  const isPartial = isVendorView
-                    ? Boolean(e.vendorSettledAmount && e.vendorSettledAmount > 0 && !e.vendorSettled)
-                    : Boolean((e.settledAmount && e.settledAmount > 0 && !e.settled) || (e.originalAmount && Math.abs(e.originalAmount - e.amount) > 0.01 && e.settled));
-                  const statusKey = isIncome
-                    ? 'none'
-                    : (isSettled ? (isPartial ? 'partial' : 'settled') : (isPartial ? 'partial' : (e.type === 'personal' && e.status === 'paid' ? 'paid' : (e.status || 'unsettled'))));
-                  const itemStatusLabel = isIncome
-                    ? ''
-                    : (isSettled
-                      ? (isPartial ? 'Partially Settled' : 'Settled')
-                      : (isPartial ? 'Partially Settled' : (e.type === 'personal' && e.status === 'paid' ? 'Paid' : (e.status === 'unpaid' ? 'Unpaid' : 'Unsettled'))));
+              {/* Expense List (Limited to 3 items for a clean, compact view with no scrolling) */}
+              {allExps.length === 0 ? (
+                <div
+                  style={{
+                    padding: '12px 8px',
+                    textAlign: 'center',
+                    color: 'var(--text-3)',
+                    fontSize: 12,
+                    fontWeight: 500,
+                  }}
+                >
+                  No recent expenses recorded yet.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {allExps.slice(0, 3).map((e, idx) => {
+                    const cat = db.settings.categories.find(c => c.name === e.category);
+                    const isIn = expenseFlow(e) === 'in';
+                    const isSettlement = e.category === 'Settlement' || Boolean(e.settlementId) || e.description.startsWith('Settlement');
 
-                  return (
-                    <div
-                      key={`${e.id}-${idx}`}
-                      onClick={() => handleOpenDetail(e)}
-                      style={{
-                        padding: '12px 14px',
-                        background: 'var(--surface2)',
-                        border: '1px solid var(--border)',
-                        borderRadius: 14,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: 10,
-                        transition: 'all 0.15s ease',
-                      }}
-                      className="hover:border-[var(--border2)]"
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
-                        <CategoryBadge category={e.category} color={cat?.color} icon={cat?.icon} size={16} showLabel={false} />
-                        <div style={{ minWidth: 0, flex: 1 }}>
-                          <div style={{ fontWeight: 650, fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {cleanExpenseDescription(e.description)}
+                    const amountPrefix = isIn ? '+' : (isSettlement && e.flow === 'out' ? '-' : '');
+                    const amountColor = isIn
+                      ? 'var(--credit, #10b981)'
+                      : (isSettlement && e.flow === 'out') || e.type === 'by_friend'
+                      ? 'var(--debit, #ef4444)'
+                      : 'var(--text)';
+
+                    const subLabel = isSettlement && friend
+                      ? friend.name
+                      : (e.category || typeLabel(e.type, contactType));
+
+                    return (
+                      <div
+                        key={`${e.id}-${idx}`}
+                        onClick={() => handleOpenDetail(e)}
+                        style={{
+                          padding: '7px 8px',
+                          borderRadius: 10,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: 10,
+                          transition: 'all 0.15s ease',
+                        }}
+                        className="hover:bg-[rgba(255,255,255,0.07)] active:bg-[rgba(255,255,255,0.1)] active:scale-[0.99]"
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 9, minWidth: 0, flex: 1 }}>
+                          <CategoryBadge category={e.category} color={cat?.color} icon={cat?.icon} size={14} showLabel={false} />
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <div style={{ fontWeight: 650, fontSize: 12.5, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {cleanExpenseDescription(e.description)}
+                            </div>
+                            <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginTop: 1, display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <span>{fmtDate(e.originalDate || e.date)}</span>
+                              <span>•</span>
+                              <span>{subLabel}</span>
+                            </div>
                           </div>
-                          <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
-                            <span>{fmtDate(e.originalDate || e.date)}</span>
-                            <span>·</span>
-                            <span>{typeLabel(e.type, contactType)}</span>
-                            {statusKey !== 'none' && itemStatusLabel && (
-                              <span className={`badge badge-${statusKey}`} style={{ fontSize: 9.5, padding: '1px 5px', borderRadius: 4 }}>
-                                {itemStatusLabel}
-                              </span>
-                            )}
+                        </div>
+
+                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                          <div
+                            style={{
+                              fontWeight: 750,
+                              fontSize: 13,
+                              color: amountColor,
+                              fontVariantNumeric: 'tabular-nums',
+                            }}
+                          >
+                            {amountPrefix}{fmtMoney(e.amount, currency)}
                           </div>
                         </div>
                       </div>
-
-                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <div
-                          style={{
-                            fontWeight: 750,
-                            fontSize: 13.5,
-                            color: contactType === 'friend' ? (isIn ? 'var(--credit)' : e.type === 'by_friend' ? 'var(--debit)' : 'var(--text)') : 'var(--text)',
-                          }}
-                        >
-                          {contactType === 'friend' ? (isIn ? '+' : '') : ''}{fmtMoney(e.amount, currency)}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </motion.div>
       </div>
+
+      {/* Nested Transactions History Drawer */}
+      <AnimatePresence>
+        {showTxDrawer && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 1300,
+              display: 'flex',
+              alignItems: isMobileScreen ? 'flex-end' : 'center',
+              justifyContent: 'center',
+              padding: isMobileScreen ? 0 : 16,
+            }}
+          >
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setShowTxDrawer(false)}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                background: 'rgba(0, 0, 0, 0.65)',
+                backdropFilter: 'blur(5px)',
+                WebkitBackdropFilter: 'blur(5px)',
+              }}
+            />
+
+            {/* Drawer Container */}
+            <motion.div
+              initial={isMobileScreen ? { y: '100%' } : { opacity: 0, scale: 0.95, y: 16 }}
+              animate={isMobileScreen ? { y: 0 } : { opacity: 1, scale: 1, y: 0 }}
+              exit={isMobileScreen ? { y: '100%' } : { opacity: 0, scale: 0.95, y: 16 }}
+              transition={{ duration: isMobileScreen ? 0.32 : 0.2, ease: [0.22, 1, 0.36, 1] }}
+              style={{
+                position: 'relative',
+                zIndex: 1301,
+                width: '100%',
+                maxWidth: '480px',
+                maxHeight: 'min(88vh, 88dvh)',
+                background: 'var(--drawer-bg, #141416)',
+                color: 'var(--text)',
+                borderRadius: isMobileScreen ? '24px 24px 0 0' : '26px',
+                border: '1px solid var(--border)',
+                display: 'flex',
+                flexDirection: 'column',
+                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.6)',
+                overflow: 'hidden',
+              }}
+            >
+              {/* Top Handle Pill */}
+              <div
+                style={{
+                  width: 38,
+                  height: 4,
+                  borderRadius: 9999,
+                  background: 'var(--text-3)',
+                  opacity: 0.35,
+                  margin: '8px auto 4px',
+                  flexShrink: 0,
+                }}
+              />
+
+              {/* Drawer Header (No Split Line, Top Left Icon Blends with Card/Drawer BG) */}
+              <div
+                style={{
+                  padding: '12px 16px 6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                  flexShrink: 0,
+                  borderBottom: 'none',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 9999,
+                      background: 'transparent',
+                      display: 'grid',
+                      placeItems: 'center',
+                      color: 'var(--text-2, #a1a1aa)',
+                    }}
+                  >
+                    <History size={18} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: 16, fontWeight: 750, margin: 0, color: 'var(--text)' }}>
+                      Transactions
+                    </h3>
+                    <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 1, fontWeight: 500 }}>
+                      {friend.name}
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowTxDrawer(false)}
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 9999,
+                    border: '1px solid var(--border)',
+                    background: 'var(--surface2)',
+                    color: 'var(--text)',
+                    display: 'grid',
+                    placeItems: 'center',
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                  }}
+                >
+                  <X size={15} />
+                </button>
+              </div>
+
+              {/* Drawer Body with Segmented Control & List */}
+              <div
+                style={{
+                  flex: 1,
+                  overflowY: 'auto',
+                  padding: '10px 16px 20px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 12,
+                }}
+              >
+                {/* Segmented Control for Active & Settled Tabs */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    padding: 4,
+                    borderRadius: 16,
+                    background: 'rgba(255, 255, 255, 0.04)',
+                    border: '1px solid var(--border)',
+                    width: '100%',
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setTab('active')}
+                    style={{
+                      flex: 1,
+                      height: 38,
+                      borderRadius: 12,
+                      fontWeight: 700,
+                      fontSize: 13.5,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                      border: 'none',
+                      cursor: 'pointer',
+                      transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
+                      background: tab === 'active' ? '#ffffff' : 'transparent',
+                      color: tab === 'active' ? '#000000' : 'var(--text-3)',
+                      boxShadow: tab === 'active' ? '0 2px 8px rgba(0, 0, 0, 0.25)' : 'none',
+                    }}
+                  >
+                    <span>Active</span>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 800,
+                        padding: '1px 7px',
+                        borderRadius: 9999,
+                        background: tab === 'active' ? '#000000' : 'rgba(255, 255, 255, 0.08)',
+                        color: tab === 'active' ? '#ffffff' : 'var(--text-3)',
+                      }}
+                    >
+                      {activeExps.length}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setTab('settled')}
+                    style={{
+                      flex: 1,
+                      height: 38,
+                      borderRadius: 12,
+                      fontWeight: 700,
+                      fontSize: 13.5,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                      border: 'none',
+                      cursor: 'pointer',
+                      transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
+                      background: tab === 'settled' ? '#ffffff' : 'transparent',
+                      color: tab === 'settled' ? '#000000' : 'var(--text-3)',
+                      boxShadow: tab === 'settled' ? '0 2px 8px rgba(0, 0, 0, 0.25)' : 'none',
+                    }}
+                  >
+                    <span>Settled</span>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 800,
+                        padding: '1px 7px',
+                        borderRadius: 9999,
+                        background: tab === 'settled' ? '#000000' : 'rgba(255, 255, 255, 0.08)',
+                        color: tab === 'settled' ? '#ffffff' : 'var(--text-3)',
+                      }}
+                    >
+                      {settledExps.length}
+                    </span>
+                  </button>
+                </div>
+
+                {/* Transactions List */}
+                {shown.length === 0 ? (
+                  <div
+                    style={{
+                      padding: '24px 16px',
+                      borderRadius: 16,
+                      textAlign: 'center',
+                      border: '1px solid var(--border)',
+                      background: 'var(--surface2)',
+                    }}
+                  >
+                    <p style={{ color: 'var(--text-3)', margin: 0, fontSize: 12.5, fontWeight: 500 }}>
+                      {contactType === 'friend'
+                        ? tab === 'active'
+                          ? 'No active expenses with this friend.'
+                          : 'No settled expenses yet.'
+                        : 'No recorded transactions yet.'}
+                    </p>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 4,
+                    }}
+                  >
+                    {shown.map((e, idx) => {
+                      const cat = db.settings.categories.find(c => c.name === e.category);
+                      const isIn = expenseFlow(e) === 'in';
+                      const isSettlement = e.category === 'Settlement' || Boolean(e.settlementId) || e.description.startsWith('Settlement');
+
+                      const amountPrefix = isIn ? '+' : (isSettlement && e.flow === 'out' ? '-' : '');
+                      const amountColor = isIn
+                        ? 'var(--credit, #10b981)'
+                        : (isSettlement && e.flow === 'out') || e.type === 'by_friend'
+                        ? 'var(--debit, #ef4444)'
+                        : 'var(--text)';
+
+                      const subLabel = isSettlement && friend
+                        ? friend.name
+                        : (e.category || typeLabel(e.type, contactType));
+
+                      return (
+                        <div
+                          key={`${e.id}-${idx}`}
+                          onClick={() => handleOpenDetail(e)}
+                          style={{
+                            padding: '10px 12px',
+                            borderRadius: 14,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 10,
+                            border: '1px solid transparent',
+                            transition: 'all 0.16s ease-in-out',
+                          }}
+                          className="hover:bg-[rgba(255,255,255,0.08)] hover:border-[rgba(255,255,255,0.12)] active:bg-[rgba(255,255,255,0.12)] active:scale-[0.99]"
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+                            <CategoryBadge category={e.category} color={cat?.color} icon={cat?.icon} size={16} showLabel={false} />
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <div style={{ fontWeight: 650, fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {cleanExpenseDescription(e.description)}
+                              </div>
+                              <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 5 }}>
+                                <span>{fmtDate(e.originalDate || e.date)}</span>
+                                <span>•</span>
+                                {isSettlement && friend ? (
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                    <span
+                                      className="avatar avatar-sm"
+                                      style={{
+                                        ...getAvatarStyle(friend.color),
+                                        width: 14,
+                                        height: 14,
+                                        fontSize: 7.5,
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                      }}
+                                    >
+                                      {friendInitial(friend.name, friend.avatarNumber)}
+                                    </span>
+                                    <span>{friend.name}</span>
+                                  </span>
+                                ) : (
+                                  <span>{subLabel}</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                            <div
+                              style={{
+                                fontWeight: 750,
+                                fontSize: 13.5,
+                                color: amountColor,
+                              }}
+                            >
+                              {amountPrefix}{fmtMoney(e.amount, currency)}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Modals & Dialogs */}
       {selectedDetailGe && (

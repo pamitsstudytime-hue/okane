@@ -241,11 +241,11 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
                 )}
               </div>
               <div className="dashboard-wallet-chips-scroll">
-                {visibleWallets.map(w => {
+                {visibleWallets.map((w, idx) => {
                   const bal = walletBalance(db, w.id);
                   return (
                     <div
-                      key={w.id}
+                      key={`${w.id}-${idx}`}
                       className="dashboard-wallet-chip"
                       onClick={() => onNavigate('wallets')}
                       title={`Click to view ${w.name} in Wallets`}
@@ -564,11 +564,11 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: '100%', minWidth: 0 }}>
-              {balancedFriends.map(({ friend, net }: { friend: Friend; net: number }) => {
+              {balancedFriends.map(({ friend, net }: { friend: Friend; net: number }, idx: number) => {
                 const isOwed = net > 0;
                 return (
                   <div
-                    key={friend.id}
+                    key={`${friend.id}-${idx}`}
                     onClick={() => onNavigate('friend-detail', friend.id)}
                     style={{
                       display: 'flex',

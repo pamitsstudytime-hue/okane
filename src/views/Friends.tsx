@@ -541,7 +541,7 @@ export default function Friends({ onNavigate }: Props) {
       ) : density === 'grid' || typeFilter === 'subscription' ? (
         /* GRID CARDS VIEW */
         <div className="contact-grid">
-          {filtered.map(f => {
+          {filtered.map((f, idx) => {
             const fType: ContactType = f.type || 'friend';
             const contactExpenses = db.expenses.filter(e => e.friendId === f.id || e.vendorId === f.id);
             const totalSpent = contactTotalSpent(db, f.id);
@@ -554,7 +554,7 @@ export default function Friends({ onNavigate }: Props) {
 
             return (
               <div
-                key={f.id}
+                key={`${f.id}-${idx}`}
                 className="contact-grid-card"
                 onClick={() => onNavigate('friend-detail', f.id)}
               >
@@ -645,7 +645,7 @@ export default function Friends({ onNavigate }: Props) {
       ) : density === 'detailed' ? (
         /* DETAILED FLOATING CARDS VIEW */
         <div className="contact-cards-container density-detailed">
-          {filtered.map(f => {
+          {filtered.map((f, idx) => {
             const fType: ContactType = f.type || 'friend';
             const contactExpenses = db.expenses.filter(e => e.friendId === f.id || e.vendorId === f.id);
             const totalSpent = contactTotalSpent(db, f.id);
@@ -658,7 +658,7 @@ export default function Friends({ onNavigate }: Props) {
 
             return (
               <div
-                key={f.id}
+                key={`${f.id}-${idx}`}
                 className="contact-card-item density-detailed"
                 onClick={() => onNavigate('friend-detail', f.id)}
               >
@@ -765,7 +765,7 @@ export default function Friends({ onNavigate }: Props) {
       ) : (
         /* COMPACT FLOATING CARDS VIEW */
         <div className="contact-cards-container density-compact">
-          {filtered.map(f => {
+          {filtered.map((f, idx) => {
             const fType: ContactType = f.type || 'friend';
             const totalSpent = contactTotalSpent(db, f.id);
             const bal = friendBalance(db, f.id);
@@ -775,7 +775,7 @@ export default function Friends({ onNavigate }: Props) {
 
             return (
               <div
-                key={f.id}
+                key={`${f.id}-${idx}`}
                 className="contact-card-item density-compact"
                 onClick={() => onNavigate('friend-detail', f.id)}
               >

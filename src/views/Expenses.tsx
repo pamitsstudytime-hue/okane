@@ -477,13 +477,13 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
         <>
           {/* List of distinct date cards separated with gap */}
           <div className="expense-date-cards-container">
-            {dateGroups.map(group => {
+            {dateGroups.map((group, gIdx) => {
               const isCollapsed = !!collapsedDates[group.date];
               const relativeLabel = getRelativeDateLabel(group.date);
 
               return (
                 <motion.div
-                  key={group.date}
+                  key={`${group.date}-${gIdx}`}
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.24, ease: "easeOut" }}
@@ -549,7 +549,7 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
                                 <col style={{ width: '12%', minWidth: '80px' }} />
                               </colgroup>
                               <tbody>
-                                {group.items.map(ge => {
+                                {group.items.map((ge, idx) => {
                                   const cat = categoriesMap.get(ge.category);
                                   const stl = ge.items.reduce<typeof db.settlements[0] | null | undefined>((found, item) => {
                                     if (found) return found;
@@ -566,7 +566,7 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
 
                                   return (
                                     <ExpenseTableRow
-                                      key={ge.id}
+                                      key={`${ge.id}-${idx}`}
                                       ge={ge}
                                       currency={currency}
                                       onEdit={setEditExp}
@@ -588,7 +588,7 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
 
                           {/* Mobile Expandable Cards View */}
                           <div className="mobile-expense-list mobile-only">
-                            {group.items.map(ge => {
+                            {group.items.map((ge, idx) => {
                               const cat = categoriesMap.get(ge.category);
                               const stl = ge.items.reduce<typeof db.settlements[0] | null | undefined>((found, item) => {
                                 if (found) return found;
@@ -605,7 +605,7 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
 
                               return (
                                 <ExpenseMobileCard
-                                  key={ge.id}
+                                  key={`${ge.id}-${idx}`}
                                   ge={ge}
                                   currency={currency}
                                   onSelectDetail={setSelectedDetailGe}

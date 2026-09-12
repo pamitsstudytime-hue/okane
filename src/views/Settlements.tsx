@@ -380,7 +380,7 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
 
           {isPendingExpanded && (
             <div className="pending-settlements-desktop-grid">
-              {friendsWithUnsettled.map(f => {
+              {friendsWithUnsettled.map((f, idx) => {
                 if (!f) return null;
                 const unsettledCount = unsettledExpensesForFriend(db, f.id).length;
                 const bal = friendBalance(db, f.id) || { net: 0 };
@@ -390,7 +390,7 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
 
                 return (
                   <div
-                    key={f.id}
+                    key={`${f.id}-${idx}`}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -868,7 +868,7 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
           </div>
         ) : (
           <div className="settlement-compact-list">
-            {filteredSettlements.map(s => {
+            {filteredSettlements.map((s, idx) => {
               if (!s) return null;
               const friend = friends.find(f => f && f.id === s.friendId);
               const wallet = wallets.find(w => w && w.id === s.walletId);
@@ -878,7 +878,7 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
 
               return (
                 <div
-                  key={s.id}
+                  key={`${s.id}-${idx}`}
                   className="settlement-compact-card"
                   onClick={() => setDetailSettlement(s)}
                 >

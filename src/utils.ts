@@ -151,6 +151,7 @@ export function groupExpenses(
   friends?: Friend[],
   settlements?: Settlement[]
 ): GroupedExpense[] {
+  const walletMap = wallets ? new Map(wallets.map(w => [w.id, w.name])) : null;
   const groupedMap = new Map<string, Expense[]>();
   const singles: Expense[] = [];
 
@@ -174,8 +175,8 @@ export function groupExpenses(
         const outItem = items.find(i => i.flow === 'out') || items[0];
         const inItem = items.find(i => i.flow === 'in') || items[1];
 
-        let fromWName = outItem ? wallets?.find(w => w.id === outItem.walletId)?.name : undefined;
-        let toWName = inItem ? wallets?.find(w => w.id === inItem.walletId)?.name : undefined;
+        let fromWName = outItem ? (walletMap?.get(outItem.walletId) || wallets?.find(w => w.id === outItem.walletId)?.name) : undefined;
+        let toWName = inItem ? (walletMap?.get(inItem.walletId) || wallets?.find(w => w.id === inItem.walletId)?.name) : undefined;
 
         if (!fromWName && inItem?.description) {
           const m = inItem.description.match(/Transfer from\s+(.+?)(?:\s*\(|$)/i);
