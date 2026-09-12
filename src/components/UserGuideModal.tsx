@@ -153,8 +153,8 @@ export default function UserGuideModal({
     >
       {/* Mobile Drag Handle Indicator */}
       {isMobile && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', pt: 1.2, pb: 0.2, bgcolor: 'var(--surface)' }}>
-          <Box sx={{ width: 38, height: 4, borderRadius: 2, bgcolor: 'var(--border2)' }} />
+        <Box sx={{ display: 'flex', justifyContent: 'center', pt: 1.5, pb: 0.5, bgcolor: 'var(--surface)' }}>
+          <Box sx={{ width: 36, height: 4, borderRadius: '2px', bgcolor: 'var(--border2)' }} />
         </Box>
       )}
 
@@ -173,17 +173,17 @@ export default function UserGuideModal({
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Box
             sx={{
-              width: 38,
-              height: 38,
-              borderRadius: '12px',
-              bgcolor: 'var(--accent-soft)',
-              color: 'var(--accent)',
+              width: 36,
+              height: 36,
+              borderRadius: '10px',
+              bgcolor: 'transparent',
+              color: 'var(--text)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <BookOpen size={20} />
+            <BookOpen size={20} strokeWidth={2.2} />
           </Box>
           <Box>
             <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.1rem', lineHeight: 1.2 }}>
@@ -198,11 +198,13 @@ export default function UserGuideModal({
           onClick={onClose}
           size="small"
           sx={{
-            display: { xs: 'none', md: 'inline-flex' },
+            display: 'inline-flex',
             color: 'var(--text-2)',
-            borderRadius: '10px',
-            p: 0.8,
-            '&:hover': { bgcolor: 'var(--surface3)', color: 'var(--text-1)' },
+            borderRadius: '9999px',
+            width: 32,
+            height: 32,
+            p: 0,
+            '&:hover': { bgcolor: 'var(--surface2)', color: 'var(--text-1)' },
           }}
         >
           <X size={18} />
@@ -830,11 +832,19 @@ export default function UserGuideModal({
           onClick={onClose}
           variant="contained"
           sx={{
-            borderRadius: '10px',
+            height: 40,
+            borderRadius: '9999px',
             textTransform: 'none',
-            fontWeight: 600,
-            bgcolor: 'var(--accent)',
+            fontWeight: 700,
+            fontSize: '13px',
+            bgcolor: 'var(--text)',
+            color: 'var(--bg)',
             px: 3,
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+            '&:hover': {
+              bgcolor: 'var(--text)',
+              opacity: 0.9,
+            },
           }}
         >
           Got it!

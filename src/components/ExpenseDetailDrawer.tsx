@@ -344,24 +344,20 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
           {/* Close circular button */}
           <button
             type="button"
-            className="compact-close-btn"
+            className="btn-icon"
             onClick={onClose}
             aria-label="Close"
             style={{
-              width: 34,
-              height: 34,
-              borderRadius: '50%',
-              background: 'var(--surface2)',
-              border: '1px solid var(--border)',
-              color: 'var(--text-2)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              width: 32,
+              height: 32,
+              borderRadius: 9999,
+              display: 'grid',
+              placeItems: 'center',
               cursor: 'pointer',
               flexShrink: 0,
             }}
           >
-            <X size={16} />
+            <X size={18} />
           </button>
         </div>
 

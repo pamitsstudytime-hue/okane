@@ -102,14 +102,12 @@ function NoteEditorContent({
         }}
       >
         {/* Mobile handle indicator */}
-        <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 10, paddingBottom: 2 }}>
-          <div style={{ width: 38, height: 4.5, borderRadius: 999, backgroundColor: 'var(--border2, var(--text-3))', opacity: 0.5 }} />
-        </div>
+        <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border2)', margin: '12px auto 4px', flexShrink: 0 }} />
 
         {/* Modal Header */}
         <div
           style={{
-            padding: '14px 20px 12px',
+            padding: '12px 20px 8px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -121,23 +119,19 @@ function NoteEditorContent({
           </div>
           <button
             type="button"
+            className="btn-icon"
             onClick={onClose}
             style={{
-              background: 'var(--surface2)',
-              border: '1px solid var(--border)',
-              color: 'var(--text-2)',
-              cursor: 'pointer',
-              width: 30,
-              height: 30,
-              borderRadius: 8,
+              width: 32,
+              height: 32,
+              borderRadius: 9999,
               display: 'grid',
               placeItems: 'center',
-              padding: 0,
-              transition: 'all 0.15s ease',
+              cursor: 'pointer',
             }}
             aria-label="Close note dialog"
           >
-            <X size={15} />
+            <X size={18} />
           </button>
         </div>
 

@@ -719,7 +719,22 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
               </button>
             </div>
           )}
-          <button className="btn-icon compact-close-btn drawer-close-btn" onClick={onClose} aria-label="Close dialog"><X size={18} /></button>
+          <button
+            type="button"
+            className="btn-icon"
+            onClick={onClose}
+            aria-label="Close dialog"
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 9999,
+              display: 'grid',
+              placeItems: 'center',
+              cursor: 'pointer',
+            }}
+          >
+            <X size={18} />
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="expense-modal-form">

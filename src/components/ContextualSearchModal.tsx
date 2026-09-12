@@ -429,8 +429,7 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                 width: '36px',
                 height: '4px',
                 borderRadius: '2px',
-                backgroundColor: 'var(--text-3)',
-                opacity: 0.35,
+                backgroundColor: 'var(--border2)',
               }}
             />
           </div>
@@ -444,6 +443,7 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
             display: 'flex',
             alignItems: 'center',
             backgroundColor: 'var(--surface)',
+            gap: 10,
           }}
         >
           {/* Inner Search Box */}
@@ -506,6 +506,23 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
               </button>
             )}
           </div>
+          <button
+            type="button"
+            className="btn-icon"
+            onClick={onClose}
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 9999,
+              display: 'grid',
+              placeItems: 'center',
+              cursor: 'pointer',
+              flexShrink: 0,
+            }}
+            aria-label="Close search"
+          >
+            <X size={18} />
+          </button>
         </div>
 
         {/* Dynamic Context Tabs */}

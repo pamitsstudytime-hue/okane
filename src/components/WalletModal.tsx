@@ -139,9 +139,9 @@ export default function WalletModal({ wallet, onClose }: Props) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div
               style={{
-                width: 34,
-                height: 34,
-                borderRadius: 8,
+                width: 36,
+                height: 36,
+                borderRadius: 10,
                 background: 'transparent',
                 display: 'flex',
                 alignItems: 'center',
@@ -150,7 +150,7 @@ export default function WalletModal({ wallet, onClose }: Props) {
                 flexShrink: 0,
               }}
             >
-              <WalletIcon size={19} />
+              <WalletIcon size={19} strokeWidth={2.2} />
             </div>
             <div>
               <span className="modal-title" style={{ fontSize: 16, fontWeight: 700 }}>

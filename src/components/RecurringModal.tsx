@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { motion } from 'motion/react';
 import {
   X,
   RefreshCw,
@@ -14,7 +15,8 @@ import {
   Store,
   Plus,
   Search,
-  Feather
+  Feather,
+  RotateCcw
 } from 'lucide-react';
 import { useStore } from '../store';
 import type { RecurringRule, RecurringKind, FrequencyType, ExpenseType } from '../types';
@@ -39,6 +41,13 @@ export default function RecurringModal({ rule, defaultKind = 'autopay', onClose 
   const { db, addRecurringRule, updateRecurringRule, addFriend, showToast } = useStore();
   const s = db.settings;
   const currSym = currencySymbol(s.currency);
+
+  const [isMobileScreen, setIsMobileScreen] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 640);
+  useEffect(() => {
+    const handleResize = () => setIsMobileScreen(window.innerWidth <= 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const [kind, setKind] = useState<RecurringKind>(rule?.kind || defaultKind);
   const [title, setTitle] = useState(rule?.title || '');
@@ -269,83 +278,123 @@ export default function RecurringModal({ rule, defaultKind = 'autopay', onClose 
   const linkedFriend = friendId ? db.friends.find(f => f.id === friendId) : null;
 
   return createPortal(
-    <div className="modal-backdrop" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div
-        className="modal"
+    <div className="modal-backdrop-motion">
+      {/* Backdrop overlay */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="modal-backdrop-overlay"
+        onClick={onClose}
+      />
+
+      {/* Dialog sheet / Desktop center panel */}
+      <motion.div
+        initial={isMobileScreen ? { y: '100%' } : { opacity: 0, scale: 0.95, y: 16 }}
+        animate={isMobileScreen ? { y: 0 } : { opacity: 1, scale: 1, y: 0 }}
+        exit={isMobileScreen ? { y: '100%' } : { opacity: 0, scale: 0.95, y: 16 }}
+        transition={{ duration: isMobileScreen ? 0.32 : 0.2, ease: [0.22, 1, 0.36, 1] }}
+        className="modal modal-dialog-panel"
         style={{
-          maxWidth: 440,
-          borderRadius: 'var(--radius-lg, 16px)',
-          overflow: 'hidden',
+          maxWidth: 560,
+          width: '100%',
+          maxHeight: 'min(90vh, 90dvh)',
           display: 'flex',
           flexDirection: 'column',
-          maxHeight: '94vh',
-          boxShadow: '0 20px 40px -10px rgba(0,0,0,0.22)',
-          position: 'relative'
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          borderRadius: 20,
+          overflow: 'hidden',
+          boxShadow: 'var(--shadow-lg)',
+          position: 'relative',
         }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Mobile Drag Indicator */}
-        <div className="modal-handle-bar">
-          <div className="modal-handle" />
-        </div>
-
-        {/* Compact Header */}
+        {/* Drag Handle Indicator */}
         <div
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '12px 16px 6px 16px',
-            background: 'var(--surface)',
-            flexShrink: 0
+            width: 36,
+            height: 4,
+            borderRadius: 2,
+            background: 'var(--border2)',
+            margin: '12px auto 10px',
+            flexShrink: 0,
           }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+        />
+
+        {/* Themed Header */}
+        <div className="modal-header" style={{ padding: '0 20px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div
               style={{
-                width: 32,
-                height: 32,
-                borderRadius: 'var(--radius-sm, 8px)',
-                background: isSubscription
-                  ? 'linear-gradient(135deg, rgba(14, 165, 233, 0.16), rgba(99, 102, 241, 0.16))'
-                  : 'linear-gradient(135deg, rgba(245, 158, 11, 0.16), rgba(239, 68, 68, 0.16))',
-                color: isSubscription ? 'var(--accent, #0284c7)' : '#d97706',
-                display: 'grid',
-                placeItems: 'center',
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                background: 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--text)',
                 flexShrink: 0,
-                border: `1px solid ${isSubscription ? 'rgba(14, 165, 233, 0.25)' : 'rgba(245, 158, 11, 0.25)'}`
               }}
             >
-              {isSubscription ? <RefreshCw size={16} /> : <Zap size={16} />}
+              {isSubscription ? <RefreshCw size={20} /> : <Zap size={20} />}
             </div>
             <div>
-              <h2 style={{ fontSize: 14.5, fontWeight: 700, margin: 0, color: 'var(--text)', lineHeight: 1.2 }}>
-                {isEditing ? `Edit ${isSubscription ? 'Subscription' : 'Custom'}` : (isSubscription ? 'New Subscription' : 'Custom')}
-              </h2>
-              <p style={{ fontSize: 11, color: 'var(--text-3)', margin: '1px 0 0 0' }}>
-                {isSubscription ? 'Track recurring bills and due reminders' : 'Quick 1-tap repetitive logs (milk, groceries, maid, etc.)'}
-              </p>
+              <span className="modal-title" style={{ fontSize: 16, fontWeight: 700 }}>
+                {isEditing ? (isSubscription ? 'Edit Subscription' : 'Edit Routine') : (isSubscription ? 'New Subscription' : 'New Routine')}
+              </span>
+              <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 1 }}>
+                {isSubscription ? 'Track recurring bills and due reminders' : 'Quick 1-tap repetitive logs'}
+              </div>
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: '50%',
-              background: 'var(--surface2)',
-              border: '1px solid var(--border)',
-              display: 'grid',
-              placeItems: 'center',
-              color: 'var(--text-2)',
-              cursor: 'pointer'
-            }}
-          >
-            <X size={15} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {/* Note Button */}
+            <button
+              type="button"
+              className={`btn-icon ${notes ? 'has-note' : ''}`}
+              onClick={() => setIsNoteModalOpen(true)}
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 9999,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: notes ? 'var(--text)' : 'var(--text-3)',
+                background: notes ? 'var(--surface2)' : 'transparent',
+                border: notes ? '1px solid var(--border)' : 'none',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+              title={notes ? `Note: "${notes}"` : 'Add note'}
+              aria-label={notes ? 'Edit note' : 'Add note'}
+            >
+              <Feather size={16} strokeWidth={2} />
+            </button>
+
+            {/* Close Button */}
+            <button
+              type="button"
+              className="btn-icon"
+              onClick={onClose}
+              aria-label="Close dialog"
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 9999,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+              }}
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {/* Compact Form Body */}
@@ -879,42 +928,73 @@ export default function RecurringModal({ rule, defaultKind = 'autopay', onClose 
             )}
           </div>
 
-          {/* Compact Modal Footer */}
+          {/* Modal Footer */}
           <div
+            className="modal-footer"
             style={{
-              padding: '6px 16px 14px 16px',
-              background: 'var(--surface)',
+              padding: '10px 20px 16px',
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-              gap: 8,
-              flexShrink: 0
+              gap: 10,
+              borderTop: 'none',
+              background: 'transparent',
+              flexShrink: 0,
             }}
           >
             <button
               type="button"
-              onClick={onClose}
-              className="btn btn-secondary"
-              style={{ fontSize: 12, padding: '5px 12px', minHeight: 30, borderRadius: 'var(--radius-sm, 6px)' }}
+              onClick={isEditing ? onClose : () => {
+                setTitle('');
+                setAmount('');
+                setNotes('');
+                setFriendId('');
+                setCategory(defaultKind === 'autopay' ? 'Entertainment' : (s.defaultCategory || 'Other'));
+                setWalletId(s.defaultWalletId || db.wallets[0]?.id || '');
+              }}
+              className="btn"
+              style={{
+                flex: 1,
+                height: 40,
+                borderRadius: 9999,
+                fontSize: 13,
+                fontWeight: 650,
+                border: '1px solid var(--border)',
+                background: 'var(--surface2)',
+                color: 'var(--text)',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                transition: 'all 0.15s ease',
+              }}
             >
-              Cancel
+              {isEditing ? <X size={15} style={{ color: 'var(--text)' }} /> : <RotateCcw size={15} style={{ color: 'var(--text)' }} />}
+              <span>{isEditing ? 'Cancel' : 'Clear'}</span>
             </button>
             <button
               type="submit"
               className="btn btn-primary"
               style={{
-                fontSize: 12,
+                flex: 1.35,
+                height: 40,
+                borderRadius: 9999,
+                fontSize: 13,
                 fontWeight: 700,
-                padding: '5px 18px',
-                minHeight: 30,
-                borderRadius: 'var(--radius-sm, 6px)',
+                background: 'var(--text)',
+                border: '1px solid var(--text)',
+                color: 'var(--bg)',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+                cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 5
+                justifyContent: 'center',
+                gap: 6,
+                whiteSpace: 'nowrap',
+                transition: 'all 0.15s ease',
               }}
             >
-              <Check size={14} />
-              <span>{isEditing ? 'Save Changes' : 'Create'}</span>
+              {isEditing ? <Check size={15} style={{ color: 'inherit' }} /> : <Plus size={15} style={{ color: 'inherit' }} />}
+              <span>{isEditing ? 'Save Changes' : (isSubscription ? 'Create Subscription' : 'Create Routine')}</span>
             </button>
           </div>
         </form>
@@ -929,7 +1009,7 @@ export default function RecurringModal({ rule, defaultKind = 'autopay', onClose 
               zIndex: 30,
               display: 'flex',
               flexDirection: 'column',
-              borderRadius: 'var(--radius-lg, 16px)',
+              borderRadius: 20,
               overflow: 'hidden',
               animation: 'fadeIn 0.15s ease-out'
             }}
@@ -940,35 +1020,33 @@ export default function RecurringModal({ rule, defaultKind = 'autopay', onClose 
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '12px 14px 8px 14px',
+                padding: '14px 20px 10px',
                 background: 'var(--surface)',
                 flexShrink: 0
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <button
                   type="button"
                   onClick={() => setShowContactDrawer(false)}
                   aria-label="Back"
+                  className="btn-icon"
                   style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: '50%',
-                    background: 'var(--surface2)',
-                    border: '1px solid var(--border)',
+                    width: 32,
+                    height: 32,
+                    borderRadius: 9999,
                     display: 'grid',
                     placeItems: 'center',
-                    color: 'var(--text)',
                     cursor: 'pointer'
                   }}
                 >
-                  <ArrowLeft size={14} />
+                  <ArrowLeft size={16} />
                 </button>
                 <div>
-                  <h3 style={{ fontSize: 13.5, fontWeight: 700, margin: 0, color: 'var(--text)' }}>
+                  <h3 style={{ fontSize: 14.5, fontWeight: 700, margin: 0, color: 'var(--text)' }}>
                     Link Contact or Vendor
                   </h3>
-                  <p style={{ fontSize: 10.5, color: 'var(--text-3)', margin: '1px 0 0 0' }}>
+                  <p style={{ fontSize: 11, color: 'var(--text-3)', margin: '1px 0 0 0' }}>
                     Connect ledger balances or tag expenses
                   </p>
                 </div>
@@ -1268,7 +1346,7 @@ export default function RecurringModal({ rule, defaultKind = 'autopay', onClose 
             </div>
           </div>
         )}
-      </div>
+      </motion.div>
 
       {/* Note Editor Modal Dialog */}
       <NoteEditorModal

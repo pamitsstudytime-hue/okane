@@ -273,14 +273,12 @@ export default function SettleExpensePickerModal({
         style={{ display: 'flex', flexDirection: 'column' }}
       >
         {/* Mobile Drag Handle */}
-        <div className="friend-picker-handle">
-          <div style={{ width: 36, height: 4.5, borderRadius: 99, background: 'var(--border2)' }} />
-        </div>
+        <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border2)', margin: '12px auto 6px', flexShrink: 0 }} />
 
         {/* Modal Header */}
         <div
           style={{
-            padding: '16px 20px 10px',
+            padding: '12px 20px 10px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -312,24 +310,21 @@ export default function SettleExpensePickerModal({
           </div>
           <button
             type="button"
+            className="btn-icon"
             onClick={onClose}
             style={{
-              background: 'var(--surface2)',
-              border: '1px solid var(--border)',
-              color: 'var(--text-2)',
+              width: 32,
+              height: 32,
+              borderRadius: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               cursor: 'pointer',
-              width: 30,
-              height: 30,
-              borderRadius: 8,
-              display: 'grid',
-              placeItems: 'center',
-              padding: 0,
               flexShrink: 0,
-              transition: 'all 0.15s ease',
             }}
             aria-label="Close modal"
           >
-            <X size={15} />
+            <X size={18} />
           </button>
         </div>
 
@@ -914,15 +909,25 @@ export default function SettleExpensePickerModal({
             className="btn btn-primary"
             onClick={onClose}
             style={{
-              padding: '8px 22px',
+              height: 40,
+              padding: '0 24px',
               fontSize: 13,
-              fontWeight: 650,
-              borderRadius: 8,
-              minWidth: 100,
+              fontWeight: 700,
+              borderRadius: 9999,
+              background: 'var(--text)',
+              border: '1px solid var(--text)',
+              color: 'var(--bg)',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
               cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              transition: 'all 0.15s ease',
             }}
           >
-            Done
+            <Check size={15} style={{ color: 'inherit' }} />
+            <span>Done</span>
           </button>
         </div>
       </div>

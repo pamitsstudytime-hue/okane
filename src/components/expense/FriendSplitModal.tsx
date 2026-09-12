@@ -163,9 +163,7 @@ export function FriendSplitModal({
     >
       <div className="friend-picker-sheet" onClick={e => e.stopPropagation()}>
         {/* Mobile Grab Handle */}
-        <div className="friend-picker-handle">
-          <div style={{ width: 36, height: 4, borderRadius: 999, backgroundColor: 'var(--text-3)', opacity: 0.4 }} />
-        </div>
+        <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border2)', margin: '12px auto 4px', flexShrink: 0 }} />
 
         {/* ========================================================================= */}
         {/* STEP 1: SELECT FRIENDS                                                    */}
@@ -175,7 +173,7 @@ export function FriendSplitModal({
             {/* Header */}
             <div
               style={{
-                padding: '16px 18px 8px',
+                padding: '12px 18px 8px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -186,18 +184,17 @@ export function FriendSplitModal({
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div
                   style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: '50%',
-                    background: '#ffffff',
-                    color: '#09090b',
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
+                    background: 'transparent',
+                    color: 'var(--text)',
                     display: 'grid',
                     placeItems: 'center',
                     flexShrink: 0,
-                    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.2)',
                   }}
                 >
-                  <Users size={17} strokeWidth={2.4} />
+                  <Users size={19} strokeWidth={2.2} />
                 </div>
                 <div>
                   <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>
@@ -212,23 +209,19 @@ export function FriendSplitModal({
               </div>
               <button
                 type="button"
+                className="btn-icon"
                 onClick={handleClose}
                 style={{
-                  background: 'var(--surface2)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--text-2)',
-                  cursor: 'pointer',
-                  width: 30,
-                  height: 30,
-                  borderRadius: '50%',
+                  width: 32,
+                  height: 32,
+                  borderRadius: 9999,
                   display: 'grid',
                   placeItems: 'center',
-                  padding: 0,
-                  transition: 'all 0.15s ease',
+                  cursor: 'pointer',
                 }}
                 aria-label="Close dialog"
               >
-                <X size={15} />
+                <X size={18} />
               </button>
             </div>
 
@@ -774,23 +767,19 @@ export function FriendSplitModal({
                 </span>
                 <button
                   type="button"
+                  className="btn-icon"
                   onClick={handleClose}
                   style={{
-                    background: 'var(--surface2)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--text-2)',
-                    cursor: 'pointer',
-                    width: 30,
-                    height: 30,
-                    borderRadius: '50%',
+                    width: 32,
+                    height: 32,
+                    borderRadius: 9999,
                     display: 'grid',
                     placeItems: 'center',
-                    padding: 0,
-                    transition: 'all 0.15s ease',
+                    cursor: 'pointer',
                   }}
                   aria-label="Close dialog"
                 >
-                  <X size={15} />
+                  <X size={18} />
                 </button>
               </div>
             </div>

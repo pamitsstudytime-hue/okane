@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Calendar, ReceiptText, FileText, Wallet } from 'lucide-react';
+import { motion } from 'motion/react';
+import { X, Calendar, ReceiptText, Feather, Wallet, Check } from 'lucide-react';
 import { useStore } from '../store';
 import type { Friend } from '../types';
 import { expenseFlow, unsettledExpensesForFriend, todayISO } from '../db';
@@ -19,6 +20,13 @@ export default function SettleModal({ friend, onClose }: Props) {
 
   const { db, recordSettlement, showToast } = useStore();
   const { wallets, settings: { currency } } = db;
+
+  const [isMobileScreen, setIsMobileScreen] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 640);
+  useEffect(() => {
+    const handleResize = () => setIsMobileScreen(window.innerWidth <= 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const unsettled = useMemo(() => unsettledExpensesForFriend(db, friend.id), [db, friend.id]);
   const [selected, setSelected] = useState<Set<string>>(new Set(unsettled.map(e => e.id)));
@@ -111,55 +119,118 @@ export default function SettleModal({ friend, onClose }: Props) {
   const activeWallet = wallets.find(w => w.id === selectedWalletId);
 
   return createPortal(
-    <div className="modal-backdrop" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="modal modal-lg" style={{ maxWidth: 500 }}>
-        {/* Drag Handle Indicator for Mobile Drawer Sheet */}
-        <div className="modal-handle-bar">
-          <div className="modal-handle" />
-        </div>
+    <div className="modal-backdrop-motion">
+      {/* Backdrop overlay */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="modal-backdrop-overlay"
+        onClick={onClose}
+      />
 
-        {/* Modal Header */}
-        <div className="modal-header" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div className="avatar" style={{ ...getAvatarStyle(friend.color), borderRadius: 'var(--radius)' }}>
-              {friendInitial(friend.name, friend.avatarNumber)}
+      {/* Sheet panel / Desktop center dialog */}
+      <motion.div
+        initial={isMobileScreen ? { y: '100%' } : { opacity: 0, scale: 0.95, y: 16 }}
+        animate={isMobileScreen ? { y: 0 } : { opacity: 1, scale: 1, y: 0 }}
+        exit={isMobileScreen ? { y: '100%' } : { opacity: 0, scale: 0.95, y: 16 }}
+        transition={{ duration: isMobileScreen ? 0.32 : 0.2, ease: [0.22, 1, 0.36, 1] }}
+        className="modal modal-dialog-panel"
+        style={{
+          maxWidth: 560,
+          width: '100%',
+          maxHeight: 'min(90vh, 90dvh)',
+          display: 'flex',
+          flexDirection: 'column',
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          borderRadius: 20,
+          overflow: 'hidden',
+          boxShadow: 'var(--shadow-lg)',
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Drag Handle Indicator */}
+        <div
+          style={{
+            width: 36,
+            height: 4,
+            borderRadius: 2,
+            background: 'var(--border2)',
+            margin: '12px auto 10px',
+            flexShrink: 0,
+          }}
+        />
+
+        {/* Themed Modal Header */}
+        <div className="modal-header" style={{ padding: '0 20px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                background: 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--text)',
+                flexShrink: 0,
+              }}
+            >
+              <div className="avatar" style={{ ...getAvatarStyle(friend.color), width: 34, height: 34, borderRadius: 10 }}>
+                {friendInitial(friend.name, friend.avatarNumber)}
+              </div>
             </div>
             <div>
-              <div className="modal-title" style={{ fontSize: 16, fontWeight: 700 }}>Settle with {friend.name}</div>
-              <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 1 }}>{unsettled.length} unsettled expense{unsettled.length !== 1 ? 's' : ''}</div>
+              <span className="modal-title" style={{ fontSize: 16, fontWeight: 700 }}>
+                Settle with {friend.name}
+              </span>
+              <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 1 }}>
+                {unsettled.length} unsettled transaction{unsettled.length !== 1 ? 's' : ''}
+              </div>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {/* Note Icon Button in Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {/* Note Drawer Button Trigger */}
+            <button
+              type="button"
+              className={`btn-icon ${note ? 'has-note' : ''}`}
+              onClick={openNoteModal}
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 9999,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: note ? 'var(--text)' : 'var(--text-3)',
+                background: note ? 'var(--surface2)' : 'transparent',
+                border: note ? '1px solid var(--border)' : 'none',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+              title={note ? `Note: "${note}"` : 'Add note'}
+              aria-label={note ? 'Edit note' : 'Add note'}
+            >
+              <Feather size={16} strokeWidth={2} />
+            </button>
             <button
               type="button"
               className="btn-icon"
-              onClick={openNoteModal}
-              title={note ? `Note: "${note}"` : 'Add note'}
+              onClick={onClose}
+              aria-label="Close dialog"
               style={{
-                position: 'relative',
-                color: note ? 'var(--accent)' : 'var(--text-3)',
-                background: note ? 'var(--accent-soft)' : 'transparent',
-                border: note ? '1px solid var(--accent-border-soft)' : '1px solid transparent',
-                borderRadius: 'var(--radius-sm)',
+                width: 32,
+                height: 32,
+                borderRadius: 9999,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
               }}
             >
-              <FileText size={17} />
-              {note && (
-                <span
-                  style={{
-                    position: 'absolute',
-                    top: 5,
-                    right: 5,
-                    width: 7,
-                    height: 7,
-                    borderRadius: '50%',
-                    background: 'var(--accent)',
-                  }}
-                />
-              )}
-            </button>
-            <button type="button" className="btn-icon" onClick={onClose} title="Close" style={{ borderRadius: 'var(--radius-sm)' }}>
               <X size={18} />
             </button>
           </div>
@@ -456,26 +527,38 @@ export default function SettleModal({ friend, onClose }: Props) {
         <div
           className="modal-footer"
           style={{
-            padding: '14px 20px',
+            padding: '10px 20px 16px',
             display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
+            gap: 10,
             borderTop: 'none',
             background: 'transparent',
+            flexShrink: 0,
           }}
         >
           <button
             type="button"
-            className="btn btn-secondary"
+            className="btn"
             onClick={onClose}
             style={{
-              borderRadius: 'var(--radius)',
-              fontSize: 12.5,
-              fontWeight: 600,
-              padding: '9px 18px',
+              flex: 1,
+              height: 40,
+              borderRadius: 9999,
+              fontSize: 13,
+              fontWeight: 650,
+              border: '1px solid var(--border)',
+              background: 'var(--surface2)',
+              color: 'var(--text)',
+              cursor: 'pointer',
+              padding: '0 16px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              transition: 'all 0.15s ease',
             }}
           >
-            Cancel
+            <X size={15} style={{ color: 'var(--text)' }} />
+            <span>Cancel</span>
           </button>
           {unsettled.length > 0 && (
             <button
@@ -484,22 +567,31 @@ export default function SettleModal({ friend, onClose }: Props) {
               disabled={!selected.size || (isCustomMode && (!customAmountStr || effectiveSettleAmt <= 0))}
               onClick={handleSettle}
               style={{
-                padding: '9px 20px',
+                flex: 1.35,
+                height: 40,
+                borderRadius: 9999,
                 fontSize: 13,
-                fontWeight: 650,
-                borderRadius: 'var(--radius)',
-                background: 'var(--accent)',
-                color: 'var(--accent-contrast, #ffffff)',
-                border: 'none',
-                boxShadow: '0 1px 4px var(--accent-shadow, rgba(0,0,0,0.12))',
+                fontWeight: 700,
+                background: 'var(--text)',
+                border: '1px solid var(--text)',
+                color: 'var(--bg)',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
                 cursor: 'pointer',
+                padding: '0 18px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                whiteSpace: 'nowrap',
+                transition: 'all 0.15s ease',
               }}
             >
-              Settle ({fmtMoney(effectiveSettleAmt, currency)})
+              <Check size={15} style={{ color: 'inherit' }} />
+              <span>Settle ({fmtMoney(effectiveSettleAmt, currency)})</span>
             </button>
           )}
         </div>
-      </div>
+      </motion.div>
 
       {/* Separate Dedicated Note Modal */}
       <NoteEditorModal

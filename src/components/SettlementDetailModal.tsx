@@ -43,42 +43,61 @@ export default function SettlementDetailModal({ settlement, onClose, onUndo }: S
       style={{ zIndex: 100050 }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="modal modal-lg" style={{ maxWidth: 620 }}>
+      <div className="modal modal-lg" style={{ maxWidth: 620, borderRadius: 20 }}>
+        {/* Mobile Drag Handle */}
+        <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border2)', margin: '12px auto 4px', flexShrink: 0 }} />
+
         {/* Header */}
-        <div className="modal-header">
+        <div className="modal-header" style={{ padding: '12px 20px 8px', borderBottom: 'none' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {friend ? (
               <div
                 className="avatar"
-                style={getAvatarStyle(friend.color || (friend.type === 'vendor' ? '#f59e0b' : 'var(--accent)'))}
+                style={{
+                  ...getAvatarStyle(friend.color || (friend.type === 'vendor' ? '#f59e0b' : 'var(--accent)')),
+                  width: 36,
+                  height: 36,
+                }}
               >
                 {friend.type === 'vendor' ? <Store size={18} strokeWidth={2.2} /> : friendInitial(friend.name, friend.avatarNumber)}
               </div>
             ) : (
               <div
                 style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: '50%',
-                  background: 'var(--surface3)',
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  background: 'transparent',
                   display: 'grid',
                   placeItems: 'center',
-                  color: 'var(--text-3)',
+                  color: 'var(--text)',
                 }}
               >
                 <Handshake size={20} />
               </div>
             )}
             <div>
-              <div className="modal-title" style={{ fontSize: 17, fontWeight: 700 }}>
+              <div className="modal-title" style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.2 }}>
                 Settlement Details
               </div>
-              <div style={{ fontSize: 12, color: 'var(--text-3)' }}>
+              <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2 }}>
                 {friend ? friend.name : 'Unknown Friend'} • {fmtDate(settlement?.date || '')}
               </div>
             </div>
           </div>
-          <button className="btn-icon" onClick={onClose}>
+          <button
+            type="button"
+            className="btn-icon"
+            onClick={onClose}
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 9999,
+              display: 'grid',
+              placeItems: 'center',
+              cursor: 'pointer',
+            }}
+          >
             <X size={18} />
           </button>
         </div>
@@ -476,28 +495,66 @@ export default function SettlementDetailModal({ settlement, onClose, onUndo }: S
         </div>
 
         {/* Footer */}
-        <div className="modal-footer" style={{ justifyContent: 'space-between' }}>
+        <div
+          className="modal-footer"
+          style={{
+            padding: '12px 20px calc(14px + env(safe-area-inset-bottom, 0px))',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 10,
+            borderTop: 'none',
+            background: 'transparent',
+          }}
+        >
           {onUndo ? (
             <button
               type="button"
-              className="btn btn-secondary btn-sm"
+              className="btn"
               onClick={() => {
                 onClose();
                 onUndo(settlement.id);
               }}
               style={{
+                height: 40,
+                borderRadius: 9999,
+                padding: '0 16px',
+                fontSize: 13,
+                fontWeight: 650,
                 color: 'var(--debit)',
                 borderColor: 'var(--debit-border)',
                 background: 'var(--debit-bg)',
-                gap: 5,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
               }}
             >
-              <RotateCcw size={13} /> Undo Settlement
+              <RotateCcw size={14} /> <span>Undo Settlement</span>
             </button>
           ) : <div />}
 
-          <button type="button" className="btn btn-primary btn-sm" onClick={onClose}>
-            Close
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={onClose}
+            style={{
+              height: 40,
+              padding: '0 24px',
+              borderRadius: 9999,
+              background: 'var(--text)',
+              border: '1px solid var(--text)',
+              color: 'var(--bg)',
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+            }}
+          >
+            <span>Close</span>
           </button>
         </div>
       </div>

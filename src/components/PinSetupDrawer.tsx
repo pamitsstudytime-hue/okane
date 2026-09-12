@@ -202,27 +202,26 @@ export default function PinSetupDrawer({
 
         {/* Drawer Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div
               style={{
-                width: 42,
-                height: 42,
-                borderRadius: 14,
-                background: 'var(--accent-soft)',
-                border: '1px solid var(--accent-border-soft)',
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                background: 'transparent',
                 display: 'grid',
                 placeItems: 'center',
-                color: 'var(--accent)',
+                color: 'var(--text)',
                 flexShrink: 0,
               }}
             >
-              <KeyRound size={22} strokeWidth={2.2} />
+              <KeyRound size={20} strokeWidth={2.2} />
             </div>
             <div>
-              <h3 style={{ fontSize: 17, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em' }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em', lineHeight: 1.2 }}>
                 {hasExistingPin ? 'Change Security Passcode' : 'Create Security Passcode'}
               </h3>
-              <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '2px 0 0' }}>
+              <p style={{ fontSize: 11.5, color: 'var(--text-3)', margin: '2px 0 0' }}>
                 {hasExistingPin
                   ? step === 'verify_old'
                     ? 'Step 1 of 3: Verify Current Passcode'
@@ -238,21 +237,18 @@ export default function PinSetupDrawer({
 
           <button
             type="button"
-            className="drawer-close-btn"
+            className="btn-icon"
             onClick={handleClose}
             style={{
-              background: 'var(--surface2)',
-              border: '1px solid var(--border)',
-              borderRadius: 8,
               width: 32,
               height: 32,
+              borderRadius: 9999,
               display: 'grid',
               placeItems: 'center',
-              color: 'var(--text-2)',
               cursor: 'pointer',
             }}
           >
-            <X size={16} />
+            <X size={18} />
           </button>
         </div>
 

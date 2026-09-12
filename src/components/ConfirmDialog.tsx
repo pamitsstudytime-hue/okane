@@ -56,16 +56,17 @@ export default function ConfirmDialog({ title, message, confirmLabel = 'Delete',
             </span>
           </div>
           <button
+            type="button"
             className="btn-icon"
             onClick={onClose}
-            style={{ borderRadius: 8, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ width: 32, height: 32, borderRadius: 9999, display: 'grid', placeItems: 'center', cursor: 'pointer' }}
             title="Close"
           >
             <X size={18} />
           </button>
         </div>
 
-        <div className="confirm-body" style={{ padding: '18px 20px 14px', background: 'transparent' }}>
+        <div className="confirm-body" style={{ padding: '14px 20px 14px', background: 'transparent' }}>
           <p style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.6, margin: 0 }}>
             {message}
           </p>
@@ -73,26 +74,29 @@ export default function ConfirmDialog({ title, message, confirmLabel = 'Delete',
 
         <div className="confirm-actions" style={{ padding: '10px 20px 18px', background: 'transparent', borderTop: 'none', display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
           <button
-            className="btn btn-secondary btn-sm"
+            type="button"
+            className="btn btn-secondary"
             onClick={onClose}
-            style={{ padding: '8px 16px', borderRadius: 8, fontWeight: 600, fontSize: 13 }}
+            style={{ height: 40, padding: '0 20px', borderRadius: 9999, fontWeight: 650, fontSize: 13, border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)', cursor: 'pointer' }}
           >
             Cancel
           </button>
           <button
-            className="btn btn-sm"
+            type="button"
+            className="btn"
             onClick={() => { onConfirm(); onClose(); }}
             style={{
-              padding: '8px 20px',
-              borderRadius: 8,
+              height: 40,
+              padding: '0 22px',
+              borderRadius: 9999,
               fontWeight: 700,
               fontSize: 13,
-              border: 'none',
-              background: danger ? 'var(--debit-gradient)' : 'var(--accent-gradient)',
-              color: danger ? '#ffffff' : 'var(--accent-contrast, #ffffff)',
+              border: danger ? '1px solid var(--debit-border)' : '1px solid var(--text)',
+              background: danger ? 'var(--debit-bg)' : 'var(--text)',
+              color: danger ? 'var(--debit)' : 'var(--bg)',
               boxShadow: danger
-                ? '0 4px 14px rgba(239, 68, 68, 0.35)'
-                : '0 4px 14px var(--accent-soft)',
+                ? '0 2px 8px rgba(239, 68, 68, 0.2)'
+                : '0 2px 8px rgba(0, 0, 0, 0.2)',
               cursor: 'pointer',
               transition: 'transform 0.15s ease, opacity 0.15s ease',
             }}

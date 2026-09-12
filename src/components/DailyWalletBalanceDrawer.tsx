@@ -599,14 +599,13 @@ export default function DailyWalletBalanceDrawer({
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div
                 style={{
-                  width: 38,
-                  height: 38,
+                  width: 36,
+                  height: 36,
                   borderRadius: 10,
-                  backgroundColor: selectedDayRecord.isToday ? 'var(--accent)' : 'var(--surface2)',
-                  color: selectedDayRecord.isToday ? 'var(--accent-contrast, #fff)' : 'var(--accent)',
+                  backgroundColor: 'transparent',
+                  color: 'var(--text)',
                   display: 'grid',
                   placeItems: 'center',
-                  border: selectedDayRecord.isToday ? 'none' : '1px solid var(--border)',
                 }}
               >
                 <Calendar size={18} strokeWidth={2.2} />
@@ -650,15 +649,23 @@ export default function DailyWalletBalanceDrawer({
 
             <button
               type="button"
-              className="compact-close-btn"
+              className="btn-icon"
               onClick={() => {
                 setSelectedDayDate(null);
                 onClose();
               }}
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 9999,
+                display: 'grid',
+                placeItems: 'center',
+                cursor: 'pointer',
+              }}
               title="Close"
               aria-label="Close"
             >
-              <X size={16} />
+              <X size={18} />
             </button>
           </div>
 
@@ -1110,18 +1117,18 @@ export default function DailyWalletBalanceDrawer({
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
             <div
               style={{
-                width: 34,
-                height: 34,
-                borderRadius: 9,
-                background: 'var(--accent-soft)',
-                color: 'var(--accent)',
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                background: 'transparent',
+                color: 'var(--text)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0,
               }}
             >
-              <WalletIcon size={17} strokeWidth={2.2} />
+              <WalletIcon size={19} strokeWidth={2.2} />
             </div>
             <div style={{ minWidth: 0 }}>
               <h3
@@ -1270,12 +1277,20 @@ export default function DailyWalletBalanceDrawer({
 
             <button
               type="button"
-              className="compact-close-btn"
+              className="btn-icon"
               onClick={onClose}
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 9999,
+                display: 'grid',
+                placeItems: 'center',
+                cursor: 'pointer',
+              }}
               title="Close"
               aria-label="Close"
             >
-              <X size={16} />
+              <X size={18} />
             </button>
           </div>
         </div>
@@ -1837,10 +1852,13 @@ export default function DailyWalletBalanceDrawer({
           aria-labelledby="daily-balance-filter-title"
         >
           <div className="filter-drawer-panel" style={{ maxWidth: 480 }}>
+            {/* Drawer Drag Handle */}
+            <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border2)', margin: '12px auto 4px', flexShrink: 0 }} />
+
             {/* Drawer Header */}
             <div
               style={{
-                padding: '14px 18px 8px',
+                padding: '12px 18px 8px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -1852,16 +1870,16 @@ export default function DailyWalletBalanceDrawer({
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div
                   style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: 9,
-                    backgroundColor: 'var(--accent-soft)',
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
+                    backgroundColor: 'transparent',
                     display: 'grid',
                     placeItems: 'center',
-                    color: 'var(--accent)',
+                    color: 'var(--text)',
                   }}
                 >
-                  <SlidersHorizontal size={17} strokeWidth={2.2} />
+                  <SlidersHorizontal size={19} strokeWidth={2.2} />
                 </div>
                 <div>
                   <div
@@ -1879,37 +1897,22 @@ export default function DailyWalletBalanceDrawer({
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                {activeFilterCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={resetFilters}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: 'var(--text-2)',
-                      fontSize: '12px',
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 4,
-                      padding: '4px 8px',
-                      borderRadius: 6,
-                    }}
-                  >
-                    <RotateCcw size={12} />
-                    <span>Reset</span>
-                  </button>
-                )}
-
                 <button
                   type="button"
-                  className="compact-close-btn"
+                  className="btn-icon"
                   onClick={() => setShowFilterPanel(false)}
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 9999,
+                    display: 'grid',
+                    placeItems: 'center',
+                    cursor: 'pointer',
+                  }}
                   title="Close"
                   aria-label="Close"
                 >
-                  <X size={16} />
+                  <X size={18} />
                 </button>
               </div>
             </div>
@@ -2124,8 +2127,8 @@ export default function DailyWalletBalanceDrawer({
             {/* Drawer Footer */}
             <div
               style={{
-                padding: '12px 18px',
-                borderTop: '1px solid var(--border)',
+                padding: '12px 20px calc(14px + env(safe-area-inset-bottom, 0px))',
+                borderTop: 'none',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 10,
@@ -2137,22 +2140,23 @@ export default function DailyWalletBalanceDrawer({
                 <button
                   type="button"
                   onClick={resetFilters}
+                  className="btn"
                   style={{
-                    height: 38,
-                    padding: '0 14px',
-                    borderRadius: 9,
+                    height: 40,
+                    borderRadius: 9999,
                     border: '1px solid var(--border)',
                     background: 'var(--surface2)',
-                    color: 'var(--text-2)',
-                    fontSize: 12,
-                    fontWeight: 600,
+                    color: 'var(--text)',
+                    fontSize: 13,
+                    fontWeight: 650,
                     cursor: 'pointer',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: 5,
+                    padding: '0 16px',
+                    gap: 6,
                   }}
                 >
-                  <RotateCcw size={13} />
+                  <RotateCcw size={14} style={{ color: 'var(--text)' }} />
                   <span>Reset</span>
                 </button>
               )}
@@ -2160,22 +2164,26 @@ export default function DailyWalletBalanceDrawer({
               <button
                 type="button"
                 onClick={() => setShowFilterPanel(false)}
+                className="btn btn-primary"
                 style={{
                   flex: 1,
-                  height: 38,
-                  borderRadius: 9,
-                  border: 'none',
-                  background: 'var(--accent)',
-                  color: 'var(--accent-contrast, #ffffff)',
+                  height: 40,
+                  borderRadius: 9999,
+                  background: 'var(--text)',
+                  border: '1px solid var(--text)',
+                  color: 'var(--bg)',
                   fontSize: 13,
                   fontWeight: 700,
                   cursor: 'pointer',
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  gap: 6,
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
                 }}
               >
-                Done
+                <Check size={15} style={{ color: 'inherit' }} />
+                <span>Done</span>
               </button>
             </div>
           </div>

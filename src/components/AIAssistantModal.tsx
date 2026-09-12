@@ -1369,16 +1369,15 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
           sx={{
             width: 36,
             height: 36,
-            borderRadius: '8px',
-            bgcolor: 'var(--surface2)',
-            border: '1px solid var(--border)',
-            color: 'var(--accent)',
+            borderRadius: '10px',
+            bgcolor: 'transparent',
+            color: 'var(--text)',
             display: 'grid',
             placeItems: 'center',
             flexShrink: 0,
           }}
         >
-          <Sparkles size={17} color="currentColor" />
+          <Sparkles size={19} strokeWidth={2.2} color="currentColor" />
         </Box>
         <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'nowrap' }}>
@@ -1419,16 +1418,14 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
               onClick={handleRestartChat}
               sx={{
                 color: 'var(--text-2)',
-                p: 0.75,
+                p: 0,
                 width: 32,
                 height: 32,
-                borderRadius: '8px',
-                bgcolor: 'var(--surface2)',
-                border: '1px solid var(--border)',
+                borderRadius: '9999px',
                 display: 'grid',
                 placeItems: 'center',
                 transition: 'all 0.15s ease',
-                '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)' },
+                '&:hover': { bgcolor: 'var(--surface2)', color: 'var(--text)' },
               }}
             >
               <RotateCcw size={15} />
@@ -1441,19 +1438,17 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
           onClick={onClose}
           sx={{
             color: 'var(--text-2)',
-            p: 0.75,
+            p: 0,
             width: 32,
             height: 32,
-            borderRadius: '8px',
-            bgcolor: 'var(--surface2)',
-            border: '1px solid var(--border)',
+            borderRadius: '9999px',
             display: 'grid',
             placeItems: 'center',
             transition: 'all 0.15s ease',
-            '&:hover': { bgcolor: 'var(--surface3)', color: 'var(--text)' },
+            '&:hover': { bgcolor: 'var(--surface2)', color: 'var(--text)' },
           }}
         >
-          <X size={16} />
+          <X size={18} />
         </IconButton>
       </Box>
     </Box>
@@ -2459,9 +2454,8 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
             sx={{
               width: dragOffsetY > 0 ? 44 : 36,
               height: 4,
-              bgcolor: 'var(--text-3)',
-              opacity: 0.5,
-              borderRadius: '99px',
+              bgcolor: 'var(--border2)',
+              borderRadius: '2px',
             }}
           />
         </Box>

@@ -125,8 +125,8 @@ export const SettlementFilterDrawer: React.FC<Props> = ({
           className="mobile-only"
           style={{
             width: '100%',
-            paddingTop: '10px',
-            paddingBottom: '2px',
+            paddingTop: '12px',
+            paddingBottom: '6px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -137,9 +137,8 @@ export const SettlementFilterDrawer: React.FC<Props> = ({
             style={{
               width: '36px',
               height: '4px',
-              borderRadius: '999px',
-              backgroundColor: 'var(--text-3)',
-              opacity: 0.4,
+              borderRadius: '2px',
+              backgroundColor: 'var(--border2)',
               margin: '0 auto',
             }}
           />
@@ -148,7 +147,7 @@ export const SettlementFilterDrawer: React.FC<Props> = ({
         {/* Drawer Header */}
         <div
           style={{
-            padding: '16px 20px 8px',
+            padding: '12px 20px 8px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -159,16 +158,16 @@ export const SettlementFilterDrawer: React.FC<Props> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div
               style={{
-                width: 34,
-                height: 34,
-                borderRadius: 9,
-                backgroundColor: 'var(--accent-soft)',
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                backgroundColor: 'transparent',
                 display: 'grid',
                 placeItems: 'center',
-                color: 'var(--accent)',
+                color: 'var(--text)',
               }}
             >
-              <SlidersHorizontal size={17} strokeWidth={2.2} />
+              <SlidersHorizontal size={19} strokeWidth={2.2} />
             </div>
             <div>
               <div
@@ -186,42 +185,14 @@ export const SettlementFilterDrawer: React.FC<Props> = ({
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {activeFilterCount > 0 && (
-              <button
-                type="button"
-                onClick={onResetFilters}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text-2)',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  padding: '5px 8px',
-                  borderRadius: 6,
-                  transition: 'color 0.15s ease',
-                }}
-                onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-2)')}
-              >
-                <RotateCcw size={12.5} />
-                <span>Reset</span>
-              </button>
-            )}
-
             <button
               type="button"
+              className="btn-icon"
               onClick={onClose}
               style={{
                 width: 32,
                 height: 32,
-                borderRadius: 8,
-                border: '1px solid var(--border)',
-                backgroundColor: 'var(--surface2)',
-                color: 'var(--text-2)',
+                borderRadius: 9999,
                 display: 'grid',
                 placeItems: 'center',
                 cursor: 'pointer',
@@ -229,7 +200,7 @@ export const SettlementFilterDrawer: React.FC<Props> = ({
               }}
               title="Close filter drawer"
             >
-              <X size={16} />
+              <X size={18} />
             </button>
           </div>
         </div>
@@ -616,7 +587,7 @@ export const SettlementFilterDrawer: React.FC<Props> = ({
         {/* Drawer Sticky Footer */}
         <div
           style={{
-            padding: '12px 20px 16px',
+            padding: '12px 20px calc(14px + env(safe-area-inset-bottom, 0px))',
             backgroundColor: 'var(--surface)',
             display: 'flex',
             alignItems: 'center',
@@ -629,27 +600,58 @@ export const SettlementFilterDrawer: React.FC<Props> = ({
             Showing <strong style={{ color: 'var(--text)' }}>{filteredCount}</strong> result{filteredCount === 1 ? '' : 's'}
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            style={{
-              padding: '8px 18px',
-              borderRadius: 10,
-              backgroundColor: 'var(--accent)',
-              color: 'var(--accent-contrast, #ffffff)',
-              border: 'none',
-              fontSize: '13px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              boxShadow: '0 2px 8px var(--accent-soft)',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <span>Done</span>
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {activeFilterCount > 0 && (
+              <button
+                type="button"
+                onClick={onResetFilters}
+                className="btn"
+                style={{
+                  height: 40,
+                  borderRadius: 9999,
+                  fontSize: 13,
+                  fontWeight: 650,
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface2)',
+                  color: 'var(--text)',
+                  cursor: 'pointer',
+                  padding: '0 16px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <RotateCcw size={14} style={{ color: 'var(--text)' }} />
+                <span>Reset</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="btn btn-primary"
+              style={{
+                height: 40,
+                padding: '0 24px',
+                borderRadius: 9999,
+                backgroundColor: 'var(--text)',
+                border: '1px solid var(--text)',
+                color: 'var(--bg)',
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <Check size={15} style={{ color: 'inherit' }} />
+              <span>Done</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>,

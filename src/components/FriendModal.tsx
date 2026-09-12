@@ -399,18 +399,18 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
                           gap: 6,
                           padding: '8px 6px',
                           borderRadius: 9,
-                          border: isSelected ? '1px solid var(--border2)' : '1px solid transparent',
-                          background: isSelected ? 'var(--surface)' : 'transparent',
-                          color: isSelected ? 'var(--text)' : 'var(--text-3)',
+                          border: isSelected ? '1px solid var(--text)' : '1px solid transparent',
+                          background: isSelected ? 'var(--text)' : 'transparent',
+                          color: isSelected ? 'var(--bg)' : 'var(--text-3)',
                           fontWeight: isSelected ? 700 : 500,
                           fontSize: 12.5,
                           cursor: 'pointer',
-                          boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+                          boxShadow: isSelected ? '0 2px 6px rgba(0, 0, 0, 0.25)' : 'none',
                           minHeight: 38,
                           transition: 'all 0.15s ease',
                         }}
                       >
-                        <Icon size={15} style={{ color: isSelected ? 'var(--text)' : 'inherit' }} />
+                        <Icon size={15} style={{ color: isSelected ? 'var(--bg)' : 'inherit' }} />
                         <span>{tab.label}</span>
                       </button>
                     );
