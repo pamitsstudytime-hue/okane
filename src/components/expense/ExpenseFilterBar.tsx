@@ -5,7 +5,7 @@ import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import {
   X,
-  SlidersHorizontal,
+  Filter,
   RotateCcw,
   Layers,
   ArrowUpRight,
@@ -118,7 +118,7 @@ export const ExpenseFilterBar: React.FC<Props> = ({
         {/* Drawer Header */}
         <div
           style={{
-            padding: '14px 18px 10px',
+            padding: '16px 20px 12px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -126,79 +126,60 @@ export const ExpenseFilterBar: React.FC<Props> = ({
             flexShrink: 0,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div
               style={{
                 width: 32,
                 height: 32,
-                borderRadius: 8,
-                backgroundColor: 'var(--surface2)',
                 display: 'grid',
                 placeItems: 'center',
-                color: 'var(--accent)',
+                color: 'var(--text)',
+                flexShrink: 0,
               }}
             >
-              <SlidersHorizontal size={16} />
+              <Filter size={18} />
             </div>
             <div>
-              <div style={{ fontSize: '15px', fontWeight: 650, color: 'var(--text)', lineHeight: 1.2 }}>
+              <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>
                 Filters & Sorting
               </div>
-              {activeFilterCount > 0 && (
-                <div style={{ fontSize: '11.5px', color: 'var(--accent)', fontWeight: 500 }}>
+              {activeFilterCount > 0 ? (
+                <div style={{ fontSize: '11.5px', color: 'var(--text-3)', fontWeight: 550, marginTop: 2 }}>
                   {activeFilterCount} active filter{activeFilterCount === 1 ? '' : 's'}
+                </div>
+              ) : (
+                <div style={{ fontSize: '11.5px', color: 'var(--text-3)', fontWeight: 500, marginTop: 2 }}>
+                  Refine transaction view
                 </div>
               )}
             </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {activeFilterCount > 0 && (
-              <button
-                type="button"
-                onClick={onClearAll}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text-3)',
-                  fontSize: '12px',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  padding: '4px 8px',
-                  borderRadius: 6,
-                }}
-              >
-                <RotateCcw size={12} />
-                <span>Reset all</span>
-              </button>
-            )}
-
             {toggleAllDateCollapse && (
               <button
                 type="button"
-                onClick={toggleAllDateCollapse}
+                onClick={() => {
+                  toggleAllDateCollapse();
+                  setShowFilters(false);
+                }}
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 5,
+                  width: 32,
                   height: 32,
-                  padding: '0 10px',
-                  borderRadius: 8,
-                  fontSize: '12px',
-                  fontWeight: 500,
+                  borderRadius: '50%',
                   backgroundColor: 'var(--surface2)',
                   border: '1px solid var(--border)',
                   color: 'var(--text-2)',
                   cursor: 'pointer',
+                  display: 'grid',
+                  placeItems: 'center',
+                  padding: 0,
                   transition: 'all 0.15s ease',
                 }}
                 title={allCollapsed ? 'Expand all date groups' : 'Collapse all date groups'}
+                aria-label={allCollapsed ? 'Expand all date groups' : 'Collapse all date groups'}
               >
-                <ChevronsUpDown size={14} />
-                <span>{allCollapsed ? 'Expand All' : 'Collapse All'}</span>
+                <ChevronsUpDown size={15} />
               </button>
             )}
 
@@ -208,14 +189,15 @@ export const ExpenseFilterBar: React.FC<Props> = ({
               style={{
                 width: 32,
                 height: 32,
-                borderRadius: 8,
+                borderRadius: '50%',
                 backgroundColor: 'var(--surface2)',
                 border: '1px solid var(--border)',
-                color: 'var(--text-2)',
+                color: 'var(--text)',
                 cursor: 'pointer',
                 display: 'grid',
                 placeItems: 'center',
                 padding: 0,
+                transition: 'all 0.15s ease',
               }}
               aria-label="Close filters"
             >
@@ -234,10 +216,10 @@ export const ExpenseFilterBar: React.FC<Props> = ({
             WebkitOverflowScrolling: 'touch',
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
-            padding: '14px 18px',
+            padding: '16px 20px',
             display: 'flex',
             flexDirection: 'column',
-            gap: 16,
+            gap: 20,
           }}
         >
           {/* Section 1: Money Flow */}
@@ -247,9 +229,9 @@ export const ExpenseFilterBar: React.FC<Props> = ({
                 fontSize: '11.5px',
                 fontWeight: 700,
                 textTransform: 'uppercase',
-                letterSpacing: '0.5px',
+                letterSpacing: '0.6px',
                 color: 'var(--text-3)',
-                marginBottom: 8,
+                marginBottom: 10,
               }}
             >
               Transaction Flow
@@ -272,19 +254,19 @@ export const ExpenseFilterBar: React.FC<Props> = ({
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: 6,
-                      padding: '9px 8px',
-                      borderRadius: 10,
+                      padding: '10px 8px',
+                      borderRadius: 12,
                       fontSize: '12.5px',
-                      fontWeight: isSelected ? 650 : 500,
-                      backgroundColor: isSelected ? 'var(--surface)' : 'var(--surface2)',
-                      color: isSelected ? 'var(--text)' : 'var(--text-2)',
-                      border: isSelected ? '1px solid var(--border2)' : '1px solid var(--border)',
-                      boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+                      fontWeight: isSelected ? 700 : 550,
+                      backgroundColor: isSelected ? 'var(--accent)' : 'var(--surface2)',
+                      color: isSelected ? 'var(--accent-contrast)' : 'var(--text-2)',
+                      border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border)',
+                      boxShadow: isSelected ? '0 2px 8px var(--accent-soft)' : 'none',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease',
                     }}
                   >
-                    <Icon size={14} style={{ color: isSelected ? 'var(--text)' : f.color || 'var(--text-3)' }} />
+                    <Icon size={14} style={{ color: isSelected ? 'var(--accent-contrast)' : f.color || 'var(--text-3)' }} />
                     <span>{f.label}</span>
                   </button>
                 );
@@ -299,9 +281,9 @@ export const ExpenseFilterBar: React.FC<Props> = ({
                 fontSize: '11.5px',
                 fontWeight: 700,
                 textTransform: 'uppercase',
-                letterSpacing: '0.5px',
+                letterSpacing: '0.6px',
                 color: 'var(--text-3)',
-                marginBottom: 8,
+                marginBottom: 10,
               }}
             >
               Sort Order
@@ -323,20 +305,20 @@ export const ExpenseFilterBar: React.FC<Props> = ({
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      padding: '9px 12px',
-                      borderRadius: 10,
+                      padding: '10px 14px',
+                      borderRadius: 12,
                       fontSize: '12.5px',
-                      fontWeight: isSelected ? 650 : 500,
-                      backgroundColor: isSelected ? 'var(--surface)' : 'var(--surface2)',
-                      color: isSelected ? 'var(--text)' : 'var(--text-2)',
-                      border: isSelected ? '1px solid var(--border2)' : '1px solid var(--border)',
-                      boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+                      fontWeight: isSelected ? 700 : 550,
+                      backgroundColor: isSelected ? 'var(--accent)' : 'var(--surface2)',
+                      color: isSelected ? 'var(--accent-contrast)' : 'var(--text-2)',
+                      border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border)',
+                      boxShadow: isSelected ? '0 2px 8px var(--accent-soft)' : 'none',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease',
                     }}
                   >
                     <span>{s.label}</span>
-                    {isSelected && <Check size={14} style={{ color: 'var(--text)' }} />}
+                    {isSelected && <Check size={14} style={{ color: 'var(--accent-contrast)' }} />}
                   </button>
                 );
               })}
@@ -350,9 +332,9 @@ export const ExpenseFilterBar: React.FC<Props> = ({
                 fontSize: '11.5px',
                 fontWeight: 700,
                 textTransform: 'uppercase',
-                letterSpacing: '0.5px',
+                letterSpacing: '0.6px',
                 color: 'var(--text-3)',
-                marginBottom: 8,
+                marginBottom: 10,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -366,18 +348,18 @@ export const ExpenseFilterBar: React.FC<Props> = ({
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: 'var(--accent)',
+                    color: 'var(--text-2)',
                     fontSize: '11px',
                     fontWeight: 600,
                     cursor: 'pointer',
                     padding: 0,
                   }}
                 >
-                  Clear
+                  Clear Category
                 </button>
               )}
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '1px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, padding: '1px' }}>
               <button
                 type="button"
                 onClick={() => setCatFilter('')}
@@ -385,14 +367,14 @@ export const ExpenseFilterBar: React.FC<Props> = ({
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 6,
-                  padding: '6px 12px',
-                  borderRadius: 20,
-                  fontSize: '12px',
-                  fontWeight: catFilter === '' ? 650 : 500,
-                  backgroundColor: catFilter === '' ? 'var(--surface)' : 'var(--surface2)',
-                  color: catFilter === '' ? 'var(--text)' : 'var(--text-2)',
-                  border: catFilter === '' ? '1px solid var(--border2)' : '1px solid var(--border)',
-                  boxShadow: catFilter === '' ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+                  padding: '7px 14px',
+                  borderRadius: 9999,
+                  fontSize: '12.5px',
+                  fontWeight: catFilter === '' ? 700 : 550,
+                  backgroundColor: catFilter === '' ? 'var(--accent)' : 'var(--surface2)',
+                  color: catFilter === '' ? 'var(--accent-contrast)' : 'var(--text-2)',
+                  border: catFilter === '' ? '1px solid var(--accent)' : '1px solid var(--border)',
+                  boxShadow: catFilter === '' ? '0 2px 8px var(--accent-soft)' : 'none',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
                 }}
@@ -412,14 +394,14 @@ export const ExpenseFilterBar: React.FC<Props> = ({
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: 6,
-                      padding: '6px 12px',
-                      borderRadius: 20,
-                      fontSize: '12px',
-                      fontWeight: isSelected ? 650 : 500,
-                      backgroundColor: isSelected ? 'var(--surface)' : 'var(--surface2)',
-                      color: isSelected ? 'var(--text)' : 'var(--text-2)',
-                      border: isSelected ? '1px solid var(--border2)' : '1px solid var(--border)',
-                      boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+                      padding: '7px 14px',
+                      borderRadius: 9999,
+                      fontSize: '12.5px',
+                      fontWeight: isSelected ? 700 : 550,
+                      backgroundColor: isSelected ? 'var(--accent)' : 'var(--surface2)',
+                      color: isSelected ? 'var(--accent-contrast)' : 'var(--text-2)',
+                      border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border)',
+                      boxShadow: isSelected ? '0 2px 8px var(--accent-soft)' : 'none',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease',
                     }}
@@ -439,9 +421,9 @@ export const ExpenseFilterBar: React.FC<Props> = ({
                 fontSize: '11.5px',
                 fontWeight: 700,
                 textTransform: 'uppercase',
-                letterSpacing: '0.5px',
+                letterSpacing: '0.6px',
                 color: 'var(--text-3)',
-                marginBottom: 8,
+                marginBottom: 10,
               }}
             >
               Transaction Type
@@ -463,20 +445,20 @@ export const ExpenseFilterBar: React.FC<Props> = ({
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      padding: '9px 12px',
-                      borderRadius: 10,
+                      padding: '10px 14px',
+                      borderRadius: 12,
                       fontSize: '12.5px',
-                      fontWeight: isSelected ? 650 : 500,
-                      backgroundColor: isSelected ? 'var(--surface)' : 'var(--surface2)',
-                      color: isSelected ? 'var(--text)' : 'var(--text-2)',
-                      border: isSelected ? '1px solid var(--border2)' : '1px solid var(--border)',
-                      boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+                      fontWeight: isSelected ? 700 : 550,
+                      backgroundColor: isSelected ? 'var(--accent)' : 'var(--surface2)',
+                      color: isSelected ? 'var(--accent-contrast)' : 'var(--text-2)',
+                      border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border)',
+                      boxShadow: isSelected ? '0 2px 8px var(--accent-soft)' : 'none',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease',
                     }}
                   >
                     <span>{t.label}</span>
-                    {isSelected && <Check size={14} style={{ color: 'var(--text)' }} />}
+                    {isSelected && <Check size={14} style={{ color: 'var(--accent-contrast)' }} />}
                   </button>
                 );
               })}
@@ -491,9 +473,9 @@ export const ExpenseFilterBar: React.FC<Props> = ({
                   fontSize: '11.5px',
                   fontWeight: 700,
                   textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
+                  letterSpacing: '0.6px',
                   color: 'var(--text-3)',
-                  marginBottom: 8,
+                  marginBottom: 10,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
@@ -507,14 +489,14 @@ export const ExpenseFilterBar: React.FC<Props> = ({
                     style={{
                       background: 'none',
                       border: 'none',
-                      color: 'var(--accent)',
+                      color: 'var(--text-2)',
                       fontSize: '11px',
                       fontWeight: 600,
                       cursor: 'pointer',
                       padding: 0,
                     }}
                   >
-                    Clear
+                    Clear Wallet
                   </button>
                 )}
               </div>
@@ -526,14 +508,14 @@ export const ExpenseFilterBar: React.FC<Props> = ({
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: 6,
-                    padding: '6px 12px',
-                    borderRadius: 20,
-                    fontSize: '12px',
-                    fontWeight: walletFilter === '' ? 650 : 500,
-                    backgroundColor: walletFilter === '' ? 'var(--surface)' : 'var(--surface2)',
-                    color: walletFilter === '' ? 'var(--text)' : 'var(--text-2)',
-                    border: walletFilter === '' ? '1px solid var(--border2)' : '1px solid var(--border)',
-                    boxShadow: walletFilter === '' ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+                    padding: '7px 14px',
+                    borderRadius: 9999,
+                    fontSize: '12.5px',
+                    fontWeight: walletFilter === '' ? 700 : 550,
+                    backgroundColor: walletFilter === '' ? 'var(--accent)' : 'var(--surface2)',
+                    color: walletFilter === '' ? 'var(--accent-contrast)' : 'var(--text-2)',
+                    border: walletFilter === '' ? '1px solid var(--accent)' : '1px solid var(--border)',
+                    boxShadow: walletFilter === '' ? '0 2px 8px var(--accent-soft)' : 'none',
                     cursor: 'pointer',
                     transition: 'all 0.15s ease',
                   }}
@@ -553,14 +535,14 @@ export const ExpenseFilterBar: React.FC<Props> = ({
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: 6,
-                        padding: '6px 12px',
-                        borderRadius: 20,
-                        fontSize: '12px',
-                        fontWeight: isSelected ? 650 : 500,
-                        backgroundColor: isSelected ? 'var(--surface)' : 'var(--surface2)',
-                        color: isSelected ? 'var(--text)' : 'var(--text-2)',
-                        border: isSelected ? '1px solid var(--border2)' : '1px solid var(--border)',
-                        boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+                        padding: '7px 14px',
+                        borderRadius: 9999,
+                        fontSize: '12.5px',
+                        fontWeight: isSelected ? 700 : 550,
+                        backgroundColor: isSelected ? 'var(--accent)' : 'var(--surface2)',
+                        color: isSelected ? 'var(--accent-contrast)' : 'var(--text-2)',
+                        border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border)',
+                        boxShadow: isSelected ? '0 2px 8px var(--accent-soft)' : 'none',
                         cursor: 'pointer',
                         transition: 'all 0.15s ease',
                       }}
@@ -575,37 +557,69 @@ export const ExpenseFilterBar: React.FC<Props> = ({
           )}
         </div>
 
-        {/* Drawer Sticky Footer */}
+        {/* Drawer Sticky Footer: 2 Action Buttons (Clear & Filter) */}
         <div
           style={{
-            padding: '10px 18px 14px',
+            padding: '12px 18px 16px',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 10,
+            gap: 12,
             backgroundColor: 'var(--surface)',
             flexShrink: 0,
-            paddingBottom: isMobile ? 'calc(env(safe-area-inset-bottom, 0px) + 14px)' : '14px',
+            paddingBottom: isMobile ? 'calc(env(safe-area-inset-bottom, 0px) + 16px)' : '16px',
           }}
         >
-          <div style={{ fontSize: '12px', color: 'var(--text-3)' }}>
-            {filteredCount !== undefined ? `${filteredCount} result${filteredCount === 1 ? '' : 's'}` : ''}
-          </div>
+          <button
+            type="button"
+            onClick={onClearAll}
+            disabled={activeFilterCount === 0}
+            style={{
+              flex: 1,
+              height: 44,
+              borderRadius: 9999,
+              fontSize: '13.5px',
+              fontWeight: 650,
+              backgroundColor: 'var(--surface2)',
+              border: '1px solid var(--border)',
+              color: activeFilterCount > 0 ? 'var(--text)' : 'var(--text-3)',
+              cursor: activeFilterCount > 0 ? 'pointer' : 'default',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              opacity: activeFilterCount > 0 ? 1 : 0.5,
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <RotateCcw size={14} />
+            <span>Clear</span>
+          </button>
 
           <button
             type="button"
-            className="btn btn-primary"
             onClick={() => setShowFilters(false)}
             style={{
-              flex: isMobile ? 1 : undefined,
-              minWidth: 120,
-              height: 38,
-              fontSize: '13px',
-              fontWeight: 600,
+              flex: 1.6,
+              height: 44,
+              borderRadius: 9999,
+              fontSize: '13.5px',
+              fontWeight: 700,
+              backgroundColor: 'var(--accent)',
+              color: 'var(--accent-contrast)',
+              border: 'none',
+              boxShadow: '0 3px 12px var(--accent-soft)',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
               justifyContent: 'center',
+              gap: 6,
+              transition: 'all 0.15s ease',
             }}
           >
-            Apply Filters
+            <span>Apply</span>
+            {filteredCount !== undefined && (
+              <span style={{ fontSize: '12px', opacity: 0.85, fontWeight: 600 }}>({filteredCount})</span>
+            )}
           </button>
         </div>
       </motion.div>

@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import {
   X,
   SlidersHorizontal,
+  Filter,
   RotateCcw,
   Check,
   User,
@@ -19,13 +20,9 @@ import {
   Handshake,
   Clock,
   Layers,
-  BarChart3,
-  ChevronDown,
-  ChevronUp,
 } from 'lucide-react';
 import { showSoftKeyboard } from '../utils/keyboard';
 import type { ContactType } from '../types';
-import { fmtMoney } from '../utils';
 
 export type FriendFilterStatus = 'all' | 'owes_me' | 'i_owe' | 'settled';
 export type SortOption = 'owed_desc' | 'owed_asc' | 'name' | 'recent' | 'expenses_count';
@@ -46,22 +43,15 @@ interface Props {
   setSearch: (s: string) => void;
   activeFilterCount: number;
   onClearAll: () => void;
-  counts: {
+  counts?: {
     all: number;
     friend: number;
     vendor: number;
     subscription: number;
   };
   filteredCount: number;
-  friendStats?: {
-    credit: number;
-    debit: number;
-    net: number;
-  };
-  vendorAndSubSpend?: {
-    total: number;
-    subTotal: number;
-  };
+  friendStats?: unknown;
+  vendorAndSubSpend?: unknown;
   currency?: string;
 }
 
@@ -80,15 +70,10 @@ export const ContactFilterBar: React.FC<Props> = ({
   setSearch,
   activeFilterCount,
   onClearAll,
-  counts,
   filteredCount,
-  friendStats,
-  vendorAndSubSpend,
-  currency = 'USD',
 }) => {
   const muiTheme = useTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
-  const [showBreakdown, setShowBreakdown] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Auto-focus search input when filters drawer opens
@@ -172,86 +157,36 @@ export const ContactFilterBar: React.FC<Props> = ({
             gap: 8,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
             <div
               style={{
                 width: 32,
                 height: 32,
-                borderRadius: 8,
-                backgroundColor: 'var(--surface2)',
                 display: 'grid',
                 placeItems: 'center',
-                color: 'var(--accent)',
+                color: 'var(--text)',
                 flexShrink: 0,
               }}
             >
-              <SlidersHorizontal size={16} />
+              <Filter size={18} />
             </div>
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: '15px', fontWeight: 650, color: 'var(--text)', lineHeight: 1.2 }}>
+              <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>
                 Filters & Sorting
               </div>
-              {activeFilterCount > 0 && (
-                <div style={{ fontSize: '11.5px', color: 'var(--accent)', fontWeight: 500 }}>
+              {activeFilterCount > 0 ? (
+                <div style={{ fontSize: '11.5px', color: 'var(--text-3)', fontWeight: 550, marginTop: 2 }}>
                   {activeFilterCount} active filter{activeFilterCount === 1 ? '' : 's'}
+                </div>
+              ) : (
+                <div style={{ fontSize: '11.5px', color: 'var(--text-3)', fontWeight: 500, marginTop: 2 }}>
+                  Filter contact directory
                 </div>
               )}
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-            {activeFilterCount > 0 && (
-              <button
-                type="button"
-                onClick={onClearAll}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text-3)',
-                  fontSize: '12px',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  padding: '4px 6px',
-                  borderRadius: 6,
-                }}
-              >
-                <RotateCcw size={12} />
-                <span className="desktop-only">Reset</span>
-              </button>
-            )}
-
-            {/* Full Breakdown Stats Button (on left of close btn) */}
-            {friendStats && (
-              <button
-                type="button"
-                onClick={() => setShowBreakdown(prev => !prev)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  padding: '5px 9px',
-                  borderRadius: 8,
-                  backgroundColor: showBreakdown ? 'var(--surface)' : 'var(--surface2)',
-                  border: showBreakdown ? '1px solid var(--border2)' : '1px solid var(--border)',
-                  color: showBreakdown ? 'var(--text)' : 'var(--text-2)',
-                  fontSize: '12px',
-                  fontWeight: showBreakdown ? 650 : 500,
-                  boxShadow: showBreakdown ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                }}
-                title="Toggle Financial Breakdown Stats"
-                aria-label="Toggle Financial Breakdown Stats"
-              >
-                <BarChart3 size={14} style={{ flexShrink: 0 }} />
-                <span>Stats</span>
-                {showBreakdown ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-              </button>
-            )}
-
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             {/* Close Button */}
             <button
               type="button"
@@ -259,14 +194,15 @@ export const ContactFilterBar: React.FC<Props> = ({
               style={{
                 width: 32,
                 height: 32,
-                borderRadius: 8,
+                borderRadius: '50%',
                 backgroundColor: 'var(--surface2)',
                 border: '1px solid var(--border)',
-                color: 'var(--text-2)',
+                color: 'var(--text)',
                 cursor: 'pointer',
                 display: 'grid',
                 placeItems: 'center',
                 padding: 0,
+                transition: 'all 0.15s ease',
               }}
               aria-label="Close filters"
             >
@@ -291,80 +227,6 @@ export const ContactFilterBar: React.FC<Props> = ({
             gap: 16,
           }}
         >
-          {/* Collapsible Full Breakdown Stats Panel inside Drawer */}
-          {showBreakdown && friendStats && vendorAndSubSpend && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 8,
-                padding: '12px',
-                backgroundColor: 'var(--surface2)',
-                borderRadius: 12,
-                border: '1px solid var(--border)',
-                animation: 'fadein 0.15s ease',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--accent)' }}>
-                  Financial Breakdown Stats
-                </div>
-                <div style={{ fontSize: '11px', color: 'var(--text-3)', fontWeight: 500 }}>
-                  {counts.all} total contacts
-                </div>
-              </div>
-
-              {/* Friends Balance Box */}
-              <div style={{ background: 'var(--surface)', borderRadius: 10, border: '1px solid var(--border)', padding: '10px 12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '12px', fontWeight: 650, color: 'var(--text)' }}>
-                    <User size={13} className="text-accent" />
-                    <span>Friends Balance Status</span>
-                  </div>
-                  <span style={{ fontSize: '11px', color: 'var(--text-3)', fontWeight: 500 }}>{counts.friend} friends</span>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  <div>
-                    <div style={{ fontSize: '10.5px', color: 'var(--text-3)' }}>Owed to You</div>
-                    <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--credit)' }}>
-                      +{fmtMoney(friendStats.credit, currency)}
-                    </div>
-                  </div>
-                  <div style={{ borderLeft: '1px solid var(--border)', paddingLeft: 10 }}>
-                    <div style={{ fontSize: '10.5px', color: 'var(--text-3)' }}>You Owe</div>
-                    <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--debit)' }}>
-                      -{fmtMoney(Math.abs(friendStats.debit), currency)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Vendors & Subscriptions Spend Box */}
-              <div style={{ background: 'var(--surface)', borderRadius: 10, border: '1px solid var(--border)', padding: '10px 12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '12px', fontWeight: 650, color: 'var(--text)' }}>
-                    <Store size={13} style={{ color: '#F59E0B' }} />
-                    <span>Vendors & Subscriptions Spend</span>
-                  </div>
-                  <span style={{ fontSize: '11px', color: 'var(--text-3)', fontWeight: 500 }}>{counts.vendor + counts.subscription} contacts</span>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  <div>
-                    <div style={{ fontSize: '10.5px', color: 'var(--text-3)' }}>Total Spent</div>
-                    <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)' }}>
-                      {fmtMoney(vendorAndSubSpend.total, currency)}
-                    </div>
-                  </div>
-                  <div style={{ borderLeft: '1px solid var(--border)', paddingLeft: 10 }}>
-                    <div style={{ fontSize: '10.5px', color: 'var(--text-3)' }}>Active Subscriptions ({counts.subscription})</div>
-                    <div style={{ fontSize: '13px', fontWeight: 650, color: 'var(--text-2)' }}>
-                      {fmtMoney(vendorAndSubSpend.subTotal, currency)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
           {/* Search Input Filter */}
           <div>
             <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-3)', marginBottom: 8 }}>
@@ -377,8 +239,8 @@ export const ContactFilterBar: React.FC<Props> = ({
                 gap: 8,
                 backgroundColor: 'var(--surface2)',
                 border: '1px solid var(--border)',
-                borderRadius: '10px',
-                padding: '7px 10px',
+                borderRadius: 9999,
+                padding: '8px 14px',
               }}
             >
               <Search size={14} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
@@ -426,17 +288,17 @@ export const ContactFilterBar: React.FC<Props> = ({
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: 6,
+                gap: 4,
                 backgroundColor: 'var(--surface2)',
-                padding: 4,
-                borderRadius: '12px',
+                padding: 3,
+                borderRadius: 12,
                 border: '1px solid var(--border)',
               }}
             >
               {[
-                { id: 'friend' as ContactType, label: 'Friends', icon: <User size={13} />, count: counts.friend },
-                { id: 'vendor' as ContactType, label: 'Vendors', icon: <Store size={13} />, count: counts.vendor },
-                { id: 'subscription' as ContactType, label: 'Subscriptions', icon: <Tv size={13} />, count: counts.subscription },
+                { id: 'friend' as ContactType, label: 'Friends', icon: <User size={13} /> },
+                { id: 'vendor' as ContactType, label: 'Vendors', icon: <Store size={13} /> },
+                { id: 'subscription' as ContactType, label: 'Subscriptions', icon: <Tv size={13} /> },
               ].map(tab => {
                 const isSelected = typeFilter === tab.id;
                 return (
@@ -449,24 +311,23 @@ export const ContactFilterBar: React.FC<Props> = ({
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: 6,
-                      padding: '7px 4px',
-                      borderRadius: '8px',
-                      border: isSelected ? '1px solid var(--border)' : '1px solid transparent',
-                      backgroundColor: isSelected ? 'var(--surface)' : 'transparent',
-                      color: isSelected ? 'var(--text)' : 'var(--text-2)',
+                      padding: '8px 4px',
+                      borderRadius: 9,
+                      border: isSelected ? '1px solid var(--accent)' : '1px solid transparent',
+                      backgroundColor: isSelected ? 'var(--accent)' : 'transparent',
+                      color: isSelected ? 'var(--accent-contrast)' : 'var(--text-2)',
                       fontSize: '12px',
-                      fontWeight: isSelected ? 650 : 500,
+                      fontWeight: isSelected ? 700 : 500,
                       cursor: 'pointer',
-                      boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.12)' : 'none',
+                      boxShadow: isSelected ? '0 2px 8px var(--accent-soft)' : 'none',
                       transition: 'all 0.15s ease',
                       whiteSpace: 'nowrap',
                     }}
                   >
                     {React.cloneElement(tab.icon, {
-                      style: { color: isSelected ? 'var(--text)' : 'var(--text-3)' }
+                      style: { color: isSelected ? 'var(--accent-contrast)' : 'var(--text-3)' }
                     })}
                     <span>{tab.label}</span>
-                    <span style={{ fontSize: '10px', opacity: isSelected ? 0.95 : 0.6 }}>({tab.count})</span>
                   </button>
                 );
               })}
@@ -496,26 +357,28 @@ export const ContactFilterBar: React.FC<Props> = ({
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '9px 12px',
-                        borderRadius: '10px',
-                        backgroundColor: isSelected ? 'var(--surface)' : 'var(--surface2)',
-                        border: isSelected ? '1px solid var(--border2)' : '1px solid var(--border)',
-                        color: isSelected ? 'var(--text)' : 'var(--text-2)',
+                        padding: '10px 14px',
+                        borderRadius: 14,
+                        backgroundColor: isSelected ? 'var(--accent)' : 'var(--surface2)',
+                        border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border)',
+                        color: isSelected ? 'var(--accent-contrast)' : 'var(--text-2)',
                         cursor: 'pointer',
                         textAlign: 'left',
-                        boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+                        boxShadow: isSelected ? '0 2px 8px var(--accent-soft)' : 'none',
                         transition: 'all 0.15s ease',
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                        {opt.icon}
+                        {React.cloneElement(opt.icon, {
+                          style: { color: isSelected ? 'var(--accent-contrast)' : opt.icon.props.style?.color }
+                        })}
                         <div>
-                          <div style={{ fontSize: '12px', fontWeight: isSelected ? 650 : 500, color: isSelected ? 'var(--text)' : 'inherit' }}>
+                          <div style={{ fontSize: '12px', fontWeight: isSelected ? 700 : 500, color: isSelected ? 'var(--accent-contrast)' : 'inherit' }}>
                             {opt.label}
                           </div>
                         </div>
                       </div>
-                      {isSelected && <Check size={14} style={{ color: 'var(--text)', flexShrink: 0 }} />}
+                      {isSelected && <Check size={14} style={{ color: 'var(--accent-contrast)', flexShrink: 0 }} />}
                     </button>
                   );
                 })}
@@ -528,15 +391,15 @@ export const ContactFilterBar: React.FC<Props> = ({
             <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-3)', marginBottom: 8 }}>
               Sort Order
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6 }}>
               {[
                 ...((typeFilter === 'friend' || typeFilter === 'vendor') ? [
-                  { id: 'owed_desc' as SortOption, label: 'Highest Owed First', icon: <ArrowDownLeft size={13} style={{ color: 'var(--credit)' }} /> },
-                  { id: 'owed_asc' as SortOption, label: 'You Owe Most First', icon: <ArrowUpRight size={13} style={{ color: 'var(--debit)' }} /> },
+                  { id: 'owed_desc' as SortOption, label: 'Highest Owed', icon: <ArrowDownLeft size={13} style={{ color: 'var(--credit)' }} /> },
+                  { id: 'owed_asc' as SortOption, label: 'You Owe Most', icon: <ArrowUpRight size={13} style={{ color: 'var(--debit)' }} /> },
                 ] : []),
                 { id: 'name' as SortOption, label: 'Name (A to Z)', icon: <ArrowUpDown size={13} /> },
                 { id: 'recent' as SortOption, label: 'Recent Activity', icon: <Clock size={13} /> },
-                { id: 'expenses_count' as SortOption, label: 'Most Expenses / Orders', icon: <Layers size={13} /> },
+                { id: 'expenses_count' as SortOption, label: 'Most Expenses', icon: <Layers size={13} /> },
               ].map(opt => {
                 const isSelected = sortBy === opt.id;
                 return (
@@ -548,25 +411,26 @@ export const ContactFilterBar: React.FC<Props> = ({
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      padding: '8px 12px',
-                      borderRadius: '8px',
-                      backgroundColor: isSelected ? 'var(--surface2)' : 'transparent',
-                      border: '1px solid transparent',
-                      color: isSelected ? 'var(--text)' : 'var(--text-2)',
-                      fontSize: '12.5px',
-                      fontWeight: isSelected ? 650 : 450,
+                      padding: '10px 12px',
+                      borderRadius: 12,
+                      backgroundColor: isSelected ? 'var(--accent)' : 'var(--surface2)',
+                      border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border)',
+                      color: isSelected ? 'var(--accent-contrast)' : 'var(--text-2)',
+                      fontSize: '12px',
+                      fontWeight: isSelected ? 700 : 500,
                       cursor: 'pointer',
                       transition: 'all 0.12s ease',
                       textAlign: 'left',
+                      boxShadow: isSelected ? '0 2px 8px var(--accent-soft)' : 'none',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       {React.cloneElement(opt.icon, {
-                        style: { color: isSelected ? 'var(--text)' : 'var(--text-3)', ...opt.icon.props.style }
+                        style: { color: isSelected ? 'var(--accent-contrast)' : opt.icon.props.style?.color || 'var(--text-3)' }
                       })}
                       <span>{opt.label}</span>
                     </div>
-                    {isSelected && <Check size={14} style={{ color: 'var(--text)' }} />}
+                    {isSelected && <Check size={14} style={{ color: 'var(--accent-contrast)', flexShrink: 0 }} />}
                   </button>
                 );
               })}
@@ -582,10 +446,10 @@ export const ContactFilterBar: React.FC<Props> = ({
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: 6,
+                gap: 4,
                 backgroundColor: 'var(--surface2)',
-                padding: 4,
-                borderRadius: '12px',
+                padding: 3,
+                borderRadius: 12,
                 border: '1px solid var(--border)',
               }}
             >
@@ -605,20 +469,21 @@ export const ContactFilterBar: React.FC<Props> = ({
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: 6,
-                      padding: '8px 6px',
-                      borderRadius: '8px',
-                      border: isSelected ? '1px solid var(--border)' : '1px solid transparent',
-                      backgroundColor: isSelected ? 'var(--surface)' : 'transparent',
-                      color: isSelected ? 'var(--text)' : 'var(--text-2)',
+                      padding: '8px 4px',
+                      borderRadius: 9,
+                      border: isSelected ? '1px solid var(--accent)' : '1px solid transparent',
+                      backgroundColor: isSelected ? 'var(--accent)' : 'transparent',
+                      color: isSelected ? 'var(--accent-contrast)' : 'var(--text-2)',
                       fontSize: '12px',
-                      fontWeight: isSelected ? 650 : 500,
+                      fontWeight: isSelected ? 700 : 500,
                       cursor: 'pointer',
-                      boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.12)' : 'none',
+                      boxShadow: isSelected ? '0 2px 8px var(--accent-soft)' : 'none',
                       transition: 'all 0.15s ease',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {React.cloneElement(opt.icon, {
-                      style: { color: isSelected ? 'var(--text)' : 'var(--text-3)' }
+                      style: { color: isSelected ? 'var(--accent-contrast)' : 'var(--text-3)' }
                     })}
                     <span>{opt.label}</span>
                   </button>
@@ -628,34 +493,67 @@ export const ContactFilterBar: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Drawer Sticky Footer */}
+        {/* Drawer Sticky Footer: 2 Action Buttons (Clear & Filter) */}
         <div
           style={{
-            padding: '10px 18px 14px',
+            padding: '12px 18px 16px',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
+            gap: 12,
             backgroundColor: 'var(--surface)',
             flexShrink: 0,
-            paddingBottom: isMobile ? 'calc(env(safe-area-inset-bottom, 0px) + 14px)' : '14px',
+            paddingBottom: isMobile ? 'calc(env(safe-area-inset-bottom, 0px) + 16px)' : '16px',
           }}
         >
-          <div style={{ fontSize: '12px', color: 'var(--text-3)' }}>
-            <strong style={{ color: 'var(--text-1)', fontWeight: 650 }}>{filteredCount}</strong> contact{filteredCount === 1 ? '' : 's'}
-          </div>
+          <button
+            type="button"
+            onClick={onClearAll}
+            disabled={activeFilterCount === 0}
+            style={{
+              flex: 1,
+              height: 44,
+              borderRadius: 9999,
+              fontSize: '13.5px',
+              fontWeight: 650,
+              backgroundColor: 'var(--surface2)',
+              border: '1px solid var(--border)',
+              color: activeFilterCount > 0 ? 'var(--text)' : 'var(--text-3)',
+              cursor: activeFilterCount > 0 ? 'pointer' : 'default',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              opacity: activeFilterCount > 0 ? 1 : 0.5,
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <RotateCcw size={14} />
+            <span>Clear</span>
+          </button>
 
           <button
             type="button"
-            className="btn btn-primary"
             onClick={() => setShowFilters(false)}
             style={{
-              padding: '8px 24px',
-              fontSize: '13px',
-              fontWeight: 650,
-              borderRadius: '20px',
+              flex: 1.6,
+              height: 44,
+              borderRadius: 9999,
+              fontSize: '13.5px',
+              fontWeight: 700,
+              backgroundColor: 'var(--accent)',
+              color: 'var(--accent-contrast)',
+              border: 'none',
+              boxShadow: '0 3px 12px var(--accent-soft)',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              transition: 'all 0.15s ease',
             }}
           >
-            Apply Filters
+            <span>Apply</span>
+            <span style={{ fontSize: '12px', opacity: 0.85, fontWeight: 600 }}>({filteredCount})</span>
           </button>
         </div>
       </div>
