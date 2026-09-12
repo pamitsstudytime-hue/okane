@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
-import { X, Calendar, ReceiptText, Feather, Wallet, Check, RotateCcw, Pencil } from 'lucide-react';
+import { X, Calendar, ReceiptText, Feather, Wallet, Check, RotateCcw, Pencil, ChevronDown } from 'lucide-react';
 import { useStore } from '../store';
 import type { Friend } from '../types';
 import { expenseFlow, unsettledExpensesForFriend, todayISO } from '../db';
@@ -175,30 +175,43 @@ export default function SettleModal({ friend, onClose }: Props) {
 
         {/* Themed Modal Header */}
         <div className="modal-header" style={{ padding: '0 20px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div
+              className="avatar"
               style={{
-                width: 36,
-                height: 36,
-                borderRadius: 10,
-                background: 'transparent',
+                ...getAvatarStyle(friend.color),
+                width: 44,
+                height: 44,
+                borderRadius: 14,
+                fontSize: 16,
+                fontWeight: 800,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'var(--text)',
                 flexShrink: 0,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.14)',
               }}
             >
-              <div className="avatar" style={{ ...getAvatarStyle(friend.color), width: 34, height: 34, borderRadius: 10 }}>
-                {friendInitial(friend.name, friend.avatarNumber)}
-              </div>
+              {friendInitial(friend.name, friend.avatarNumber)}
             </div>
             <div>
-              <span className="modal-title" style={{ fontSize: 16, fontWeight: 700 }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.3px', lineHeight: 1.2 }}>
                 Settle with {friend.name}
-              </span>
-              <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 1 }}>
-                {unsettled.length} unsettled transaction{unsettled.length !== 1 ? 's' : ''}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 3 }}>
+                <span
+                  style={{
+                    width: 5,
+                    height: 5,
+                    borderRadius: '50%',
+                    background: 'var(--text-3)',
+                    display: 'inline-block',
+                    flexShrink: 0,
+                  }}
+                />
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)' }}>
+                  {unsettled.length} unsettled transaction{unsettled.length !== 1 ? 's' : ''}
+                </span>
               </div>
             </div>
           </div>
@@ -216,8 +229,8 @@ export default function SettleModal({ friend, onClose }: Props) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: note ? 'var(--text)' : 'var(--text-3)',
-                background: note ? 'var(--surface2)' : 'transparent',
-                border: note ? '1px solid var(--border)' : 'none',
+                background: note ? 'var(--surface2)' : 'var(--surface2)',
+                border: '1px solid var(--border)',
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
               }}
@@ -239,6 +252,9 @@ export default function SettleModal({ friend, onClose }: Props) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
+                background: 'var(--surface2)',
+                border: '1px solid var(--border)',
+                color: 'var(--text-2)',
               }}
             >
               <X size={18} />
@@ -259,10 +275,10 @@ export default function SettleModal({ friend, onClose }: Props) {
                 <div
                   onClick={() => setIsPickerOpen(true)}
                   style={{
-                    padding: '10px 14px',
+                    padding: '12px 16px',
                     background: 'var(--surface2)',
                     border: '1px solid var(--border)',
-                    borderRadius: 12,
+                    borderRadius: 16,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -276,7 +292,7 @@ export default function SettleModal({ friend, onClose }: Props) {
                       style={{
                         width: 32,
                         height: 32,
-                        borderRadius: 8,
+                        borderRadius: 10,
                         background: 'transparent',
                         color: 'var(--text)',
                         display: 'grid',
@@ -351,8 +367,8 @@ export default function SettleModal({ friend, onClose }: Props) {
               </div>
 
               {/* Settle Amount Mode Segment Toggle */}
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 10.5, fontWeight: 750, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 5 }}>
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 10.5, fontWeight: 750, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 6 }}>
                   Settle Mode
                 </div>
                 <div
@@ -360,9 +376,9 @@ export default function SettleModal({ friend, onClose }: Props) {
                     display: 'flex',
                     background: 'var(--surface2)',
                     border: '1px solid var(--border)',
-                    borderRadius: 12,
-                    padding: 3,
-                    gap: 3,
+                    borderRadius: 16,
+                    padding: 4,
+                    gap: 4,
                   }}
                 >
                   <button
@@ -371,9 +387,9 @@ export default function SettleModal({ friend, onClose }: Props) {
                       flex: 1,
                       textAlign: 'center',
                       padding: '8px 12px',
-                      fontSize: 12.5,
+                      fontSize: 13,
                       fontWeight: !isCustomMode ? 700 : 550,
-                      borderRadius: 9,
+                      borderRadius: 12,
                       border: !isCustomMode ? '1px solid var(--text)' : '1px solid transparent',
                       background: !isCustomMode ? 'var(--text)' : 'transparent',
                       color: !isCustomMode ? 'var(--bg)' : 'var(--text-3)',
@@ -395,7 +411,7 @@ export default function SettleModal({ friend, onClose }: Props) {
                     <span>Full</span>
                     <span
                       style={{
-                        fontSize: 12,
+                        fontSize: 12.5,
                         fontWeight: !isCustomMode ? 750 : 550,
                         opacity: !isCustomMode ? 0.95 : 0.65,
                         letterSpacing: '0.15px',
@@ -410,9 +426,9 @@ export default function SettleModal({ friend, onClose }: Props) {
                       flex: 1,
                       textAlign: 'center',
                       padding: '8px 12px',
-                      fontSize: 12.5,
+                      fontSize: 13,
                       fontWeight: isCustomMode ? 700 : 550,
-                      borderRadius: 9,
+                      borderRadius: 12,
                       border: isCustomMode ? '1px solid var(--text)' : '1px solid transparent',
                       background: isCustomMode ? 'var(--text)' : 'transparent',
                       color: isCustomMode ? 'var(--bg)' : 'var(--text-3)',
@@ -437,7 +453,7 @@ export default function SettleModal({ friend, onClose }: Props) {
 
               {/* Styled Custom Amount Input Field */}
               {isCustomMode && (
-                <div style={{ marginBottom: 12 }}>
+                <div style={{ marginBottom: 14 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                     <label style={{ fontSize: 10.5, fontWeight: 750, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
                       Custom Amount
@@ -453,9 +469,9 @@ export default function SettleModal({ friend, onClose }: Props) {
                       alignItems: 'center',
                       background: 'var(--surface2)',
                       border: '1px solid var(--border)',
-                      borderRadius: 12,
-                      padding: '0 12px',
-                      height: 42,
+                      borderRadius: 14,
+                      padding: '0 14px',
+                      height: 44,
                       transition: 'all 0.15s ease',
                       gap: 8,
                     }}
@@ -525,26 +541,26 @@ export default function SettleModal({ friend, onClose }: Props) {
               <div
                 style={{
                   background: 'var(--surface2)',
-                  borderRadius: 12,
-                  padding: '10px 14px',
+                  borderRadius: 18,
+                  padding: '14px 16px',
                   marginBottom: 14,
                   border: '1px solid var(--border)',
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
-                  <span style={{ color: 'var(--text-3)', fontWeight: 550, fontSize: 11.5 }}>Total Debt Selected</span>
-                  <span style={{ fontWeight: 700, color: 'var(--text-2)', fontSize: 12.5, letterSpacing: '0.2px' }}>{fmtMoney(absNet, currency)}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <span style={{ color: 'var(--text-3)', fontWeight: 550, fontSize: 12 }}>Total Debt Selected</span>
+                  <span style={{ fontWeight: 700, color: 'var(--text-2)', fontSize: 13, letterSpacing: '0.2px' }}>{fmtMoney(absNet, currency)}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: remainingBalance > 0 ? 5 : 0 }}>
-                  <span style={{ color: 'var(--text)', fontWeight: 700, fontSize: 13 }}>Amount Settling Now</span>
-                  <span style={{ fontWeight: 800, color: net >= 0 ? 'var(--credit)' : 'var(--debit)', fontSize: 14.5, letterSpacing: '0.2px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: remainingBalance > 0 ? 6 : 0 }}>
+                  <span style={{ color: 'var(--text)', fontWeight: 700, fontSize: 13.5 }}>Amount Settling Now</span>
+                  <span style={{ fontWeight: 800, color: net >= 0 ? 'var(--credit)' : 'var(--debit)', fontSize: 15, letterSpacing: '0.2px' }}>
                     {net >= 0 ? '+' : '-'}{fmtMoney(effectiveSettleAmt, currency)}
                   </span>
                 </div>
                 {isCustomMode && remainingBalance > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: 5, marginTop: 5 }}>
-                    <span style={{ color: 'var(--text-3)', fontWeight: 500, fontSize: 11.5 }}>Remaining Balance</span>
-                    <span style={{ fontWeight: 700, color: 'var(--text)', fontSize: 12.5, letterSpacing: '0.2px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: 6, marginTop: 6 }}>
+                    <span style={{ color: 'var(--text-3)', fontWeight: 500, fontSize: 12 }}>Remaining Balance</span>
+                    <span style={{ fontWeight: 700, color: 'var(--text)', fontSize: 13, letterSpacing: '0.2px' }}>
                       {fmtMoney(remainingBalance, currency)}
                     </span>
                   </div>
@@ -566,13 +582,13 @@ export default function SettleModal({ friend, onClose }: Props) {
                     style={{
                       width: '100%',
                       fontWeight: 600,
-                      height: 40,
+                      height: 42,
                       fontSize: 12.5,
-                      borderRadius: 'var(--radius)',
+                      borderRadius: 14,
                       border: '1px solid var(--border)',
                       background: 'var(--surface2)',
                       color: 'var(--text)',
-                      padding: '0 10px',
+                      padding: '0 12px',
                       outline: 'none',
                       boxSizing: 'border-box',
                     }}
@@ -585,7 +601,7 @@ export default function SettleModal({ friend, onClose }: Props) {
                     <Wallet size={13} style={{ color: 'var(--accent)' }} />
                     <span>Payment Method</span>
                   </label>
-                  <div>
+                  <div style={{ position: 'relative' }}>
                     <select
                       value={selectedWalletId}
                       onChange={e => {
@@ -598,16 +614,20 @@ export default function SettleModal({ friend, onClose }: Props) {
                       }}
                       style={{
                         width: '100%',
-                        height: 40,
+                        height: 42,
                         fontSize: 12.5,
                         fontWeight: 600,
-                        borderRadius: 'var(--radius)',
+                        borderRadius: 14,
                         border: '1px solid var(--border)',
                         background: 'var(--surface2)',
                         color: 'var(--text)',
-                        padding: '0 12px',
+                        padding: '0 32px 0 12px',
                         outline: 'none',
                         boxSizing: 'border-box',
+                        appearance: 'none',
+                        WebkitAppearance: 'none',
+                        MozAppearance: 'none',
+                        cursor: 'pointer',
                       }}
                     >
                       {wallets.map(w => (
@@ -616,6 +636,17 @@ export default function SettleModal({ friend, onClose }: Props) {
                         </option>
                       ))}
                     </select>
+                    <ChevronDown
+                      size={15}
+                      style={{
+                        position: 'absolute',
+                        right: 12,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        pointerEvents: 'none',
+                        color: 'var(--text-2)',
+                      }}
+                    />
                   </div>
                 </div>
               </div>
@@ -642,9 +673,9 @@ export default function SettleModal({ friend, onClose }: Props) {
               onClick={onClose}
               style={{
                 flex: 1,
-                height: 40,
+                height: 44,
                 borderRadius: 9999,
-                fontSize: 13,
+                fontSize: 13.5,
                 fontWeight: 650,
                 border: '1px solid var(--border)',
                 background: 'var(--surface2)',
@@ -669,9 +700,9 @@ export default function SettleModal({ friend, onClose }: Props) {
                 onClick={handleClearToDefault}
                 style={{
                   flex: 1,
-                  height: 40,
+                  height: 44,
                   borderRadius: 9999,
-                  fontSize: 13,
+                  fontSize: 13.5,
                   fontWeight: 650,
                   border: '1px solid var(--border)',
                   background: 'var(--surface2)',
@@ -696,9 +727,9 @@ export default function SettleModal({ friend, onClose }: Props) {
                 onClick={handleSettle}
                 style={{
                   flex: 1.35,
-                  height: 40,
+                  height: 44,
                   borderRadius: 9999,
-                  fontSize: 13,
+                  fontSize: 13.5,
                   fontWeight: 700,
                   background: 'var(--text)',
                   border: '1px solid var(--text)',
@@ -714,8 +745,8 @@ export default function SettleModal({ friend, onClose }: Props) {
                   transition: 'all 0.15s ease',
                 }}
               >
-                <Check size={15} style={{ color: 'inherit' }} />
-                <span>Settle ({fmtMoney(effectiveSettleAmt, currency)})</span>
+                <Check size={16} style={{ color: 'inherit' }} />
+                <span>Settle {fmtMoney(effectiveSettleAmt, currency)}</span>
               </button>
             </>
           )}

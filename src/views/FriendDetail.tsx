@@ -295,14 +295,26 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
                     {contactType}
                   </span>
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 3, fontWeight: 500 }}>
-                  {contactType === 'friend'
-                    ? `${allExps.length} transaction${allExps.length !== 1 ? 's' : ''}`
-                    : contactType === 'vendor'
-                    ? `${allExps.length} order${allExps.length !== 1 ? 's' : ''}`
-                    : friend.billingCycle
-                    ? `${formatBillingCycleShort(friend.billingCycle)} renewal`
-                    : `${allExps.length} payments`}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 3 }}>
+                  <span
+                    style={{
+                      width: 5,
+                      height: 5,
+                      borderRadius: '50%',
+                      background: 'var(--text-3)',
+                      display: 'inline-block',
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-2)' }}>
+                    {contactType === 'friend'
+                      ? `${allExps.length} transaction${allExps.length !== 1 ? 's' : ''}`
+                      : contactType === 'vendor'
+                      ? `${allExps.length} order${allExps.length !== 1 ? 's' : ''}`
+                      : friend.billingCycle
+                      ? `${formatBillingCycleShort(friend.billingCycle)} renewal`
+                      : `${allExps.length} payments`}
+                  </span>
                 </div>
               </div>
             </div>

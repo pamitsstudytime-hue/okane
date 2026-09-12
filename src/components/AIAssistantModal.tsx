@@ -2118,8 +2118,8 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
                   </Box>
                 )}
               >
-                {categories.map((cat) => (
-                  <MenuItem key={cat} value={cat}>
+                {categories.map((cat, idx) => (
+                  <MenuItem key={`${cat}-${idx}`} value={cat}>
                     <CategoryBadge category={cat} size={14} showLabel={true} />
                   </MenuItem>
                 ))}
@@ -2133,8 +2133,8 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
                 label="Wallet / Account"
                 onChange={(e) => setActiveDraft({ ...activeDraft, walletName: e.target.value })}
               >
-                {wallets.map((w) => (
-                  <MenuItem key={w.id} value={w.name}>
+                {wallets.map((w, idx) => (
+                  <MenuItem key={`${w.id}-${idx}`} value={w.name}>
                     {w.name}
                   </MenuItem>
                 ))}

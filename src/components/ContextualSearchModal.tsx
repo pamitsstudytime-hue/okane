@@ -689,7 +689,7 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                     {!q && <span style={{ fontSize: '10.5px', fontWeight: 600, letterSpacing: '0.5px', opacity: 0.9 }}>Recent</span>}
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {matchingExpenses.map(ge => {
+                    {matchingExpenses.map((ge, idx) => {
                       const isTransfer = ge.category === 'Transfer' || ge.items.some(i => i.category === 'Transfer');
                       const isIn = (ge.flow === 'in' && !isTransfer) || (ge.isSettlementGroup && ge.flow === 'in');
                       const rawFriends = ge.friendIds.map(fid => friendsMap.get(fid)).filter(Boolean) as typeof friends;
@@ -701,7 +701,7 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
 
                       return (
                         <div
-                          key={ge.id}
+                          key={`${ge.id}-${idx}`}
                           onClick={() => setSelectedDetailGe(ge)}
                           role="button"
                           tabIndex={0}

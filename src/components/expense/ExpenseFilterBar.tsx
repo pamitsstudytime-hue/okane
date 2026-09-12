@@ -401,11 +401,11 @@ export const ExpenseFilterBar: React.FC<Props> = ({
                 <span>All Categories</span>
               </button>
 
-              {categories.map(c => {
+              {categories.map((c, idx) => {
                 const isSelected = catFilter === c.name;
                 return (
                   <button
-                    key={c.name}
+                    key={`${c.name}-${idx}`}
                     type="button"
                     onClick={() => setCatFilter(isSelected ? '' : c.name)}
                     style={{

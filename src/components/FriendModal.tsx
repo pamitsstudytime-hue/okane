@@ -20,7 +20,7 @@ import { useStore } from '../store';
 import type { Friend, ContactType } from '../types';
 import { FRIEND_PALETTE } from '../db';
 import { getAvatarStyle } from '../utils';
-import { POPULAR_SUBSCRIPTIONS, renderBrandLogo, detectBrandPreset } from './BrandIcons';
+import { POPULAR_SUBSCRIPTIONS, detectBrandPreset } from './BrandIcons';
 import { NoteEditorModal } from './common/NoteEditorModal';
 import { showSoftKeyboard } from '../utils/keyboard';
 
@@ -67,19 +67,18 @@ const BILLING_CYCLE_CHOICES: CycleChoice[] = [
   },
 ];
 
-const getCycleDisplayInfo = (cycle: string, amountStr?: string, currency = '₹') => {
-  const amount = parseFloat(amountStr || '0') || 0;
+const getCycleDisplayInfo = (cycle: string) => {
   if (cycle === 'monthly') {
     return {
       title: 'Monthly Billing',
-      sub: amount > 0 ? `Renews every month • ≈ ${currency} ${(amount * 12).toLocaleString()}/yr` : 'Renews every month (30 days)',
+      sub: '',
       badge: 'Monthly',
     };
   }
   if (cycle === 'yearly') {
     return {
-      title: 'Yearly / Annual Billing',
-      sub: amount > 0 ? `Renews annually • ≈ ${currency} ${(amount / 12).toFixed(1)}/mo` : 'Billed once a year (12 months)',
+      title: 'Yearly Billing',
+      sub: '',
       badge: 'Yearly',
     };
   }
@@ -88,7 +87,7 @@ const getCycleDisplayInfo = (cycle: string, amountStr?: string, currency = '₹'
   const months = match ? parseInt(match[1]) : 3;
   return {
     title: `Every ${months} Month${months > 1 ? 's' : ''}`,
-    sub: amount > 0 ? `Renews every ${months} mo • ≈ ${currency} ${(amount / months).toFixed(1)}/mo` : `Custom cycle: billed every ${months} months`,
+    sub: '',
     badge: `${months} Months`,
   };
 };
@@ -440,14 +439,18 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
                     <span style={{ fontSize: 10.5, color: 'var(--text-3)' }}>Tap to fill</span>
                   </div>
                   <div
+                    className="no-scrollbar"
                     style={{
                       display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: 6,
+                      flexWrap: 'nowrap',
+                      overflowX: 'auto',
+                      gap: 8,
                       width: '100%',
+                      paddingBottom: 4,
+                      scrollbarWidth: 'none',
                     }}
                   >
-                    {POPULAR_SUBSCRIPTIONS.slice(0, 4).map(sub => {
+                    {POPULAR_SUBSCRIPTIONS.map(sub => {
                       const isSelected = name.toLowerCase() === sub.name.toLowerCase();
                       return (
                         <button
@@ -455,15 +458,16 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
                           type="button"
                           onClick={() => applyPreset(sub)}
                           style={{
-                            padding: '5px 12px',
+                            flexShrink: 0,
+                            padding: '7px 16px',
                             borderRadius: 9999,
-                            border: `1px solid ${isSelected ? 'var(--border2)' : 'var(--border)'}`,
-                            background: isSelected ? 'var(--surface)' : 'var(--surface2)',
-                            color: isSelected ? 'var(--text)' : 'var(--text-2)',
-                            fontSize: 12,
-                            fontWeight: isSelected ? 650 : 500,
+                            border: isSelected ? '1px solid var(--text)' : '1px solid var(--border)',
+                            background: isSelected ? 'var(--text)' : 'var(--surface2)',
+                            color: isSelected ? 'var(--bg)' : 'var(--text-2)',
+                            fontSize: 13,
+                            fontWeight: isSelected ? 700 : 550,
                             cursor: 'pointer',
-                            boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+                            boxShadow: isSelected ? '0 2px 8px rgba(0, 0, 0, 0.25)' : 'none',
                             transition: 'all 0.15s ease',
                           }}
                         >
@@ -571,7 +575,7 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
                           textAlign: 'left',
                         }}
                       >
-                        Cost ({db.settings.currency})
+                        Cost
                       </label>
                       <input
                         className="form-input"
@@ -605,13 +609,13 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
                       style={{
                         background: 'var(--surface2)',
                         border: '1px solid var(--border)',
-                        borderRadius: 12,
-                        padding: '10px 14px',
+                        borderRadius: 16,
+                        padding: '12px 16px',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        gap: 10,
+                        gap: 12,
                         transition: 'all 0.15s ease',
                       }}
                       onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--accent-border-soft, var(--accent))')}
@@ -622,25 +626,25 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
                           style={{
                             width: 32,
                             height: 32,
-                            borderRadius: '50%',
-                            background: 'var(--accent-soft)',
-                            color: 'var(--accent)',
+                            borderRadius: 8,
+                            background: 'transparent',
+                            color: 'var(--text-2)',
                             display: 'grid',
                             placeItems: 'center',
-                            fontWeight: 700,
-                            fontSize: 13,
                             flexShrink: 0,
                           }}
                         >
-                          <Repeat size={16} />
+                          <Repeat size={18} />
                         </div>
                         <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: 12.5, fontWeight: 650, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {getCycleDisplayInfo(billingCycle, defaultAmount, db.settings.currency).title}
+                          <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {getCycleDisplayInfo(billingCycle).title}
                           </div>
-                          <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {getCycleDisplayInfo(billingCycle, defaultAmount, db.settings.currency).sub}
-                          </div>
+                          {getCycleDisplayInfo(billingCycle).sub ? (
+                            <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {getCycleDisplayInfo(billingCycle).sub}
+                            </div>
+                          ) : null}
                         </div>
                       </div>
 
@@ -648,20 +652,20 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
                         style={{
                           background: 'var(--text)',
                           color: 'var(--bg)',
-                          border: 'none',
-                          padding: '4px 10px',
+                          border: '1px solid var(--text)',
+                          padding: '6px 14px',
                           borderRadius: 9999,
-                          fontSize: 11,
+                          fontSize: 12,
                           fontWeight: 700,
                           whiteSpace: 'nowrap',
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: 3,
                           flexShrink: 0,
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
                         }}
                       >
-                        <span>{getCycleDisplayInfo(billingCycle, defaultAmount, db.settings.currency).badge}</span>
+                        <span>{getCycleDisplayInfo(billingCycle).badge}</span>
                       </div>
                     </div>
                   </div>
@@ -707,8 +711,9 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
               ) : null}
 
               {/* Minimized Avatar Theme Color Row */}
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
+              {type !== 'subscription' && (
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
                   <label
                     style={{
                       fontSize: 11,
@@ -791,12 +796,8 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
                       boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
                     }}
                   >
-                    {type === 'subscription' && renderBrandLogo(name, 14)
-                      ? renderBrandLogo(name, 14)
-                      : type === 'vendor'
+                    {type === 'vendor'
                       ? <Store size={13} />
-                      : type === 'subscription'
-                      ? <Tv size={13} />
                       : (avatarNumber.trim() || (name ? name.slice(0, 1).toUpperCase() : <User size={13} />))}
                   </div>
 
@@ -1008,6 +1009,7 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
                   </div>
                 )}
               </div>
+              )}
 
               {error && <p className="form-error" style={{ margin: '2px 0 0' }}>{error}</p>}
 

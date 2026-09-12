@@ -265,7 +265,7 @@ export default function SettleExpensePickerModal({
         {/* Modal Header */}
         <div
           style={{
-            padding: '12px 20px 6px',
+            padding: '12px 20px 8px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -278,21 +278,22 @@ export default function SettleExpensePickerModal({
               className="avatar"
               style={{
                 ...getAvatarStyle(friend.color),
-                width: 38,
-                height: 38,
-                borderRadius: 11,
-                fontSize: 13.5,
-                fontWeight: 700,
+                width: 44,
+                height: 44,
+                borderRadius: 14,
+                fontSize: 16,
+                fontWeight: 800,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.14)',
               }}
             >
-              {isVendor ? <Store size={18} /> : friendInitial(friend.name, friend.avatarNumber)}
+              {isVendor ? <Store size={20} /> : friendInitial(friend.name, friend.avatarNumber)}
             </div>
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.25 }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.2, letterSpacing: '-0.3px' }}>
                 {title}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
@@ -348,11 +349,11 @@ export default function SettleExpensePickerModal({
               alignItems: 'center',
               position: 'relative',
               background: isSearchFocused ? 'var(--surface)' : 'var(--surface2)',
-              border: isSearchFocused ? '1px solid var(--text-3)' : '1px solid var(--border)',
+              border: isSearchFocused ? '1px solid var(--border2)' : '1px solid var(--border)',
               borderRadius: 9999,
               padding: '0 13px',
               height: 38,
-              boxShadow: isSearchFocused ? '0 0 0 3px rgba(255, 255, 255, 0.04)' : 'none',
+              boxShadow: 'none',
               transition: 'all 0.15s ease',
             }}
           >
@@ -557,7 +558,7 @@ export default function SettleExpensePickerModal({
               </div>
             </div>
           ) : (
-            filteredExpenses.map(e => {
+            filteredExpenses.map((e, idx) => {
               const cat = db.settings.categories?.find(c => c.name === e.category);
               const catMeta = resolveCategoryMeta(e.category, cat);
               const isToMe = isOwedToMe(e);
@@ -569,27 +570,27 @@ export default function SettleExpensePickerModal({
 
               return (
                 <div
-                  key={e.id}
+                  key={`${e.id}-${idx}`}
                   onClick={() => onToggle(e.id)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: 12,
-                    padding: '11px 14px',
+                    padding: '12px 14px',
                     background: 'var(--surface2)',
                     border: '1px solid var(--border)',
                     boxShadow: 'none',
-                    borderRadius: 12,
+                    borderRadius: 16,
                     cursor: 'pointer',
                     userSelect: 'none',
-                    transition: 'background 0.12s ease',
+                    transition: 'all 0.12s ease',
                   }}
                 >
                   {/* Custom Checkbox */}
                   <div
                     style={{
-                      width: 19,
-                      height: 19,
+                      width: 20,
+                      height: 20,
                       borderRadius: 6,
                       border: isSelected ? 'none' : '1.5px solid var(--border2, var(--text-3))',
                       background: isSelected ? 'var(--text)' : 'transparent',
@@ -606,9 +607,9 @@ export default function SettleExpensePickerModal({
                   {/* Category Icon Container (like image 3) */}
                   <div
                     style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 10,
+                      width: 38,
+                      height: 38,
+                      borderRadius: 12,
                       backgroundColor: catMeta.bg,
                       display: 'grid',
                       placeItems: 'center',
@@ -628,8 +629,8 @@ export default function SettleExpensePickerModal({
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                       <span
                         style={{
-                          fontSize: 13.5,
-                          fontWeight: 650,
+                          fontSize: 14,
+                          fontWeight: 700,
                           color: 'var(--text)',
                           lineHeight: 1.3,
                         }}
@@ -677,7 +678,7 @@ export default function SettleExpensePickerModal({
                       ) : null}
                     </div>
 
-                    <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2.5, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2.5, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                       <span>{fmtDate(e.originalDate || e.date)}</span>
                       {e.category ? (
                         <>
@@ -699,7 +700,7 @@ export default function SettleExpensePickerModal({
                     <div
                       style={{
                         fontWeight: 750,
-                        fontSize: 13.5,
+                        fontSize: 14,
                         letterSpacing: '0.2px',
                         color: isToMe ? 'var(--credit)' : 'var(--debit)',
                       }}
@@ -735,17 +736,17 @@ export default function SettleExpensePickerModal({
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              padding: '10px 14px',
+              padding: '12px 16px',
               background: 'var(--surface2)',
-              borderRadius: 12,
+              borderRadius: 18,
               border: '1px solid var(--border)',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div
                 style={{
-                  width: 20,
-                  height: 20,
+                  width: 22,
+                  height: 22,
                   borderRadius: '50%',
                   background: selectedSet.size > 0 ? 'rgba(34, 197, 94, 0.16)' : 'var(--surface3)',
                   color: selectedSet.size > 0 ? 'var(--credit)' : 'var(--text-3)',
@@ -755,7 +756,7 @@ export default function SettleExpensePickerModal({
                   flexShrink: 0,
                 }}
               >
-                <Check size={12} strokeWidth={2.8} />
+                <Check size={13} strokeWidth={2.8} />
               </div>
               <span style={{ fontSize: 13, color: 'var(--text-2)' }}>
                 <strong style={{ color: 'var(--text)', fontWeight: 700 }}>{selectedSet.size}</strong> of {expenses.length} selected
@@ -763,19 +764,19 @@ export default function SettleExpensePickerModal({
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-3)', letterSpacing: '0.2px' }}>
+              <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-3)', letterSpacing: '0.2px' }}>
                 Net Total:
               </span>
               <span
                 style={{
                   fontWeight: 750,
-                  fontSize: 13.5,
+                  fontSize: 14,
                   letterSpacing: '0.2px',
                   color: netTotal >= 0 ? 'var(--credit)' : 'var(--debit)',
                   background: netTotal >= 0 ? 'rgba(34, 197, 94, 0.14)' : 'rgba(239, 68, 68, 0.14)',
                   border: netTotal >= 0 ? '1px solid rgba(34, 197, 94, 0.28)' : '1px solid rgba(239, 68, 68, 0.28)',
-                  padding: '2.5px 8px',
-                  borderRadius: 7,
+                  padding: '3px 9px',
+                  borderRadius: 8,
                   display: 'inline-flex',
                   alignItems: 'center',
                 }}
@@ -792,9 +793,9 @@ export default function SettleExpensePickerModal({
               disabled={selectedSet.size === 0}
               style={{
                 flex: 1,
-                height: 42,
+                height: 44,
                 borderRadius: 9999,
-                fontSize: 13,
+                fontSize: 13.5,
                 fontWeight: 650,
                 border: '1px solid var(--border)',
                 background: 'var(--surface2)',
@@ -828,7 +829,7 @@ export default function SettleExpensePickerModal({
               onClick={onClose}
               style={{
                 flex: 1.2,
-                height: 42,
+                height: 44,
                 borderRadius: 9999,
                 fontSize: 13.5,
                 fontWeight: 700,
