@@ -60,7 +60,7 @@ import UserGuideModal from './components/UserGuideModal';
 import Toast from './components/Toast';
 import NotificationBell from './components/NotificationBell';
 import FloatingSearchButton from './components/FloatingSearchButton';
-import ContextualSearchModal from './components/ContextualSearchModal';
+import ContextualSearchModal, { type SearchTab } from './components/ContextualSearchModal';
 import SecurityLockModal from './components/SecurityLockModal';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
@@ -80,11 +80,28 @@ function AppInner() {
   const [addExpenseInitialData, setAddExpenseInitialData] = useState<ExpenseInitialData | null>(null);
   const [showAIAssistant, setShowAIAssistant] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
+  const [searchInitialQuery, setSearchInitialQuery] = useState('');
+  const [searchInitialTab, setSearchInitialTab] = useState<SearchTab | undefined>(undefined);
   const [showGuideModal, setShowGuideModal] = useState(false);
   const [isExpenseTutorial, setIsExpenseTutorial] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [settingsSearchQuery, setSettingsSearchQuery] = useState('');
   const [mobileSettingsSearchOpen, setMobileSettingsSearchOpen] = useState(false);
+
+  useEffect(() => {
+    const handleOpenSearch = (e: Event) => {
+      const ce = e as CustomEvent<{ query?: string; tab?: SearchTab }>;
+      if (ce.detail?.query !== undefined) {
+        setSearchInitialQuery(ce.detail.query);
+      }
+      if (ce.detail?.tab !== undefined) {
+        setSearchInitialTab(ce.detail.tab);
+      }
+      setShowSearchModal(true);
+    };
+    window.addEventListener('app-open-search', handleOpenSearch);
+    return () => window.removeEventListener('app-open-search', handleOpenSearch);
+  }, []);
 
   const handleGoBack = useCallback(() => {
     if (viewHistory.length > 0) {
@@ -767,16 +784,16 @@ function AppInner() {
             color: 'text.primary',
             boxShadow: 'none',
             transition: 'background-color 0.2s ease',
-            pt: 'calc(6px + env(safe-area-inset-top, 0px))',
-            pb: 0.5,
+            pt: 'env(safe-area-inset-top, 0px)',
+            pb: 0,
           }}
         >
           <Toolbar
             variant="dense"
             sx={{
-              minHeight: { xs: '52px !important', sm: '58px !important' },
-              height: { xs: 52, sm: 58 },
-              px: { xs: 2.25, sm: 2.75 },
+              minHeight: { xs: '48px !important', sm: '52px !important' },
+              height: { xs: 48, sm: 52 },
+              px: { xs: 2, sm: 2.5 },
               gap: 1.25,
               justifyContent: 'space-between',
             }}
@@ -833,68 +850,7 @@ function AppInner() {
               </Box>
             </Box>
 
-            {/* Desktop Header Search Bar */}
-            {!isMobile && (
-              <Box
-                component="button"
-                type="button"
-                onClick={() => setShowSearchModal(true)}
-                id="desktop-header-search-bar"
-                sx={{
-                  display: { xs: 'none', md: 'flex' },
-                  alignItems: 'center',
-                  gap: 1.25,
-                  height: 38,
-                  width: { md: 280, lg: 380 },
-                  maxWidth: '100%',
-                  px: 1.8,
-                  borderRadius: '9999px',
-                  bgcolor: mode === 'dark' ? '#141519' : 'var(--surface2)',
-                  border: mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid var(--border)',
-                  color: 'var(--text-3)',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'all 0.18s ease',
-                  ml: { md: 2.5, lg: 3.5 },
-                  mr: 'auto',
-                  '&:hover': {
-                    bgcolor: mode === 'dark' ? '#191b22' : 'var(--surface3)',
-                    borderColor: mode === 'dark' ? 'rgba(255, 255, 255, 0.16)' : 'var(--border2)',
-                    color: 'var(--text-2)',
-                  },
-                }}
-              >
-                <Search size={15} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
-                <Typography
-                  sx={{
-                    fontSize: '0.84rem',
-                    color: 'var(--text-3)',
-                    flex: 1,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    fontWeight: 450,
-                  }}
-                >
-                  Search expenses, contacts, wallets...
-                </Typography>
-                <Box
-                  sx={{
-                    fontSize: '0.7rem',
-                    fontWeight: 600,
-                    px: 0.8,
-                    py: 0.2,
-                    borderRadius: '6px',
-                    bgcolor: mode === 'dark' ? '#21232c' : 'var(--border)',
-                    color: 'var(--text-3)',
-                    lineHeight: 1.2,
-                    flexShrink: 0,
-                  }}
-                >
-                  Ctrl K
-                </Box>
-              </Box>
-            )}
+
 
             {/* Right side controls */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6, flexShrink: 0 }}>
@@ -1687,9 +1643,15 @@ function AppInner() {
       {/* Contextual & Universal Search Modal */}
       <ContextualSearchModal
         open={showSearchModal}
-        onClose={() => setShowSearchModal(false)}
+        onClose={() => {
+          setShowSearchModal(false);
+          setSearchInitialQuery('');
+          setSearchInitialTab(undefined);
+        }}
         activeView={view}
         onNavigate={navigate}
+        initialQuery={searchInitialQuery}
+        initialTab={searchInitialTab}
       />
 
       <AnimatePresence>

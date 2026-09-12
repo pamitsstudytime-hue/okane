@@ -10,6 +10,7 @@ import { ExpenseDetailDrawer } from '../components/ExpenseDetailDrawer';
 import ExpenseModal from '../components/ExpenseModal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { renderWalletIcon } from '../components/WalletIconRenderer';
+import DesktopSearchBar from '../components/DesktopSearchBar';
 
 interface Props {
   onNavigate: (v: ViewName, arg?: string) => void;
@@ -163,7 +164,8 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
         <div>
           <h1 className="page-title">Dashboard</h1>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <DesktopSearchBar placeholder="Search expenses, contacts, wallets..." defaultTab="all" />
+        <div className="desktop-only" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button className="btn btn-primary desktop-only" onClick={onAddExpense}>
             <Plus size={16} />
             <span>Add Expense</span>

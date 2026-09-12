@@ -172,12 +172,11 @@ export default function NotificationBell({ onNavigate }: Props) {
 
                 {/* Modal Header (Transfer Drawer Style) */}
                 <div className="modal-header" style={{ padding: '16px 20px 14px', borderBottom: 'none', flexShrink: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
                     <div
                       style={{
                         width: 36,
                         height: 36,
-                        borderRadius: 10,
                         background: 'transparent',
                         display: 'flex',
                         alignItems: 'center',
@@ -186,13 +185,13 @@ export default function NotificationBell({ onNavigate }: Props) {
                         flexShrink: 0,
                       }}
                     >
-                      <Bell size={20} />
+                      <Bell size={22} />
                     </div>
                     <div style={{ minWidth: 0 }}>
-                      <div className="modal-title" style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.2, color: 'var(--text)' }}>
+                      <div className="modal-title" style={{ fontSize: 17, fontWeight: 700, lineHeight: 1.2, color: 'var(--text)' }}>
                         Notifications
                       </div>
-                      <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>
+                      <div style={{ fontSize: 12.5, color: 'var(--text-3)', marginTop: 2 }}>
                         {totalCount > 0
                           ? `${totalCount} pending item${totalCount > 1 ? 's' : ''} require attention`
                           : 'All caught up!'}
@@ -208,8 +207,8 @@ export default function NotificationBell({ onNavigate }: Props) {
                       title="Close"
                       aria-label="Close dialog"
                       style={{
-                        width: 32,
-                        height: 32,
+                        width: 36,
+                        height: 36,
                         borderRadius: 9999,
                         background: 'var(--surface2)',
                         border: '1px solid var(--border)',
@@ -277,47 +276,36 @@ export default function NotificationBell({ onNavigate }: Props) {
                     <>
                       {/* Software Update Card */}
                       {availableUpdate && (
-                        <div
-                          style={{
-                            background: 'var(--card-surface, var(--surface))',
-                            border: '1px solid var(--border)',
-                            borderRadius: 14,
-                            padding: '14px 16px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 10,
-                            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div className="notification-card-update">
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                             <div
                               style={{
-                                width: 38,
-                                height: 38,
-                                borderRadius: 10,
-                                background: 'rgba(99, 102, 241, 0.12)',
-                                border: '1px solid rgba(99, 102, 241, 0.25)',
-                                color: '#6366F1',
+                                width: 42,
+                                height: 42,
+                                borderRadius: 13,
+                                background: 'rgba(99, 102, 241, 0.15)',
+                                border: '1px solid rgba(99, 102, 241, 0.3)',
+                                color: '#818cf8',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 flexShrink: 0,
                               }}
                             >
-                              <Sparkles size={18} style={{ color: '#6366F1' }} />
+                              <Sparkles size={19} style={{ color: '#818cf8' }} />
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text)' }}>
+                              <div style={{ fontSize: 14.5, fontWeight: 650, color: 'var(--text)' }}>
                                 Software Update: v{availableUpdate.version}
                               </div>
-                              <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 1 }}>
+                              <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 1 }}>
                                 Build #{availableUpdate.buildNumber} · {availableUpdate.releaseDate}
                               </div>
                             </div>
                           </div>
 
                           {availableUpdate.releaseNotes && (
-                            <p style={{ fontSize: 12, color: 'var(--text-2)', margin: 0, lineHeight: 1.4 }}>
+                            <p style={{ fontSize: 12.5, color: 'var(--text-2)', margin: 0, lineHeight: 1.45 }}>
                               {availableUpdate.releaseNotes}
                             </p>
                           )}
@@ -336,9 +324,9 @@ export default function NotificationBell({ onNavigate }: Props) {
                                 fontSize: 12.5,
                                 fontWeight: 700,
                                 background: 'var(--text)',
-                                border: '1px solid var(--text)',
+                                border: 'none',
                                 color: 'var(--bg)',
-                                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.16)',
+                                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.18)',
                                 cursor: 'pointer',
                                 display: 'inline-flex',
                                 alignItems: 'center',
@@ -379,7 +367,7 @@ export default function NotificationBell({ onNavigate }: Props) {
                           >
                             <span
                               style={{
-                                fontSize: 10.5,
+                                fontSize: 11,
                                 fontWeight: 700,
                                 textTransform: 'uppercase',
                                 letterSpacing: '0.6px',
@@ -389,15 +377,15 @@ export default function NotificationBell({ onNavigate }: Props) {
                                 gap: 6,
                               }}
                             >
-                              <RefreshCw size={12} style={{ color: 'var(--text-3)' }} />
+                              <RefreshCw size={13} style={{ color: 'var(--text-3)' }} />
                               <span>DUE SUBSCRIPTIONS</span>
                             </span>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                               <span
                                 style={{
-                                  fontSize: 10,
+                                  fontSize: 11,
                                   fontWeight: 700,
-                                  padding: '1px 7px',
+                                  padding: '1.5px 8px',
                                   borderRadius: 9999,
                                   background: 'var(--surface2)',
                                   border: '1px solid var(--border)',
@@ -407,7 +395,7 @@ export default function NotificationBell({ onNavigate }: Props) {
                                 {dueAutopays.length}
                               </span>
                               <ChevronDown
-                                size={14}
+                                size={15}
                                 style={{
                                   color: 'var(--text-3)',
                                   transform: subscriptionsCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
@@ -434,26 +422,15 @@ export default function NotificationBell({ onNavigate }: Props) {
                                   return (
                                     <div
                                       key={`due-${r.id}`}
-                                      style={{
-                                        background: 'var(--card-surface, var(--surface))',
-                                        border: '1px solid var(--border)',
-                                        borderRadius: 14,
-                                        padding: '12px 14px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        gap: 12,
-                                        transition: 'border-color 0.15s ease',
-                                        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
-                                      }}
+                                      className="notification-card"
                                     >
                                       {/* Left: Category Icon Tile + Info */}
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: 11, minWidth: 0, flex: 1 }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
                                         <div
                                           style={{
-                                            width: 38,
-                                            height: 38,
-                                            borderRadius: 10,
+                                            width: 42,
+                                            height: 42,
+                                            borderRadius: 13,
                                             background: catMeta.bg,
                                             border: `1px solid ${catMeta.border}`,
                                             color: catMeta.color,
@@ -463,14 +440,14 @@ export default function NotificationBell({ onNavigate }: Props) {
                                             flexShrink: 0,
                                           }}
                                         >
-                                          <CategoryIcon category={catMeta.name} icon={catMeta.icon} size={18} style={{ color: catMeta.color }} />
+                                          <CategoryIcon category={catMeta.name} icon={catMeta.icon} size={19} style={{ color: catMeta.color }} />
                                         </div>
 
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0, flex: 1 }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0, flex: 1 }}>
                                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
                                             <span
                                               style={{
-                                                fontSize: 14,
+                                                fontSize: 14.5,
                                                 fontWeight: 650,
                                                 color: 'var(--text)',
                                                 whiteSpace: 'nowrap',
@@ -485,12 +462,12 @@ export default function NotificationBell({ onNavigate }: Props) {
                                                 fontSize: 9.5,
                                                 fontWeight: 700,
                                                 textTransform: 'uppercase',
-                                                letterSpacing: '0.03em',
-                                                padding: '1.5px 5.5px',
+                                                letterSpacing: '0.04em',
+                                                padding: '2px 6px',
                                                 borderRadius: 4,
-                                                background: 'rgba(239, 68, 68, 0.12)',
-                                                color: 'var(--debit, #EF4444)',
-                                                border: '1px solid rgba(239, 68, 68, 0.25)',
+                                                background: 'rgba(239, 68, 68, 0.15)',
+                                                color: '#F87171',
+                                                border: '1px solid rgba(239, 68, 68, 0.3)',
                                                 flexShrink: 0,
                                                 lineHeight: 1.2,
                                               }}
@@ -501,7 +478,7 @@ export default function NotificationBell({ onNavigate }: Props) {
 
                                           <div
                                             style={{
-                                              fontSize: 11.5,
+                                              fontSize: 12,
                                               color: 'var(--text-3)',
                                               display: 'flex',
                                               alignItems: 'center',
@@ -518,7 +495,7 @@ export default function NotificationBell({ onNavigate }: Props) {
                                               <>
                                                 <span style={{ opacity: 0.5 }}>•</span>
                                                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                                                  {renderWalletIcon(walletObj.icon || walletObj.name, 12, walletObj.color)}
+                                                  {renderWalletIcon(walletObj.icon || walletObj.name, 13, walletObj.color)}
                                                   <span>{walletObj.name}</span>
                                                 </span>
                                               </>
@@ -541,9 +518,9 @@ export default function NotificationBell({ onNavigate }: Props) {
                                           fontSize: 12.5,
                                           fontWeight: 700,
                                           background: 'var(--text)',
-                                          border: '1px solid var(--text)',
+                                          border: 'none',
                                           color: 'var(--bg)',
-                                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.16)',
+                                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.18)',
                                           cursor: 'pointer',
                                           display: 'inline-flex',
                                           alignItems: 'center',
@@ -553,7 +530,7 @@ export default function NotificationBell({ onNavigate }: Props) {
                                           transition: 'all 0.15s ease',
                                         }}
                                       >
-                                        <CheckCircle2 size={13} style={{ color: 'inherit' }} />
+                                        <CheckCircle2 size={14} style={{ color: 'inherit' }} />
                                         <span>Pay</span>
                                       </button>
                                     </div>
@@ -591,7 +568,7 @@ export default function NotificationBell({ onNavigate }: Props) {
                           >
                             <span
                               style={{
-                                fontSize: 10.5,
+                                fontSize: 11,
                                 fontWeight: 700,
                                 textTransform: 'uppercase',
                                 letterSpacing: '0.6px',
@@ -601,15 +578,15 @@ export default function NotificationBell({ onNavigate }: Props) {
                                 gap: 6,
                               }}
                             >
-                              <Zap size={12} style={{ color: 'var(--text-3)' }} />
+                              <Zap size={13} style={{ color: 'var(--text-3)' }} />
                               <span>DUE LOGS</span>
                             </span>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                               <span
                                 style={{
-                                  fontSize: 10,
+                                  fontSize: 11,
                                   fontWeight: 700,
-                                  padding: '1px 7px',
+                                  padding: '1.5px 8px',
                                   borderRadius: 9999,
                                   background: 'var(--surface2)',
                                   border: '1px solid var(--border)',
@@ -619,7 +596,7 @@ export default function NotificationBell({ onNavigate }: Props) {
                                 {unloggedQuickLogs.length}
                               </span>
                               <ChevronDown
-                                size={14}
+                                size={15}
                                 style={{
                                   color: 'var(--text-3)',
                                   transform: quickLogsCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
@@ -646,26 +623,15 @@ export default function NotificationBell({ onNavigate }: Props) {
                                   return (
                                     <div
                                       key={`log-${r.id}`}
-                                      style={{
-                                        background: 'var(--card-surface, var(--surface))',
-                                        border: '1px solid var(--border)',
-                                        borderRadius: 14,
-                                        padding: '12px 14px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        gap: 12,
-                                        transition: 'border-color 0.15s ease',
-                                        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
-                                      }}
+                                      className="notification-card"
                                     >
                                       {/* Left: Category Icon Tile + Info */}
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: 11, minWidth: 0, flex: 1 }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
                                         <div
                                           style={{
-                                            width: 38,
-                                            height: 38,
-                                            borderRadius: 10,
+                                            width: 42,
+                                            height: 42,
+                                            borderRadius: 13,
                                             background: catMeta.bg,
                                             border: `1px solid ${catMeta.border}`,
                                             color: catMeta.color,
@@ -675,13 +641,13 @@ export default function NotificationBell({ onNavigate }: Props) {
                                             flexShrink: 0,
                                           }}
                                         >
-                                          <CategoryIcon category={catMeta.name} icon={catMeta.icon} size={18} style={{ color: catMeta.color }} />
+                                          <CategoryIcon category={catMeta.name} icon={catMeta.icon} size={19} style={{ color: catMeta.color }} />
                                         </div>
 
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0, flex: 1 }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0, flex: 1 }}>
                                           <div
                                             style={{
-                                              fontSize: 14,
+                                              fontSize: 14.5,
                                               fontWeight: 650,
                                               color: 'var(--text)',
                                               whiteSpace: 'nowrap',
@@ -694,7 +660,7 @@ export default function NotificationBell({ onNavigate }: Props) {
 
                                           <div
                                             style={{
-                                              fontSize: 11.5,
+                                              fontSize: 12,
                                               color: 'var(--text-3)',
                                               display: 'flex',
                                               alignItems: 'center',
@@ -711,7 +677,7 @@ export default function NotificationBell({ onNavigate }: Props) {
                                               <>
                                                 <span style={{ opacity: 0.5 }}>•</span>
                                                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                                                  {renderWalletIcon(walletObj.icon || walletObj.name, 12, walletObj.color)}
+                                                  {renderWalletIcon(walletObj.icon || walletObj.name, 13, walletObj.color)}
                                                   <span>{walletObj.name}</span>
                                                 </span>
                                               </>
@@ -734,9 +700,9 @@ export default function NotificationBell({ onNavigate }: Props) {
                                           fontSize: 12.5,
                                           fontWeight: 700,
                                           background: 'var(--text)',
-                                          border: '1px solid var(--text)',
+                                          border: 'none',
                                           color: 'var(--bg)',
-                                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.16)',
+                                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.18)',
                                           cursor: 'pointer',
                                           display: 'inline-flex',
                                           alignItems: 'center',
@@ -746,7 +712,7 @@ export default function NotificationBell({ onNavigate }: Props) {
                                           transition: 'all 0.15s ease',
                                         }}
                                       >
-                                        <Zap size={13} style={{ color: 'inherit' }} />
+                                        <Zap size={14} style={{ color: 'inherit' }} />
                                         <span>Log</span>
                                       </button>
                                     </div>
@@ -766,11 +732,11 @@ export default function NotificationBell({ onNavigate }: Props) {
                   <div
                     style={{
                       display: 'flex',
-                      gap: 10,
+                      gap: 12,
                       alignItems: 'center',
-                      padding: '12px 20px 16px',
+                      padding: '12px 20px 18px',
                       borderTop: 'none',
-                      background: 'var(--surface)',
+                      background: 'transparent',
                       flexShrink: 0,
                     }}
                   >
@@ -780,9 +746,9 @@ export default function NotificationBell({ onNavigate }: Props) {
                       onClick={handleClearAll}
                       style={{
                         flex: 1,
-                        height: 40,
+                        height: 44,
                         borderRadius: 9999,
-                        fontSize: 13,
+                        fontSize: 13.5,
                         fontWeight: 650,
                         border: '1px solid var(--border)',
                         background: 'var(--surface2)',
@@ -792,11 +758,11 @@ export default function NotificationBell({ onNavigate }: Props) {
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: 6,
+                        gap: 7,
                         transition: 'all 0.15s ease',
                       }}
                     >
-                      <RotateCcw size={14} style={{ color: 'var(--text)' }} />
+                      <RotateCcw size={15} style={{ color: 'var(--text)' }} />
                       <span>Clear</span>
                     </button>
 
@@ -806,26 +772,26 @@ export default function NotificationBell({ onNavigate }: Props) {
                         className="btn btn-primary"
                         onClick={handleResolveAll}
                         style={{
-                          flex: 1.35,
-                          height: 40,
+                          flex: 1.4,
+                          height: 44,
                           borderRadius: 9999,
-                          fontSize: 13,
+                          fontSize: 13.5,
                           fontWeight: 700,
                           background: 'var(--text)',
-                          border: '1px solid var(--text)',
+                          border: 'none',
                           color: 'var(--bg)',
-                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+                          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.22)',
                           cursor: 'pointer',
                           padding: '0 18px',
                           display: 'inline-flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          gap: 6,
+                          gap: 7,
                           whiteSpace: 'nowrap',
                           transition: 'all 0.15s ease',
                         }}
                       >
-                        <Check size={15} style={{ color: 'inherit' }} />
+                        <Check size={16} style={{ color: 'inherit' }} />
                         <span>{totalPendingRules === 1 ? 'Resolve' : `Resolve All (${totalPendingRules})`}</span>
                       </button>
                     )}

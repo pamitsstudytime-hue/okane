@@ -420,12 +420,72 @@ export default function Settings({
     handledArgRef.current = initialArg;
 
     const timer = setTimeout(() => {
-      if (initialArg === 'user-guide') {
-        onOpenGuide?.();
-        return;
-      }
-      if (initialArg === 'dev-mode') {
-        onNavigate?.('dev-sql');
+      const openDrawerById = (id: string) => {
+        const sheetMap: Record<string, () => void> = {
+          'appearance': () => setShowAppearanceSheet(true),
+          'preferences': () => setShowPreferencesSheet(true),
+          'categories': () => setShowCategoriesSheet(true),
+          'category': () => setShowCategoriesSheet(true),
+          'data-backup': () => setShowDataSheet(true),
+          'data': () => setShowDataSheet(true),
+          'backup': () => setShowDataSheet(true),
+          'advanced-features': () => setShowAdvancedSheet(true),
+          'advanced': () => setShowAdvancedSheet(true),
+          'performance': () => setShowPerformanceSheet(true),
+          'perf': () => setShowPerformanceSheet(true),
+          'security': () => setShowSecuritySheet(true),
+          'security-privacy': () => setShowSecuritySheet(true),
+          'app-info': () => setShowVersionSheet(true),
+          'version': () => setShowVersionSheet(true),
+          'feedback': () => setShowFeedbackSheet(true),
+          'bug-report': () => setShowFeedbackSheet(true),
+          'dev-mode': () => setShowDevSheet(true),
+          'dev': () => setShowDevSheet(true),
+          'dummy-data': () => setShowDummyModal(true),
+          'dummy': () => setShowDummyModal(true),
+          'currency': () => setShowCurrencySheet(true),
+        };
+
+        if (id === 'user-guide' || id === 'guide') {
+          if (onStartExpenseTutorial) {
+            onStartExpenseTutorial();
+          } else {
+            onOpenGuide?.();
+          }
+          return true;
+        }
+
+        if (sheetMap[id]) {
+          sheetMap[id]();
+          return true;
+        }
+
+        const el = document.getElementById(`setting-${id}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return true;
+        }
+        return false;
+      };
+
+      openDrawerById(initialArg);
+      onClearViewArg?.();
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [initialArg, onOpenGuide, onStartExpenseTutorial, onNavigate, onClearViewArg]);
+
+  useEffect(() => {
+    const handleOpenDrawerEvent = (e: Event) => {
+      const customEv = e as CustomEvent<{ id: string }>;
+      const targetId = customEv?.detail?.id;
+      if (!targetId) return;
+
+      if (targetId === 'user-guide' || targetId === 'guide') {
+        if (onStartExpenseTutorial) {
+          onStartExpenseTutorial();
+        } else {
+          onOpenGuide?.();
+        }
         return;
       }
 
@@ -433,25 +493,40 @@ export default function Settings({
         'appearance': () => setShowAppearanceSheet(true),
         'preferences': () => setShowPreferencesSheet(true),
         'categories': () => setShowCategoriesSheet(true),
+        'category': () => setShowCategoriesSheet(true),
         'data-backup': () => setShowDataSheet(true),
+        'data': () => setShowDataSheet(true),
+        'backup': () => setShowDataSheet(true),
         'advanced-features': () => setShowAdvancedSheet(true),
+        'advanced': () => setShowAdvancedSheet(true),
         'performance': () => setShowPerformanceSheet(true),
+        'perf': () => setShowPerformanceSheet(true),
+        'security': () => setShowSecuritySheet(true),
+        'security-privacy': () => setShowSecuritySheet(true),
         'app-info': () => setShowVersionSheet(true),
+        'version': () => setShowVersionSheet(true),
         'feedback': () => setShowFeedbackSheet(true),
+        'bug-report': () => setShowFeedbackSheet(true),
+        'dev-mode': () => setShowDevSheet(true),
+        'dev': () => setShowDevSheet(true),
+        'dummy-data': () => setShowDummyModal(true),
+        'dummy': () => setShowDummyModal(true),
+        'currency': () => setShowCurrencySheet(true),
       };
 
-      if (sheetMap[initialArg]) {
-        sheetMap[initialArg]();
+      if (sheetMap[targetId]) {
+        sheetMap[targetId]();
       } else {
-        const el = document.getElementById(`setting-${initialArg}`);
+        const el = document.getElementById(`setting-${targetId}`);
         if (el) {
           el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
       }
-      onClearViewArg?.();
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [initialArg, onOpenGuide, onNavigate, onClearViewArg]);
+    };
+
+    window.addEventListener('open-setting-drawer', handleOpenDrawerEvent);
+    return () => window.removeEventListener('open-setting-drawer', handleOpenDrawerEvent);
+  }, [onOpenGuide, onStartExpenseTutorial, onNavigate]);
 
   const [jsonSettings, setJsonSettings] = useState<Record<string, unknown>>({
     appName: "Okane",

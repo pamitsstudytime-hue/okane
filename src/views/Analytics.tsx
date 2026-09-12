@@ -6,6 +6,7 @@ import { CategoryBadge } from '../components/CategoryIcon';
 import ExpenseModal from '../components/ExpenseModal';
 import ExpenseDetailDrawer from '../components/ExpenseDetailDrawer';
 import DailyWalletBalanceDrawer from '../components/DailyWalletBalanceDrawer';
+import DesktopSearchBar from '../components/DesktopSearchBar';
 import type { Expense } from '../types';
 import {
   BarChart2,
@@ -547,6 +548,8 @@ export default function Analytics() {
         <div>
           <h1 className="page-title">Analytics</h1>
         </div>
+        <DesktopSearchBar placeholder="Search analytics, insights..." defaultTab="all" />
+        <div className="desktop-only" style={{ width: 100 }} />
       </div>
 
       {/* Spending Bar Chart (Interactive Weekly / Monthly View) */}

@@ -23,6 +23,7 @@ import type { Friend, ContactType, ViewName } from '../types';
 import { friendBalance, contactTotalSpent, contactTransactionCount, contactLastTransaction, unsettledExpensesForFriend } from '../db';
 import { fmtMoney, friendInitial, getAvatarStyle, formatBillingCycleShort } from '../utils';
 import { renderBrandLogo } from '../components/BrandIcons';
+import DesktopSearchBar from '../components/DesktopSearchBar';
 import FriendModal from '../components/FriendModal';
 import SettleModal from '../components/SettleModal';
 import ExpenseModal from '../components/ExpenseModal';
@@ -271,6 +272,7 @@ export default function Friends({ onNavigate }: Props) {
         <div>
           <h1 className="page-title">Contacts</h1>
         </div>
+        <DesktopSearchBar placeholder="Search contacts, friends..." defaultTab="contacts" />
         <button
           type="button"
           id="desktop-add-contact-btn"

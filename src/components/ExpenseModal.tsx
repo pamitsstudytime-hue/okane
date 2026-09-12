@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
-import { X, TrendingDown, TrendingUp, User, Users, HeartHandshake, Sparkles, Feather, Plus, ChevronRight } from 'lucide-react';
+import { X, RotateCcw, TrendingDown, TrendingUp, User, Users, HeartHandshake, Sparkles, Feather, Plus, ChevronRight } from 'lucide-react';
 import { useStore } from '../store';
 import type { Expense, ExpenseType, ExpenseFlow, ExpenseStatus } from '../types';
 import { todayISO, uid, friendBalance, unsettledExpensesForFriend } from '../db';
@@ -379,6 +379,35 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
       } else {
         setAutoDetectedCategory(null);
       }
+    }
+  };
+
+  const handleClearForm = () => {
+    setDesc('');
+    setAmount('');
+    setFriendShare('');
+    setCategory(s.defaultCategory);
+    setIsCategoryManuallySelected(false);
+    setAutoDetectedCategory(null);
+    setDate(todayISO());
+    setWhoPaid('me');
+    setSplitMode('just_me');
+    setFlow('out');
+    setIncomeMode('direct');
+    setFriendId('');
+    setSelectedFriendIds([]);
+    setSplitCalcMode('equal_all');
+    setIncludeYouInCustom(true);
+    setCustomFriendShares({});
+    setVendorId('');
+    setWalletId(s.defaultWalletId);
+    setStatus(s.defaultStatus);
+    setNotes('');
+    setError('');
+    setSelectedExpenseIds([]);
+    showToast('Form cleared');
+    if (descInputRef.current) {
+      descInputRef.current.focus();
     }
   };
 
@@ -797,7 +826,7 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                           setError('');
                         }}
                       >
-                        <User size={14} style={{ color: 'inherit' }} />
+                        <User size={15} style={{ color: 'inherit' }} />
                         <span>Just Me</span>
                       </button>
                       <button
@@ -815,7 +844,7 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                           setError('');
                         }}
                       >
-                        <Users size={14} style={{ color: 'inherit' }} />
+                        <Users size={15} style={{ color: 'inherit' }} />
                         <span>With Friends</span>
                       </button>
                       <button
@@ -827,7 +856,7 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                           setError('');
                         }}
                       >
-                        <HeartHandshake size={14} style={{ color: 'inherit' }} />
+                        <HeartHandshake size={15} style={{ color: 'inherit' }} />
                         <span>Someone Paid</span>
                       </button>
                     </div>
@@ -1474,7 +1503,7 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
             <button
               type="button"
               className="btn btn-drawer-cancel"
-              onClick={onClose}
+              onClick={handleClearForm}
               style={{
                 flex: 1,
                 height: 40,
@@ -1494,8 +1523,8 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                 transition: 'all 0.15s ease',
               }}
             >
-              <X size={15} style={{ color: 'var(--text)' }} />
-              <span>Cancel</span>
+              <RotateCcw size={15} style={{ color: 'var(--text)' }} />
+              <span>Clear</span>
             </button>
             <button
               type="submit"

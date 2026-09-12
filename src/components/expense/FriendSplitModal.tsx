@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { X, Users, Search, Plus, Store, Check, ArrowLeft, ArrowRight, RotateCcw } from 'lucide-react';
+import { X, Search, Plus, Store, Check, ArrowLeft, ArrowRight, RotateCcw } from 'lucide-react';
 import type { AppDB } from '../../types';
 import { fmtMoney, currencySymbol, getAvatarStyle, friendInitial } from '../../utils';
 import { useBackButtonModal, BackPriority } from '../../utils/backHandler';
@@ -181,21 +181,24 @@ export function FriendSplitModal({
                 flexShrink: 0,
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  type="button"
+                  className="btn-icon"
+                  onClick={handleClose}
                   style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
-                    background: 'transparent',
-                    color: 'var(--text)',
+                    width: 32,
+                    height: 32,
+                    borderRadius: 9999,
                     display: 'grid',
                     placeItems: 'center',
+                    cursor: 'pointer',
                     flexShrink: 0,
                   }}
+                  aria-label="Back to expense drawer"
                 >
-                  <Users size={19} strokeWidth={2.2} />
-                </div>
+                  <ArrowLeft size={18} />
+                </button>
                 <div>
                   <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>
                     Split with Friends
@@ -234,18 +237,18 @@ export function FriendSplitModal({
                   alignItems: 'center',
                   position: 'relative',
                   background: pickerSearchFocused ? 'var(--surface)' : 'var(--surface2)',
-                  border: pickerSearchFocused ? '1.5px solid var(--text)' : '1px solid var(--border)',
+                  border: pickerSearchFocused ? '1px solid var(--border2)' : '1px solid var(--border)',
                   borderRadius: 12,
                   padding: '0 12px',
                   height: 38,
-                  boxShadow: pickerSearchFocused ? '0 0 0 3px rgba(255, 255, 255, 0.06)' : 'none',
+                  boxShadow: pickerSearchFocused ? '0 0 0 1px var(--border2)' : 'none',
                   transition: 'all 0.15s cubic-bezier(0.16, 1, 0.3, 1)',
                 }}
               >
                 <Search
                   size={15}
                   style={{
-                    color: pickerSearchFocused ? 'var(--text)' : 'var(--text-3)',
+                    color: pickerSearchFocused ? 'var(--text-2)' : 'var(--text-3)',
                     marginRight: 9,
                     flexShrink: 0,
                     transition: 'color 0.15s ease',
@@ -329,18 +332,16 @@ export function FriendSplitModal({
                 )}
               </div>
 
-              {/* Row 2: Unified Filter Segmented Control & Select All Action */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                {/* Unified Filter Segmented Control */}
+              {/* Row 2: Filter Chips & Select All Action */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+                {/* Filter Chips */}
                 <div
                   style={{
-                    display: 'inline-flex',
+                    display: 'flex',
                     alignItems: 'center',
-                    background: 'var(--surface2)',
-                    padding: 3,
-                    borderRadius: 9,
-                    gap: 2,
-                    border: '1px solid var(--border)',
+                    gap: 6,
+                    flexWrap: 'nowrap',
+                    overflowX: 'auto',
                   }}
                 >
                   {(
@@ -357,20 +358,22 @@ export function FriendSplitModal({
                         type="button"
                         onClick={() => setPickerTypeFilter(f.id)}
                         style={{
-                          border: 'none',
-                          background: isSel ? 'var(--text)' : 'transparent',
+                          border: isSel ? '1px solid var(--text)' : '1px solid var(--border)',
+                          background: isSel ? 'var(--text)' : 'var(--surface2)',
                           color: isSel ? 'var(--bg)' : 'var(--text-3)',
-                          fontSize: 11.5,
+                          fontSize: 13,
                           fontWeight: isSel ? 700 : 550,
-                          padding: '3px 10px',
-                          borderRadius: 6,
-                          height: 23,
+                          padding: '0 14px',
+                          borderRadius: 9999,
+                          height: 32,
                           cursor: 'pointer',
                           display: 'inline-flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          boxShadow: isSel ? '0 1px 3px rgba(0, 0, 0, 0.15)' : 'none',
-                          transition: 'all 0.15s cubic-bezier(0.16, 1, 0.3, 1)',
+                          boxShadow: isSel ? '0 1px 4px rgba(0, 0, 0, 0.18)' : 'none',
+                          transition: 'all 0.15s ease',
+                          whiteSpace: 'nowrap',
+                          boxSizing: 'border-box',
                         }}
                       >
                         {f.label}
@@ -395,18 +398,19 @@ export function FriendSplitModal({
                     border: '1px solid var(--border)',
                     background: 'var(--surface2)',
                     color: 'var(--text)',
-                    fontSize: 11.5,
+                    fontSize: 13,
                     fontWeight: 650,
-                    padding: '3px 10px',
-                    borderRadius: 8,
-                    height: 29,
+                    padding: '0 14px',
+                    borderRadius: 9999,
+                    height: 32,
                     cursor: 'pointer',
                     flexShrink: 0,
                     whiteSpace: 'nowrap',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: 4,
+                    gap: 5,
                     transition: 'all 0.15s ease',
+                    boxSizing: 'border-box',
                   }}
                 >
                   {filteredFriendsList.length > 0 && filteredFriendsList.every(f => selectedFriendIds.includes(f.id))
@@ -743,12 +747,31 @@ export function FriendSplitModal({
                 flexShrink: 0,
               }}
             >
-              <div>
-                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>
-                  Split Breakdown
-                </h3>
-                <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>
-                  {selectedFriendIds.length + (isYouSelected ? 1 : 0)} participant{selectedFriendIds.length + (isYouSelected ? 1 : 0) !== 1 ? 's' : ''}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  type="button"
+                  className="btn-icon"
+                  onClick={() => setCurrentStep('select_friends')}
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 9999,
+                    display: 'grid',
+                    placeItems: 'center',
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                  }}
+                  aria-label="Back to friend selection"
+                >
+                  <ArrowLeft size={18} />
+                </button>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>
+                    Split Breakdown
+                  </h3>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>
+                    {selectedFriendIds.length + (isYouSelected ? 1 : 0)} participant{selectedFriendIds.length + (isYouSelected ? 1 : 0) !== 1 ? 's' : ''}
+                  </div>
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -903,9 +926,9 @@ export function FriendSplitModal({
                     alignItems: 'center',
                     background: 'var(--surface2)',
                     border: '1px solid var(--border)',
-                    borderRadius: 9999,
-                    padding: 3,
-                    gap: 3,
+                    borderRadius: 14,
+                    padding: 4,
+                    gap: 4,
                   }}
                 >
                   {(
@@ -923,21 +946,22 @@ export function FriendSplitModal({
                         onClick={() => handleSelectSplitCalcMode(m.id)}
                         style={{
                           flex: 1,
-                          border: 'none',
+                          border: isSel ? '1px solid var(--text)' : '1px solid transparent',
                           background: isSel ? 'var(--text)' : 'transparent',
-                          color: isSel ? 'var(--bg)' : 'var(--text-2)',
-                          fontSize: 12,
+                          color: isSel ? 'var(--bg)' : 'var(--text-3)',
+                          fontSize: 12.5,
                           fontWeight: isSel ? 700 : 550,
-                          padding: '7px 8px',
-                          borderRadius: 9999,
-                          minHeight: 32,
+                          padding: '8px 8px',
+                          borderRadius: 10,
+                          minHeight: 38,
                           cursor: 'pointer',
                           display: 'inline-flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          boxShadow: isSel ? '0 2px 6px rgba(0, 0, 0, 0.18)' : 'none',
-                          transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
+                          boxShadow: isSel ? '0 2px 6px rgba(0, 0, 0, 0.25)' : 'none',
+                          transition: 'all 0.15s ease',
                           whiteSpace: 'nowrap',
+                          boxSizing: 'border-box',
                         }}
                       >
                         {m.label}
@@ -1127,7 +1151,12 @@ export function FriendSplitModal({
                 <button
                   type="button"
                   className="btn btn-drawer-cancel"
-                  onClick={() => setCurrentStep('select_friends')}
+                  onClick={() => {
+                    handleSelectSplitCalcMode('equal_all');
+                    setCustomFriendShares({});
+                    setIncludeYouInCustom(true);
+                    showToast('Split reset to default');
+                  }}
                   style={{
                     flex: 1,
                     height: 42,
@@ -1147,8 +1176,8 @@ export function FriendSplitModal({
                     transition: 'all 0.15s ease',
                   }}
                 >
-                  <ArrowLeft size={15} style={{ color: 'var(--text)' }} />
-                  <span>Back</span>
+                  <RotateCcw size={14} style={{ color: 'var(--text)' }} />
+                  <span>Clear</span>
                 </button>
 
                 <button

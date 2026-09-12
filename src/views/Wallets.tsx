@@ -23,6 +23,7 @@ import MenuItem from '@mui/material/MenuItem';
 import { useStore } from '../store';
 import type { Wallet, Expense, Settlement } from '../types';
 import { walletBalance, expenseFlow, monthKey } from '../db';
+import DesktopSearchBar from '../components/DesktopSearchBar';
 import { fmtMoney, fmtDate, typeLabel, statusLabel, groupExpenses, resolveCategoryMeta, cleanSettlementDescription, currencySymbol, type GroupedExpense } from '../utils';
 import WalletModal from '../components/WalletModal';
 import { renderWalletIcon } from '../components/WalletIconRenderer';
@@ -234,31 +235,23 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
     <div className="view-container">
       {/* Page Header */}
       <div className="page-header wallets-page-header">
-        <h1 className="page-title">Wallets</h1>
+        <div>
+          <h1 className="page-title">Wallets</h1>
+        </div>
+        <DesktopSearchBar placeholder="Search wallets, transactions..." defaultTab="wallets" />
         <div className="page-header-actions wallets-header-actions">
           <button
             type="button"
-            className="btn wallet-action-btn"
-            style={{
-              background: 'var(--surface2)',
-              border: '1px solid var(--border)',
-              color: 'var(--text)',
-              borderRadius: 9999,
-              fontWeight: 650,
-              fontSize: 13,
-              padding: '9px 16px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-            }}
+            className="btn wallet-action-btn wallet-transfer-btn"
+            title="Transfer Funds"
+            aria-label="Transfer Funds"
             onClick={() => {
               setTransferFromId(undefined);
               setShowTransfer(true);
             }}
           >
-            <ArrowLeftRight size={16} /> Transfer Funds
+            <ArrowLeftRight size={16} />
+            <span className="wallet-transfer-btn-text">Transfer Funds</span>
           </button>
           <button
             type="button"

@@ -23,6 +23,7 @@ import {
   ChevronUp,
   Compass,
 } from 'lucide-react';
+import DesktopSearchBar from '../components/DesktopSearchBar';
 import { useStore } from '../store';
 import type { Trip, TripExpense, TripGroup, TripMember } from '../types';
 import { fmtMoney, currencySymbol } from '../utils';
@@ -1017,6 +1018,13 @@ export default function SplitTrips({ initialArg }: { initialArg?: string; onClea
 
   return (
     <div style={{ maxWidth: '920px', margin: '0 auto', padding: '16px 16px 32px 16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <div className="page-header" style={{ marginBottom: 0 }}>
+        <div>
+          <h1 className="page-title">Trips & Splits</h1>
+        </div>
+        <DesktopSearchBar placeholder="Search trips, splits, members..." defaultTab="trips" />
+        <div className="desktop-only" style={{ width: 100 }} />
+      </div>
       
       {/* ========================================================================= */}
       {/* TOP NAVIGATION BUTTONS (GROUPS & HISTORY POP DRAWERS - HOME ONLY) */}

@@ -1888,12 +1888,12 @@ input, textarea, [contenteditable="true"], .selectable-text {
   border-bottom: none !important;
   border-radius: 12px;
   box-shadow: none !important;
-  transform: none !important;
   overflow: hidden;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   outline: none !important;
-  transition: background-color 0.15s ease;
+  transition: transform 0.22s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.18s ease;
+  will-change: transform;
 }
 
 .expense-date-card-body .mobile-expense-card:focus,
@@ -1911,14 +1911,14 @@ input, textarea, [contenteditable="true"], .selectable-text {
   background: rgba(255, 255, 255, 0.04) !important;
   border-color: transparent !important;
   box-shadow: none !important;
-  transform: none !important;
+  transform: scale(1.008) !important;
 }
 
 :root:not([data-color-scheme="dark"]):not([data-theme="dark"]) .expense-date-card-body .mobile-expense-card:hover {
   background: var(--surface2) !important;
   border-color: transparent !important;
   box-shadow: none !important;
-  transform: none !important;
+  transform: scale(1.008) !important;
 }
 
 .expense-date-card-body .mobile-expense-card:active,
@@ -1927,7 +1927,7 @@ input, textarea, [contenteditable="true"], .selectable-text {
   background: rgba(255, 255, 255, 0.06) !important;
   border-color: transparent !important;
   box-shadow: none !important;
-  transform: none !important;
+  transform: scale(0.985) !important;
   opacity: 1 !important;
 }
 
@@ -1935,7 +1935,7 @@ input, textarea, [contenteditable="true"], .selectable-text {
   background: var(--surface2) !important;
   border-color: transparent !important;
   box-shadow: none !important;
-  transform: none !important;
+  transform: scale(0.985) !important;
   opacity: 1 !important;
 }
 
@@ -3003,10 +3003,10 @@ input[type="number"] {
 .segment-control {
   display: flex;
   gap: 4px;
-  background: var(--bg);
+  background: var(--surface2);
   border: 1px solid var(--border);
-  padding: 3px;
-  border-radius: 9999px;
+  padding: 4px;
+  border-radius: 14px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -3027,14 +3027,14 @@ input[type="number"] {
   flex: 1;
   min-width: 0;
   padding: 8px 10px;
-  border-radius: 9999px;
+  border-radius: 10px;
   font-size: 12.5px;
   font-weight: 550;
   cursor: pointer;
   border: 1px solid transparent;
   background: transparent;
-  color: var(--text-2);
-  transition: all var(--transition);
+  color: var(--text-3);
+  transition: all 0.15s ease;
   min-height: 38px;
   display: flex;
   align-items: center;
@@ -3234,11 +3234,11 @@ input[type="number"] {
   font-weight: 750;
 }
 .modal.expense-drawer-modal .segment-control {
-  padding: 3px;
-  border-radius: 9999px;
+  padding: 4px;
+  border-radius: 14px;
   background: var(--surface2);
   border: 1px solid var(--border) !important;
-  gap: 3px;
+  gap: 4px;
   display: flex;
   align-items: center;
   width: 100%;
@@ -3256,18 +3256,18 @@ input[type="number"] {
 }
 .modal.expense-drawer-modal .segment-btn {
   flex: 1 1 0;
-  min-height: 32px;
-  height: 32px;
-  padding: 4px 8px;
-  font-size: 12px;
-  font-weight: 600;
-  gap: 5px;
-  border-radius: 9999px;
-  border: none !important;
-  color: var(--text-2) !important;
+  min-height: 38px;
+  height: 38px;
+  padding: 6px 8px;
+  font-size: 12.5px;
+  font-weight: 550;
+  gap: 6px;
+  border-radius: 10px;
+  border: 1px solid transparent !important;
+  color: var(--text-3) !important;
   background: transparent !important;
   box-shadow: none !important;
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: all 0.15s ease;
   user-select: none;
   display: inline-flex;
   align-items: center;
@@ -3277,9 +3277,9 @@ input[type="number"] {
 }
 .modal.expense-drawer-modal .segment-btn svg {
   flex-shrink: 0;
-  width: 13.5px;
-  height: 13.5px;
-  color: var(--text-2) !important;
+  width: 14px;
+  height: 14px;
+  color: inherit !important;
   transition: color 0.15s ease;
 }
 .modal.expense-drawer-modal .segment-btn:hover:not(.active) {
@@ -3306,8 +3306,8 @@ input[type="number"] {
 [data-theme="dark"] .modal.expense-drawer-modal .segment-btn.active-accent {
   background: #ffffff !important;
   color: #09090b !important;
-  border: 1px solid rgba(0, 0, 0, 0.16) !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25) !important;
+  border: 1px solid #ffffff !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25) !important;
   font-weight: 700 !important;
 }
 .modal.expense-drawer-modal .segment-btn.active svg,
@@ -3324,9 +3324,15 @@ input[type="number"] {
 [data-theme="light"] .modal.expense-drawer-modal .segment-btn.active-accent {
   background: #18181b !important;
   color: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.16) !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.16) !important;
+  border: 1px solid #18181b !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18) !important;
   font-weight: 700 !important;
+}
+.modal.expense-drawer-modal .segment-btn.active svg,
+.modal.expense-drawer-modal .segment-btn.active-accent svg,
+[data-theme="light"] .modal.expense-drawer-modal .segment-btn.active svg,
+[data-theme="light"] .modal.expense-drawer-modal .segment-btn.active-accent svg {
+  color: #ffffff !important;
 }
 [data-color-scheme="light"] .modal.expense-drawer-modal .segment-btn.active svg,
 [data-color-scheme="light"] .modal.expense-drawer-modal .segment-btn.active-accent svg,
@@ -4024,15 +4030,29 @@ input[type="number"] {
   .app-layout { height: 100%; }
   .main-content.mobile-layout {
     height: 100%;
-    padding-top: calc(58px + env(safe-area-inset-top, 0px));
+    padding-top: calc(48px + env(safe-area-inset-top, 0px));
     padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
-  .view-container { padding: 4px 12px calc(96px + env(safe-area-inset-bottom, 0px)); }
-  .page-title { display: none; }
-  .page-header { margin-bottom: 8px; }
-  .page-header:not(:has(button:not(.desktop-only))) { display: none; }
+  .view-container { padding: 8px 12px calc(96px + env(safe-area-inset-bottom, 0px)) !important; }
+  .page-title { display: none !important; }
+  .page-header {
+    display: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 0 !important;
+  }
+  .page-header.wallets-page-header,
+  .page-header:has(.page-header-actions) {
+    display: flex !important;
+    height: auto !important;
+    margin-bottom: 10px !important;
+  }
+  .recurring-header-wrap {
+    gap: 0 !important;
+    margin-bottom: 8px !important;
+  }
   .page-header-actions {
     width: 100%;
     display: flex;
@@ -4460,9 +4480,24 @@ input[type="number"] {
 
 /* Responsive Visibility Helpers */
 .mobile-only { display: none !important; }
-.desktop-only { display: block !important; }
-button.desktop-only, .btn.desktop-only { display: inline-flex !important; }
-table.desktop-only { display: table !important; }
+
+@media (min-width: 1025px) {
+  .desktop-only { display: block !important; }
+  button.desktop-only, .btn.desktop-only { display: inline-flex !important; }
+  table.desktop-only { display: table !important; }
+}
+
+@media (max-width: 1024px) {
+  .desktop-only,
+  button.desktop-only,
+  .btn.desktop-only,
+  table.desktop-only,
+  div.desktop-only,
+  span.desktop-only,
+  #desktop-add-contact-btn {
+    display: none !important;
+  }
+}
 
 /* Dashboard grid */
 .dashboard-grid {
@@ -4495,25 +4530,29 @@ table.desktop-only { display: table !important; }
   border: 1px solid var(--border);
   border-radius: 18px;
   overflow: hidden;
-  transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  transition: transform 0.22s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.22s ease;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  will-change: transform;
 }
 
 .mobile-expense-card:hover {
   background: var(--surface2);
   border-color: var(--border2);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transform: scale(1.01);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
 }
 
 [data-color-scheme="dark"] .mobile-expense-card:hover,
 [data-theme="dark"] .mobile-expense-card:hover {
   background: var(--surface2);
-  border-color: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: scale(1.01);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
 }
 
 .mobile-expense-card:active {
-  opacity: 0.92;
+  transform: scale(0.985);
+  transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .mobile-expense-card.is-expanded {
@@ -4712,21 +4751,28 @@ table.desktop-only { display: table !important; }
 /* Screen Breakpoints */
 @media (max-width: 768px) {
   .mobile-only { display: block !important; }
-  .desktop-only { display: none !important; }
+  .desktop-only,
+  button.desktop-only,
+  .btn.desktop-only,
   table.desktop-only { display: none !important; }
 
   .dashboard-grid { grid-template-columns: 1fr; }
 
   .page-header {
+    display: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 0 !important;
+  }
+  .page-header.wallets-page-header,
+  .page-header:has(.page-header-actions) {
+    display: flex !important;
+    height: auto !important;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    margin-bottom: 14px;
-  }
-  .page-header > .btn {
-    width: auto;
-    justify-content: center;
+    margin-bottom: 10px !important;
   }
   .page-header-actions {
     width: 100%;
@@ -5682,6 +5728,63 @@ table.desktop-only { display: table !important; }
 @keyframes badgePulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.16); box-shadow: 0 3px 8px rgba(239, 83, 80, 0.5); }
+}
+
+/* Notification Drawer Cards matching Dashboard Card styling */
+.notification-card {
+  background: var(--surface2);
+  background-image: none;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  position: relative;
+  box-sizing: border-box;
+}
+
+[data-color-scheme="dark"] .notification-card,
+[data-theme="dark"] .notification-card {
+  background: var(--surface2);
+  background-image: none;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.notification-card:hover {
+  border-color: var(--border2);
+}
+
+[data-color-scheme="dark"] .notification-card:hover,
+[data-theme="dark"] .notification-card:hover {
+  border-color: var(--border2);
+}
+
+.notification-card-update {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  transition: border-color 0.15s ease;
+}
+
+[data-color-scheme="dark"] .notification-card-update,
+[data-theme="dark"] .notification-card-update {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.notification-card-update:hover {
+  border-color: var(--border2);
 }
 
 
@@ -7996,11 +8099,17 @@ body.no-animations *::after,
     user-select: none !important;
   }
   .view-container {
-    padding: 4px 10px calc(96px + env(safe-area-inset-bottom, 0px)) !important;
+    padding: 8px 10px calc(96px + env(safe-area-inset-bottom, 0px)) !important;
     max-width: 100vw;
     width: 100%;
     box-sizing: border-box;
     overflow-x: hidden;
+  }
+  .page-header:not(.wallets-page-header) {
+    display: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 0 !important;
   }
   .card {
     padding: 14px 12px !important;
@@ -8035,7 +8144,9 @@ body.no-animations *::after,
   .dashboard-grid > .card {
     margin-bottom: 0 !important;
   }
-  .desktop-only {
+  .desktop-only,
+  button.desktop-only,
+  .btn.desktop-only {
     display: none !important;
   }
   .expense-flow-switch,
@@ -9134,6 +9245,183 @@ body.no-animations *::after,
 [data-color-scheme="dark"] .app-contact-badge.subscription {
   color: #c084fc;
 }
+
+/* ==========================================================================
+   Desktop Search Bar Pill (Centered on all pages)
+   ========================================================================== */
+.desktop-search-pill {
+  display: none !important;
+}
+
+/* Tablet & Mobile: hide long search bar */
+@media (max-width: 1024px) {
+  .desktop-search-pill {
+    display: none !important;
+  }
+}
+
+/* Desktop only: show long search bar */
+@media (min-width: 1025px) {
+  .desktop-search-pill {
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+    height: 40px;
+    width: 100%;
+    max-width: 440px;
+    min-width: 140px;
+    margin: 0 auto;
+    padding: 0 16px;
+    border-radius: 9999px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-3);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.18s ease;
+    outline: none;
+    user-select: none;
+    flex-shrink: 1;
+  }
+
+@keyframes modalPopIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+  .desktop-search-pill:hover {
+    background: var(--surface3);
+    border-color: var(--border2);
+    color: var(--text-2);
+  }
+
+  .desktop-search-pill:focus-visible,
+  .desktop-search-pill:active {
+    border-color: var(--border2);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.08);
+    background: var(--surface);
+    color: var(--text);
+  }
+
+  .desktop-search-pill-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-3);
+    flex-shrink: 0;
+    transition: color 0.15s ease;
+  }
+
+  .desktop-search-pill:hover .desktop-search-pill-icon {
+    color: var(--text-2);
+  }
+
+  .desktop-search-pill:focus-visible .desktop-search-pill-icon {
+    color: var(--text);
+  }
+
+  .desktop-search-pill-text {
+    flex: 1;
+    font-size: 13.5px;
+    font-weight: 450;
+    letter-spacing: -0.01em;
+    color: var(--text-3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.15s ease;
+  }
+
+  .desktop-search-pill:hover .desktop-search-pill-text {
+    color: var(--text-2);
+  }
+
+  .desktop-search-pill:focus-visible .desktop-search-pill-text {
+    color: var(--text);
+  }
+}
+
+/* ==========================================================================
+   Wallets Header Responsive Behavior
+   - When space is less, turn Transfer Funds into just an icon
+   - If space is still less, decrease the length of the search bar
+   ========================================================================== */
+.wallets-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.wallets-page-header .page-title {
+  flex-shrink: 0;
+}
+
+.wallets-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap !important;
+  flex-shrink: 0;
+}
+
+.wallet-transfer-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 9999px;
+  font-weight: 650;
+  font-size: 13px;
+  padding: 9px 16px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.wallet-transfer-btn:hover {
+  background: var(--surface3);
+  border-color: var(--border2);
+}
+
+.wallets-page-header .desktop-search-pill {
+  flex: 1 1 auto;
+  max-width: 440px;
+  min-width: 140px;
+  margin: 0 auto;
+}
+
+/* 1. On desktop when space is less (e.g. 1025px - 1180px), turn Transfer Funds into just an icon */
+@media (min-width: 1025px) and (max-width: 1180px) {
+  .wallet-transfer-btn .wallet-transfer-btn-text {
+    display: none;
+  }
+  .wallet-transfer-btn {
+    padding: 9px 12px;
+    gap: 0;
+    min-width: 38px;
+    height: 38px;
+  }
+}
+
+/* Preserve full label on tablet & mobile screens */
+@media (max-width: 1024px) {
+  .wallet-transfer-btn .wallet-transfer-btn-text {
+    display: inline !important;
+  }
+}
+
+
 
 
 

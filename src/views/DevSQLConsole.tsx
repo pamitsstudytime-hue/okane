@@ -21,6 +21,7 @@ import {
 import { executeRawSQL, generateSQLDumpString, importSQLDumpString } from '../db';
 import { useStore } from '../store';
 import type { ViewName, AppDB } from '../types';
+import DesktopSearchBar from '../components/DesktopSearchBar';
 
 interface DevSQLConsoleProps {
   onNavigate?: (v: ViewName) => void;
@@ -373,6 +374,9 @@ export default function DevSQLConsole({ onNavigate }: DevSQLConsoleProps) {
             </p>
           </div>
         </div>
+
+        {/* Center: Desktop Search Bar */}
+        <DesktopSearchBar placeholder="Search database tables, records..." defaultTab="all" />
 
         {/* Right: Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>

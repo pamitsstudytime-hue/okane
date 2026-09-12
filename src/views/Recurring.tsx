@@ -17,6 +17,7 @@ import RecurringModal from '../components/RecurringModal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import AutopayCard from '../components/recurring/AutopayCard';
 import AutopayFilterBar from '../components/recurring/AutopayFilterBar';
+import DesktopSearchBar from '../components/DesktopSearchBar';
 import type { AutopayStatusFilter, AutopayFreqFilter, AutopaySortOption } from '../components/recurring/AutopayFilterBar';
 
 interface Props {
@@ -240,13 +241,15 @@ export default function Recurring({ onNavigate, initialArg }: Props) {
   return (
     <div className="view-container">
       {/* Header Bar */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 14 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+      <div className="recurring-header-wrap" style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 14 }}>
+        <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <h1 className="page-title" style={{ fontSize: '1.35rem', margin: 0, fontWeight: 700, letterSpacing: '-0.02em' }}>
               Autopay
             </h1>
           </div>
+          <DesktopSearchBar placeholder="Search subscriptions, autopay..." defaultTab="recurring" />
+          <div className="desktop-only" style={{ width: 80 }} />
         </div>
 
         {/* Segment Tabs + Filter Button (No Top Search Bar) */}

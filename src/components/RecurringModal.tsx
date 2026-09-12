@@ -1124,15 +1124,12 @@ export default function RecurringModal({ rule, defaultKind = 'autopay', onClose 
                   )}
                 </div>
 
-                {/* Segmented Filter Pills */}
+                {/* Filter Chips */}
                 <div
                   style={{
                     display: 'flex',
-                    background: 'var(--surface)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 8,
-                    padding: 1.5,
-                    gap: 1.5,
+                    alignItems: 'center',
+                    gap: 6,
                     flexShrink: 0,
                   }}
                 >
@@ -1148,15 +1145,22 @@ export default function RecurringModal({ rule, defaultKind = 'autopay', onClose 
                       type="button"
                       onClick={() => setPickerTypeFilter(f.id)}
                       style={{
-                        border: 'none',
-                        background: pickerTypeFilter === f.id ? 'var(--text)' : 'transparent',
+                        border: pickerTypeFilter === f.id ? '1px solid var(--text)' : '1px solid var(--border)',
+                        background: pickerTypeFilter === f.id ? 'var(--text)' : 'var(--surface2)',
                         color: pickerTypeFilter === f.id ? 'var(--bg)' : 'var(--text-3)',
-                        fontSize: 10,
+                        fontSize: 12,
                         fontWeight: pickerTypeFilter === f.id ? 700 : 500,
-                        padding: '2px 6px',
-                        borderRadius: 6,
+                        padding: '0 12px',
+                        height: 28,
+                        borderRadius: 9999,
                         cursor: 'pointer',
-                        transition: 'all 0.12s ease',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: pickerTypeFilter === f.id ? '0 1px 4px rgba(0, 0, 0, 0.18)' : 'none',
+                        transition: 'all 0.15s ease',
+                        whiteSpace: 'nowrap',
+                        boxSizing: 'border-box',
                       }}
                     >
                       {f.label}

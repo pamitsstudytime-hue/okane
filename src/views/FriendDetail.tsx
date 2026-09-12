@@ -13,6 +13,7 @@ import RecurringModal from '../components/RecurringModal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { ExpenseDetailDrawer } from '../components/ExpenseDetailDrawer';
 import { useBackButtonModal, BackPriority } from '../utils/backHandler';
+import DesktopSearchBar from '../components/DesktopSearchBar';
 
 interface Props {
   friendId: string;
@@ -124,7 +125,7 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
   return (
     <div className="view-container">
       {/* Top Desktop Back Button */}
-      <div className="hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+      <div className="hide-on-mobile" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 14 }}>
         <button
           type="button"
           className="btn btn-ghost btn-sm"
@@ -147,6 +148,8 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
           <ArrowLeft size={16} />
           <span>Back to Contacts</span>
         </button>
+        <DesktopSearchBar placeholder={`Search expenses with ${friend.name}...`} defaultTab="expenses" />
+        <div style={{ width: 120 }} />
       </div>
 
       {/* Hero Profile & Balance Overview Card */}

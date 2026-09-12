@@ -23,6 +23,7 @@ import SettleModal from '../components/SettleModal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import SettlementDetailModal from '../components/SettlementDetailModal';
 import SettlementFilterDrawer from '../components/SettlementFilterDrawer';
+import DesktopSearchBar from '../components/DesktopSearchBar';
 
 export type SettlementTimeframe = 'today' | 'yesterday' | 'this_week' | 'this_month' | 'last_month' | 'last_3_months' | 'this_year' | 'all';
 
@@ -300,6 +301,8 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
         <div>
           <h1 className="page-title">Settlements</h1>
         </div>
+        <DesktopSearchBar placeholder="Search settlements, debts..." defaultTab="settlements" />
+        <div className="desktop-only" style={{ width: 100 }} />
       </div>
 
       {/* Pending settlements section */}

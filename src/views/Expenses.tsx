@@ -11,6 +11,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import { ExpenseFilterBar } from '../components/expense/ExpenseFilterBar';
 import { ExpenseTableRow } from '../components/expenses/ExpenseTableRow';
 import { ExpenseMobileCard } from '../components/expenses/ExpenseMobileCard';
+import DesktopSearchBar from '../components/DesktopSearchBar';
 
 function getRelativeDateLabel(dateStr: string): string | null {
   const today = todayISO();
@@ -280,6 +281,7 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
         <div>
           <h1 className="page-title">Expenses</h1>
         </div>
+        <DesktopSearchBar placeholder="Search expenses..." defaultTab="expenses" />
         <button className="btn btn-primary desktop-only" onClick={() => setShowAdd(true)}>
           <Plus size={16} /> Add Expense
         </button>

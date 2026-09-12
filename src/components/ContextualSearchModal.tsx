@@ -14,7 +14,7 @@ import {
   Tv,
   ChevronRight,
   Sparkles,
-  Sliders,
+  Settings as SettingsIcon,
   Palette,
   Database,
   Tag,
@@ -22,6 +22,8 @@ import {
   HelpCircle,
   FlaskConical,
   MessageSquarePlus,
+  ShieldCheck,
+  Sliders,
 } from 'lucide-react';
 import { useStore } from '../store';
 import type { ViewName, Trip, Expense, Settlement, RecurringRule, Wallet } from '../types';
@@ -43,9 +45,11 @@ interface Props {
   onClose: () => void;
   activeView: ViewName;
   onNavigate: (view: ViewName, arg?: string) => void;
+  initialQuery?: string;
+  initialTab?: SearchTab;
 }
 
-type SearchTab = 'all' | 'expenses' | 'contacts' | 'wallets' | 'settlements' | 'trips' | 'recurring' | 'settings';
+export type SearchTab = 'all' | 'expenses' | 'contacts' | 'wallets' | 'settlements' | 'trips' | 'recurring' | 'settings';
 
 interface TabItem {
   id: SearchTab;
@@ -61,7 +65,7 @@ const TABS: TabItem[] = [
   { id: 'settlements', label: 'Settlements', icon: Handshake },
   { id: 'trips', label: 'Trips', icon: Compass },
   { id: 'recurring', label: 'Subscriptions', icon: RefreshCw },
-  { id: 'settings', label: 'Settings', icon: Sliders },
+  { id: 'settings', label: 'Settings', icon: SettingsIcon },
 ];
 
 interface SettingsSearchItem {
@@ -77,7 +81,7 @@ const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   {
     id: 'appearance',
     title: 'Appearance & Theme',
-    subtitle: 'Dark / Light mode, custom accent color, theme presets & palette',
+    subtitle: 'Theme, dark/light mode & accent colors',
     category: 'General',
     icon: Palette,
     tags: ['theme', 'dark', 'light', 'mode', 'color', 'accent', 'palette', 'neon violet', 'classic blue', 'emerald', 'coral', 'amber', 'rose', 'monochrome', 'appearance', 'look', 'style']
@@ -85,7 +89,7 @@ const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   {
     id: 'preferences',
     title: 'Preferences & Currency',
-    subtitle: 'Default currency (INR, USD...), default wallet, status & auto open keyboard',
+    subtitle: 'Currency, default wallet & keyboard settings',
     category: 'Preferences',
     icon: Sliders,
     tags: ['currency', 'money', 'inr', 'usd', 'eur', 'gbp', 'jpy', 'cad', 'aud', 'wallet', 'default', 'status', 'paid', 'unpaid', 'preferences', 'defaults', 'symbol', 'format', 'keyboard', 'auto open keyboard', 'search', 'textbox', 'mobile keyboard']
@@ -93,15 +97,23 @@ const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   {
     id: 'categories',
     title: 'Category & Tag Management',
-    subtitle: 'Manage expense categories, tags, custom color icons & labels',
+    subtitle: 'Manage categories, tags & icons',
     category: 'General',
     icon: Tag,
     tags: ['categories', 'category', 'tags', 'tag', 'labels', 'label', 'color', 'icon', 'food', 'shopping', 'fuel', 'bills', 'groceries', 'travel', 'rent', 'entertainment']
   },
   {
+    id: 'security',
+    title: 'Security & Privacy',
+    subtitle: 'PIN lock, biometric & privacy',
+    category: 'Security',
+    icon: ShieldCheck,
+    tags: ['security', 'privacy', 'pin', 'lock', 'biometric', 'fingerprint', 'face id', 'passcode']
+  },
+  {
     id: 'data-backup',
     title: 'Data Management & Backup',
-    subtitle: 'Export backup, export CSV / JSON, restore data, SQL dump, or reset storage',
+    subtitle: 'Export, import, backup & reset data',
     category: 'Data',
     icon: Database,
     tags: ['data', 'export', 'import', 'backup', 'restore', 'reset', 'sql', 'dump', 'download', 'csv', 'json', 'clear', 'wipe', 'storage', 'database', 'sync']
@@ -109,7 +121,7 @@ const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   {
     id: 'advanced-features',
     title: 'Advanced Features',
-    subtitle: 'Category envelopes budget, Autopay smart rules, Trips & split expenses',
+    subtitle: 'Envelopes budget, autopay & trip splits',
     category: 'Features',
     icon: Sparkles,
     tags: ['advanced', 'envelopes', 'envelope', 'budget', 'budgeting', 'autopay', 'rules', 'trips', 'split', 'splits', 'group', 'travel', 'features']
@@ -117,7 +129,7 @@ const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   {
     id: 'performance',
     title: 'Performance & Animations',
-    subtitle: 'Smooth UI animations toggle, ultra fast mode & FPS boost',
+    subtitle: 'Smooth animations & fast mode',
     category: 'Features',
     icon: Zap,
     tags: ['performance', 'animations', 'animation', 'fps', 'speed', 'fast', 'smooth', 'ultra', 'render', 'transitions']
@@ -125,7 +137,7 @@ const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   {
     id: 'user-guide',
     title: 'Okane User Guide & Tour',
-    subtitle: 'Interactive tutorial, feature walkthroughs & getting started FAQ',
+    subtitle: 'Interactive tutorial & feature tour',
     category: 'Support',
     icon: Compass,
     tags: ['guide', 'tour', 'help', 'tutorial', 'walkthrough', 'faq', 'support', 'how to', 'docs', 'manual', 'learn']
@@ -133,7 +145,7 @@ const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   {
     id: 'dev-mode',
     title: 'Developer Mode & SQL Console',
-    subtitle: 'Experimental tools, SQL query console & Max AI assistant settings',
+    subtitle: 'Developer console & query tools',
     category: 'System',
     icon: FlaskConical,
     tags: ['dev', 'developer', 'sql', 'console', 'query', 'ai', 'assistant', 'engine', 'experimental', 'database', 'tools', 'debug', 'terminal']
@@ -141,7 +153,7 @@ const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   {
     id: 'app-info',
     title: 'App Info & Updates',
-    subtitle: `Okane v${CURRENT_APP_VERSION} • Check for updates, build notes & changelog`,
+    subtitle: `Okane v${CURRENT_APP_VERSION} • Version info & changelog`,
     category: 'System',
     icon: HelpCircle,
     tags: ['version', 'update', 'updates', 'build', 'github', 'info', 'release', 'changelog', 'about', 'app info']
@@ -149,14 +161,14 @@ const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   {
     id: 'feedback',
     title: 'Report Bug / Feature Request',
-    subtitle: 'Submit feedback, report a bug, or suggest new feature ideas on GitHub',
+    subtitle: 'Report a bug or suggest feature ideas',
     category: 'Support',
     icon: MessageSquarePlus,
     tags: ['bug', 'feature', 'issue', 'feedback', 'github', 'report', 'request', 'suggest', 'support', 'contact']
   }
 ];
 
-export default function ContextualSearchModal({ open, onClose, activeView, onNavigate }: Props) {
+export default function ContextualSearchModal({ open, onClose, activeView, onNavigate, initialQuery, initialTab }: Props) {
   const { db } = useStore();
   const muiTheme = useTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
@@ -194,6 +206,7 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
   }, [defaultTab]);
 
   const [query, setQuery] = useState('');
+  const [isInputFocused, setIsInputFocused] = useState(false);
   const [selectedTab, setSelectedTab] = useState<SearchTab | null>(null);
   const activeTab = selectedTab ?? defaultTab;
   const inputRef = useRef<HTMLInputElement>(null);
@@ -207,6 +220,7 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
 
   const handleClose = React.useCallback(() => {
     setQuery('');
+    setIsInputFocused(false);
     setSelectedTab(null);
     setSelectedDetailGe(null);
     setSelectedSettlement(null);
@@ -222,8 +236,8 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
   if (prevOpen !== open) {
     setPrevOpen(open);
     if (open) {
-      setQuery('');
-      setSelectedTab(null);
+      setQuery(initialQuery ?? '');
+      setSelectedTab(initialTab ?? null);
     }
   }
 
@@ -391,10 +405,9 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
         inset: 0,
         zIndex: 9990,
         display: 'flex',
-        alignItems: isMobile ? 'flex-end' : 'flex-start',
+        alignItems: isMobile ? 'flex-end' : 'center',
         justifyContent: 'center',
         padding: isMobile ? '0px' : '20px 16px',
-        paddingTop: isMobile ? '0px' : 'calc(env(safe-area-inset-top, 0px) + 24px)',
         backgroundColor: 'rgba(0, 0, 0, 0.72)',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
@@ -408,42 +421,46 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
         style={{
           width: '100%',
           maxWidth: isMobile ? '100%' : '620px',
-          height: isMobile ? '70vh' : 'auto',
-          maxHeight: isMobile ? '72vh' : '82vh',
+          height: isMobile ? '78vh' : 'auto',
+          maxHeight: isMobile ? '80vh' : '84vh',
           display: 'flex',
           flexDirection: 'column',
-          backgroundColor: 'var(--surface)',
+          backgroundColor: 'var(--drawer-bg, var(--surface))',
           border: isMobile ? 'none' : '1px solid var(--border)',
           borderTop: isMobile ? '1px solid var(--border)' : undefined,
-          borderTopLeftRadius: isMobile ? '20px' : '16px',
-          borderTopRightRadius: isMobile ? '20px' : '16px',
-          borderBottomLeftRadius: isMobile ? '0px' : '16px',
-          borderBottomRightRadius: isMobile ? '0px' : '16px',
+          borderTopLeftRadius: isMobile ? '24px' : '20px',
+          borderTopRightRadius: isMobile ? '24px' : '20px',
+          borderBottomLeftRadius: isMobile ? '0px' : '20px',
+          borderBottomRightRadius: isMobile ? '0px' : '20px',
           boxShadow: isMobile
-            ? '0 -8px 32px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.05)'
+            ? '0 -10px 36px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05)'
             : '0 24px 48px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px var(--border)',
           overflow: 'hidden',
-          animation: isMobile ? 'slideup 0.25s cubic-bezier(0.16, 1, 0.3, 1)' : undefined,
+          animation: isMobile
+            ? 'slideup 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
+            : 'modalPopIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+          paddingBottom: isMobile ? 'env(safe-area-inset-bottom, 0px)' : '0px',
         }}
       >
         {/* Mobile Drawer Grab Handle */}
         {isMobile && (
           <div
             style={{
-              paddingTop: '10px',
-              paddingBottom: '2px',
+              paddingTop: '12px',
+              paddingBottom: '4px',
               display: 'flex',
               justifyContent: 'center',
-              backgroundColor: 'var(--surface)',
+              backgroundColor: 'transparent',
               cursor: 'grab',
             }}
           >
             <div
               style={{
-                width: '36px',
+                width: '38px',
                 height: '4px',
-                borderRadius: '2px',
+                borderRadius: '9999px',
                 backgroundColor: 'var(--border2)',
+                opacity: 0.8,
               }}
             />
           </div>
@@ -452,12 +469,13 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
         {/* Search Input Header */}
         <div
           style={{
-            padding: isMobile ? '10px 16px 6px 16px' : '16px 20px 8px 20px',
+            padding: isMobile ? '12px 16px 8px 16px' : '18px 20px 10px 20px',
             borderBottom: 'none',
             display: 'flex',
             alignItems: 'center',
-            backgroundColor: 'var(--surface)',
+            backgroundColor: 'transparent',
             gap: 10,
+            flexShrink: 0,
           }}
         >
           {/* Inner Search Box */}
@@ -466,21 +484,24 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
               flex: 1,
               display: 'flex',
               alignItems: 'center',
-              gap: '12px',
+              gap: '10px',
               backgroundColor: 'var(--surface2)',
-              border: '1px solid var(--border)',
-              borderRadius: '14px',
-              padding: isMobile ? '10px 14px' : '12px 16px',
+              border: isInputFocused ? '1px solid var(--border2)' : '1px solid var(--border)',
+              borderRadius: '16px',
+              padding: isMobile ? '10px 14px' : '11px 16px',
               minWidth: 0,
+              transition: 'all 0.15s ease',
             }}
           >
-            <Search size={20} style={{ color: 'var(--accent, #6366f1)', flexShrink: 0 }} />
+            <Search size={19} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
             <input
               ref={inputRef}
               type="text"
               placeholder={placeholderText}
               value={query}
               onChange={e => setQuery(e.target.value)}
+              onFocus={() => setIsInputFocused(true)}
+              onBlur={() => setIsInputFocused(false)}
               style={{
                 flex: 1,
                 background: 'transparent',
@@ -525,11 +546,14 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
             className="btn-icon"
             onClick={onClose}
             style={{
-              width: 32,
-              height: 32,
+              width: 36,
+              height: 36,
               borderRadius: 9999,
               display: 'grid',
               placeItems: 'center',
+              backgroundColor: 'var(--surface2)',
+              border: '1px solid var(--border)',
+              color: 'var(--text-2)',
               cursor: 'pointer',
               flexShrink: 0,
             }}
@@ -543,15 +567,17 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
         <div
           className="search-tabs-scroll"
           style={{
-            padding: '6px 16px 12px 16px',
+            padding: isMobile ? '4px 16px 12px 16px' : '4px 20px 14px 20px',
             borderBottom: 'none',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
+            flexWrap: 'nowrap',
             overflowX: 'auto',
-            backgroundColor: 'var(--surface)',
+            gap: '8px',
+            backgroundColor: 'transparent',
             scrollbarWidth: 'none',
             WebkitOverflowScrolling: 'touch',
+            flexShrink: 0,
           }}
         >
           {orderedTabs.map(tab => {
@@ -562,25 +588,39 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                 key={tab.id}
                 type="button"
                 onClick={() => setSelectedTab(tab.id)}
+                onMouseEnter={e => {
+                  if (!isSelected) {
+                    e.currentTarget.style.borderColor = 'var(--border2)';
+                    e.currentTarget.style.backgroundColor = 'var(--surface3)';
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!isSelected) {
+                    e.currentTarget.style.borderColor = 'var(--border)';
+                    e.currentTarget.style.backgroundColor = 'var(--surface2)';
+                  }
+                }}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
-                  padding: '5px 12px',
-                  borderRadius: '20px',
-                  fontSize: '12.5px',
-                  fontWeight: isSelected ? 650 : 500,
-                  backgroundColor: isSelected ? 'var(--accent)' : 'var(--surface2)',
-                  color: isSelected ? 'var(--accent-contrast, #ffffff)' : 'var(--text-2)',
-                  border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border)',
-                  boxShadow: isSelected ? '0 1px 4px var(--accent-soft, rgba(0, 0, 0, 0.15))' : 'none',
+                  height: '32px',
+                  padding: '0 14px',
+                  borderRadius: '9999px',
+                  fontSize: '13px',
+                  fontWeight: isSelected ? 700 : 500,
+                  backgroundColor: isSelected ? 'var(--text)' : 'var(--surface2)',
+                  color: isSelected ? 'var(--bg)' : 'var(--text-2)',
+                  border: isSelected ? '1px solid transparent' : '1px solid var(--border)',
+                  boxShadow: isSelected ? '0 2px 8px rgba(0, 0, 0, 0.2)' : 'none',
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
                   flexShrink: 0,
                   transition: 'all 0.15s ease',
+                  boxSizing: 'border-box',
                 }}
               >
-                <Icon size={14} style={{ color: isSelected ? 'var(--accent-contrast, #ffffff)' : 'var(--text-3)' }} />
+                <Icon size={14} style={{ color: isSelected ? 'var(--bg)' : 'var(--text-3)' }} />
                 <span>{tab.label}</span>
               </button>
             );
@@ -593,11 +633,11 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
             flex: 1,
             overflowY: 'auto',
             WebkitOverflowScrolling: 'touch',
-            padding: '14px 16px',
-            paddingBottom: isMobile ? 'calc(env(safe-area-inset-bottom, 0px) + 20px)' : '16px',
+            padding: '10px 16px 16px',
+            paddingBottom: isMobile ? 'calc(env(safe-area-inset-bottom, 0px) + 24px)' : '16px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '16px',
+            gap: '18px',
           }}
         >
           {totalResultsCount === 0 ? (
@@ -638,15 +678,15 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                       textTransform: 'uppercase',
                       letterSpacing: '0.6px',
                       color: 'var(--text-3)',
-                      marginBottom: '8px',
-                      paddingLeft: '2px',
+                      marginBottom: '10px',
+                      paddingLeft: '4px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
                     }}
                   >
                     <span>Expenses ({matchingExpenses.length})</span>
-                    {!q && <span style={{ fontSize: '10px', fontWeight: 500, opacity: 0.8 }}>Recent</span>}
+                    {!q && <span style={{ fontSize: '10.5px', fontWeight: 600, letterSpacing: '0.5px', opacity: 0.9 }}>Recent</span>}
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {matchingExpenses.map(ge => {
@@ -669,10 +709,10 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between',
-                            padding: '10px 12px',
+                            padding: '12px 14px',
                             background: 'var(--surface2)',
                             border: '1px solid var(--border)',
-                            borderRadius: '12px',
+                            borderRadius: '16px',
                             cursor: 'pointer',
                             transition: 'all 0.15s ease',
                           }}
@@ -683,19 +723,22 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                             }
                           }}
                           onMouseEnter={ev => {
-                            ev.currentTarget.style.borderColor = 'var(--accent)';
+                            ev.currentTarget.style.borderColor = 'var(--border2)';
                           }}
                           onMouseLeave={ev => {
                             ev.currentTarget.style.borderColor = 'var(--border)';
                           }}
+                          onMouseDown={ev => {
+                            ev.currentTarget.style.borderColor = 'var(--border2)';
+                          }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '11px', minWidth: 0, flex: '1 1 auto', overflow: 'hidden' }}>
-                            {/* Clean Category Icon */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: '1 1 auto', overflow: 'hidden' }}>
+                            {/* Clean Category Icon Squircle */}
                             <div
                               style={{
-                                width: '36px',
-                                height: '36px',
-                                borderRadius: '10px',
+                                width: '42px',
+                                height: '42px',
+                                borderRadius: '13px',
                                 backgroundColor: catMeta.bg,
                                 border: `1px solid ${catMeta.border}`,
                                 display: 'grid',
@@ -704,7 +747,7 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                                 color: catMeta.color,
                               }}
                             >
-                              <CategoryIcon category={catMeta.name} icon={catMeta.icon} size={18} style={{ color: catMeta.color }} />
+                              <CategoryIcon category={catMeta.name} icon={catMeta.icon} size={20} style={{ color: catMeta.color }} />
                             </div>
 
                             {/* Info */}
@@ -720,8 +763,8 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                               >
                                 <span
                                   style={{
-                                    fontSize: '13.5px',
-                                    fontWeight: 600,
+                                    fontSize: '14.5px',
+                                    fontWeight: 650,
                                     color: 'var(--text)',
                                     overflow: 'hidden',
                                     textOverflow: 'ellipsis',
@@ -738,7 +781,7 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                                       gap: '3px',
                                       padding: '1px 6px',
                                       borderRadius: '4px',
-                                      fontSize: '10px',
+                                      fontSize: '10.5px',
                                       fontWeight: 600,
                                       backgroundColor: 'var(--accent-soft)',
                                       color: 'var(--accent)',
@@ -758,9 +801,9 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                                   display: 'flex',
                                   alignItems: 'center',
                                   gap: '5px',
-                                  fontSize: '11.5px',
+                                  fontSize: '12px',
                                   color: 'var(--text-3)',
-                                  marginTop: '2px',
+                                  marginTop: '3px',
                                   overflow: 'hidden',
                                   textOverflow: 'ellipsis',
                                   whiteSpace: 'nowrap',
@@ -806,18 +849,19 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                           </div>
 
                           {/* Right Amount */}
-                          <div style={{ textAlign: 'right', flexShrink: 0, paddingLeft: '10px' }}>
+                          <div style={{ textAlign: 'right', flexShrink: 0, paddingLeft: '12px' }}>
                             <div
                               style={{
-                                fontSize: '14px',
+                                fontSize: '15px',
                                 fontWeight: 700,
+                                fontVariantNumeric: 'tabular-nums',
                                 color: isIn ? 'var(--credit, #22c55e)' : (ge.flow === 'out' ? 'var(--debit, #ef4444)' : 'var(--text)'),
                               }}
                             >
                               {isIn ? '+' : (ge.flow === 'out' ? '-' : '')}{fmtMoney(ge.totalAmount, currency)}
                             </div>
                             {isSplit && ge.personalShare > 0 && ge.personalShare !== ge.totalAmount && (
-                              <div style={{ fontSize: '10.5px', color: 'var(--text-3)', fontWeight: 500, marginTop: '1px' }}>
+                              <div style={{ fontSize: '11px', color: 'var(--text-3)', fontWeight: 500, marginTop: '2px' }}>
                                 You: {fmtMoney(ge.personalShare, currency)}
                               </div>
                             )}
@@ -839,8 +883,8 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                       textTransform: 'uppercase',
                       letterSpacing: '0.6px',
                       color: 'var(--text-3)',
-                      marginBottom: '8px',
-                      paddingLeft: '2px',
+                      marginBottom: '10px',
+                      paddingLeft: '4px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
@@ -868,10 +912,10 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between',
-                            padding: '11px 13px',
+                            padding: '12px 14px',
                             background: 'var(--surface2)',
                             border: '1px solid var(--border)',
-                            borderRadius: '12px',
+                            borderRadius: '16px',
                             cursor: 'pointer',
                             transition: 'all 0.15s ease',
                           }}
@@ -883,30 +927,33 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                             }
                           }}
                           onMouseEnter={ev => {
-                            ev.currentTarget.style.borderColor = 'var(--accent)';
+                            ev.currentTarget.style.borderColor = 'var(--border2)';
                           }}
                           onMouseLeave={ev => {
                             ev.currentTarget.style.borderColor = 'var(--border)';
                           }}
+                          onMouseDown={ev => {
+                            ev.currentTarget.style.borderColor = 'var(--border2)';
+                          }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '11px', minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
                             <div
                               style={{
-                                width: '36px',
-                                height: '36px',
-                                borderRadius: '10px',
+                                width: '42px',
+                                height: '42px',
+                                borderRadius: '13px',
                                 display: 'grid',
                                 placeItems: 'center',
-                                fontSize: '13px',
+                                fontSize: '14px',
                                 fontWeight: 700,
                                 flexShrink: 0,
                                 ...avatarStyle,
                               }}
                             >
                               {fType === 'vendor' ? (
-                                <Store size={17} style={{ color: fColor || '#F59E0B' }} />
+                                <Store size={18} style={{ color: fColor || '#F59E0B' }} />
                               ) : fType === 'subscription' ? (
-                                <Tv size={17} style={{ color: fColor || '#8B5CF6' }} />
+                                <Tv size={18} style={{ color: fColor || '#8B5CF6' }} />
                               ) : (
                                 friendInitial(f.name, f.avatarNumber)
                               )}
@@ -914,8 +961,8 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                             <div style={{ minWidth: 0 }}>
                               <div
                                 style={{
-                                  fontSize: '13.5px',
-                                  fontWeight: 600,
+                                  fontSize: '14.5px',
+                                  fontWeight: 650,
                                   color: 'var(--text)',
                                   overflow: 'hidden',
                                   textOverflow: 'ellipsis',
@@ -924,23 +971,23 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                               >
                                 {f.name}
                               </div>
-                              <div style={{ fontSize: '11.5px', color: 'var(--text-3)', textTransform: 'capitalize', marginTop: '2px' }}>
+                              <div style={{ fontSize: '12px', color: 'var(--text-3)', textTransform: 'capitalize', marginTop: '3px' }}>
                                 {fType} {f.category ? `• ${f.category}` : ''}
                               </div>
                             </div>
                           </div>
 
-                          <div style={{ textAlign: 'right', flexShrink: 0, paddingLeft: '10px' }}>
+                          <div style={{ textAlign: 'right', flexShrink: 0, paddingLeft: '12px' }}>
                             {bal.net > 0.004 ? (
-                              <span style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--credit, #22c55e)' }}>
+                              <span style={{ fontSize: '13.5px', fontWeight: 650, color: 'var(--credit, #22c55e)' }}>
                                 Owes {fmtMoney(bal.owedToMe, currency)}
                               </span>
                             ) : bal.net < -0.004 ? (
-                              <span style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--debit, #ef4444)' }}>
+                              <span style={{ fontSize: '13.5px', fontWeight: 650, color: 'var(--debit, #ef4444)' }}>
                                 You owe {fmtMoney(bal.owedByMe, currency)}
                               </span>
                             ) : (
-                              <span style={{ fontSize: '12.5px', fontWeight: 500, color: 'var(--text-3)' }}>
+                              <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-3)' }}>
                                 Settled
                               </span>
                             )}
@@ -962,8 +1009,8 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                       textTransform: 'uppercase',
                       letterSpacing: '0.6px',
                       color: 'var(--text-3)',
-                      marginBottom: '8px',
-                      paddingLeft: '2px',
+                      marginBottom: '10px',
+                      paddingLeft: '4px',
                     }}
                   >
                     <span>Wallets ({matchingWallets.length})</span>
@@ -981,10 +1028,10 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between',
-                            padding: '11px 13px',
+                            padding: '12px 14px',
                             background: 'var(--surface2)',
                             border: '1px solid var(--border)',
-                            borderRadius: '12px',
+                            borderRadius: '16px',
                             cursor: 'pointer',
                             transition: 'all 0.15s ease',
                           }}
@@ -995,26 +1042,29 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                             }
                           }}
                           onMouseEnter={ev => {
-                            ev.currentTarget.style.borderColor = 'var(--accent)';
+                            ev.currentTarget.style.borderColor = 'var(--border2)';
                           }}
                           onMouseLeave={ev => {
                             ev.currentTarget.style.borderColor = 'var(--border)';
                           }}
+                          onMouseDown={ev => {
+                            ev.currentTarget.style.borderColor = 'var(--border2)';
+                          }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
-                            <div style={{ width: 36, height: 36, flexShrink: 0, display: 'grid', placeItems: 'center' }}>
-                              {renderWalletIcon(w.icon || w.name, 36, w.color)}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ width: 42, height: 42, flexShrink: 0, display: 'grid', placeItems: 'center' }}>
+                              {renderWalletIcon(w.icon || w.name, 40, w.color)}
                             </div>
                             <div>
-                              <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text)' }}>{w.name}</div>
-                              <div style={{ fontSize: '11.5px', color: 'var(--text-3)' }}>
+                              <div style={{ fontSize: '14.5px', fontWeight: 650, color: 'var(--text)' }}>{w.name}</div>
+                              <div style={{ fontSize: '12px', color: 'var(--text-3)', marginTop: '2px' }}>
                                 {w.icon ? `${w.icon} • Wallet` : 'Wallet Account'}
                               </div>
                             </div>
                           </div>
 
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ fontSize: '14px', fontWeight: 700, color: bal < 0 ? 'var(--debit, #ef4444)' : 'var(--text)' }}>
+                            <div style={{ fontSize: '14.5px', fontWeight: 700, color: bal < 0 ? 'var(--debit, #ef4444)' : 'var(--text)' }}>
                               {fmtMoney(bal, currency)}
                             </div>
                             <ChevronRight size={15} style={{ color: 'var(--text-3)' }} />
@@ -1036,8 +1086,8 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                       textTransform: 'uppercase',
                       letterSpacing: '0.6px',
                       color: 'var(--text-3)',
-                      marginBottom: '8px',
-                      paddingLeft: '2px',
+                      marginBottom: '10px',
+                      paddingLeft: '4px',
                     }}
                   >
                     <span>Settlements ({matchingSettlements.length})</span>
@@ -1062,10 +1112,10 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between',
-                            padding: '11px 13px',
+                            padding: '12px 14px',
                             background: 'var(--surface2)',
                             border: '1px solid var(--border)',
-                            borderRadius: '12px',
+                            borderRadius: '16px',
                             cursor: 'pointer',
                             transition: 'all 0.15s ease',
                           }}
@@ -1076,18 +1126,21 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                             }
                           }}
                           onMouseEnter={ev => {
-                            ev.currentTarget.style.borderColor = 'var(--accent)';
+                            ev.currentTarget.style.borderColor = 'var(--border2)';
                           }}
                           onMouseLeave={ev => {
                             ev.currentTarget.style.borderColor = 'var(--border)';
                           }}
+                          onMouseDown={ev => {
+                            ev.currentTarget.style.borderColor = 'var(--border2)';
+                          }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             <div
                               style={{
-                                width: '36px',
-                                height: '36px',
-                                borderRadius: '10px',
+                                width: '42px',
+                                height: '42px',
+                                borderRadius: '13px',
                                 backgroundColor: sBg,
                                 border: `1px solid ${sBorder}`,
                                 color: sColor,
@@ -1096,20 +1149,20 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                                 flexShrink: 0,
                               }}
                             >
-                              <Handshake size={17} style={{ color: sColor }} />
+                              <Handshake size={18} style={{ color: sColor }} />
                             </div>
                             <div>
-                              <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text)' }}>
+                              <div style={{ fontSize: '14.5px', fontWeight: 650, color: 'var(--text)' }}>
                                 {isReceived ? 'Received from' : 'Paid to'} {friend?.name || 'Contact'}
                               </div>
-                              <div style={{ fontSize: '11.5px', color: 'var(--text-3)' }}>
+                              <div style={{ fontSize: '12px', color: 'var(--text-3)', marginTop: '2px' }}>
                                 {fmtDate(s.date)} {s.paymentMethod ? `• ${s.paymentMethod}` : ''}
                               </div>
                             </div>
                           </div>
 
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ fontSize: '14px', fontWeight: 700, color: sColor }}>
+                            <div style={{ fontSize: '15px', fontWeight: 700, color: sColor }}>
                               {isReceived ? '+' : '-'}{fmtMoney(absAmount, currency)}
                             </div>
                             <ChevronRight size={15} style={{ color: 'var(--text-3)' }} />
@@ -1131,8 +1184,8 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                       textTransform: 'uppercase',
                       letterSpacing: '0.6px',
                       color: 'var(--text-3)',
-                      marginBottom: '8px',
-                      paddingLeft: '2px',
+                      marginBottom: '10px',
+                      paddingLeft: '4px',
                     }}
                   >
                     <span>Trips ({matchingTrips.length})</span>
@@ -1151,10 +1204,10 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
-                          padding: '11px 13px',
+                          padding: '12px 14px',
                           background: 'var(--surface2)',
                           border: '1px solid var(--border)',
-                          borderRadius: '12px',
+                          borderRadius: '16px',
                           cursor: 'pointer',
                           transition: 'all 0.15s ease',
                         }}
@@ -1166,18 +1219,21 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                           }
                         }}
                         onMouseEnter={ev => {
-                          ev.currentTarget.style.borderColor = 'var(--accent)';
+                          ev.currentTarget.style.borderColor = 'var(--border2)';
                         }}
                         onMouseLeave={ev => {
                           ev.currentTarget.style.borderColor = 'var(--border)';
                         }}
+                        onMouseDown={ev => {
+                          ev.currentTarget.style.borderColor = 'var(--border2)';
+                        }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                           <div
                             style={{
-                              width: '36px',
-                              height: '36px',
-                              borderRadius: '10px',
+                              width: '42px',
+                              height: '42px',
+                              borderRadius: '13px',
                               backgroundColor: 'rgba(249, 115, 22, 0.14)',
                               border: '1px solid rgba(249, 115, 22, 0.28)',
                               color: '#F97316',
@@ -1186,11 +1242,11 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                               flexShrink: 0,
                             }}
                           >
-                            <Compass size={18} style={{ color: '#F97316' }} />
+                            <Compass size={19} style={{ color: '#F97316' }} />
                           </div>
                           <div>
-                            <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text)' }}>{t.name}</div>
-                            <div style={{ fontSize: '11.5px', color: 'var(--text-3)' }}>{t.groupName || 'Trip Group'}</div>
+                            <div style={{ fontSize: '14.5px', fontWeight: 650, color: 'var(--text)' }}>{t.name}</div>
+                            <div style={{ fontSize: '12px', color: 'var(--text-3)', marginTop: '2px' }}>{t.groupName || 'Trip Group'}</div>
                           </div>
                         </div>
                         <ChevronRight size={16} style={{ color: 'var(--text-3)' }} />
@@ -1210,8 +1266,8 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                       textTransform: 'uppercase',
                       letterSpacing: '0.6px',
                       color: 'var(--text-3)',
-                      marginBottom: '8px',
-                      paddingLeft: '2px',
+                      marginBottom: '10px',
+                      paddingLeft: '4px',
                     }}
                   >
                     <span>Recurring & Subscriptions ({matchingRecurring.length})</span>
@@ -1230,10 +1286,10 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between',
-                            padding: '11px 13px',
+                            padding: '12px 14px',
                             background: 'var(--surface2)',
                             border: '1px solid var(--border)',
-                            borderRadius: '12px',
+                            borderRadius: '16px',
                             cursor: 'pointer',
                             transition: 'all 0.15s ease',
                           }}
@@ -1244,18 +1300,21 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                             }
                           }}
                           onMouseEnter={ev => {
-                            ev.currentTarget.style.borderColor = 'var(--accent)';
+                            ev.currentTarget.style.borderColor = 'var(--border2)';
                           }}
                           onMouseLeave={ev => {
                             ev.currentTarget.style.borderColor = 'var(--border)';
                           }}
+                          onMouseDown={ev => {
+                            ev.currentTarget.style.borderColor = 'var(--border2)';
+                          }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             <div
                               style={{
-                                width: '36px',
-                                height: '36px',
-                                borderRadius: '10px',
+                                width: '42px',
+                                height: '42px',
+                                borderRadius: '13px',
                                 backgroundColor: rCatMeta.bg,
                                 border: `1px solid ${rCatMeta.border}`,
                                 color: rCatMeta.color,
@@ -1264,17 +1323,17 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                                 flexShrink: 0,
                               }}
                             >
-                              <CategoryIcon category={rCatMeta.name} icon={rCatMeta.icon} size={18} style={{ color: rCatMeta.color }} />
+                              <CategoryIcon category={rCatMeta.name} icon={rCatMeta.icon} size={19} style={{ color: rCatMeta.color }} />
                             </div>
                             <div>
-                              <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text)' }}>{r.title}</div>
-                              <div style={{ fontSize: '11.5px', color: 'var(--text-3)', textTransform: 'capitalize' }}>
+                              <div style={{ fontSize: '14.5px', fontWeight: 650, color: 'var(--text)' }}>{r.title}</div>
+                              <div style={{ fontSize: '12px', color: 'var(--text-3)', textTransform: 'capitalize', marginTop: '2px' }}>
                                 {r.frequency} • {r.category || 'Subscription'}
                               </div>
                             </div>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)' }}>
+                            <div style={{ fontSize: '14.5px', fontWeight: 700, color: 'var(--text)' }}>
                               {fmtMoney(Number(r.amount), currency)}
                             </div>
                             <ChevronRight size={15} style={{ color: 'var(--text-3)' }} />
@@ -1296,8 +1355,8 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                       textTransform: 'uppercase',
                       letterSpacing: '0.6px',
                       color: 'var(--text-3)',
-                      marginBottom: '8px',
-                      paddingLeft: '2px',
+                      marginBottom: '10px',
+                      paddingLeft: '4px',
                     }}
                   >
                     <span>Settings & Preferences ({matchingSettings.length})</span>
@@ -1325,6 +1384,10 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                           onClick={() => {
                             handleClose();
                             onNavigate('settings', s.id);
+                            window.dispatchEvent(new CustomEvent('open-setting-drawer', { detail: { id: s.id } }));
+                            setTimeout(() => {
+                              window.dispatchEvent(new CustomEvent('open-setting-drawer', { detail: { id: s.id } }));
+                            }, 60);
                           }}
                           role="button"
                           tabIndex={0}
@@ -1332,10 +1395,10 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between',
-                            padding: '11px 13px',
+                            padding: '12px 14px',
                             background: 'var(--surface2)',
                             border: '1px solid var(--border)',
-                            borderRadius: '12px',
+                            borderRadius: '16px',
                             cursor: 'pointer',
                             transition: 'all 0.15s ease',
                           }}
@@ -1344,21 +1407,28 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                               e.preventDefault();
                               handleClose();
                               onNavigate('settings', s.id);
+                              window.dispatchEvent(new CustomEvent('open-setting-drawer', { detail: { id: s.id } }));
+                              setTimeout(() => {
+                                window.dispatchEvent(new CustomEvent('open-setting-drawer', { detail: { id: s.id } }));
+                              }, 60);
                             }
                           }}
                           onMouseEnter={ev => {
-                            ev.currentTarget.style.borderColor = 'var(--accent)';
+                            ev.currentTarget.style.borderColor = 'var(--border2)';
                           }}
                           onMouseLeave={ev => {
                             ev.currentTarget.style.borderColor = 'var(--border)';
                           }}
+                          onMouseDown={ev => {
+                            ev.currentTarget.style.borderColor = 'var(--border2)';
+                          }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '11px', flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
                             <div
                               style={{
-                                width: '36px',
-                                height: '36px',
-                                borderRadius: '10px',
+                                width: '42px',
+                                height: '42px',
+                                borderRadius: '13px',
                                 backgroundColor: setStyle.bg,
                                 border: `1px solid ${setStyle.border}`,
                                 color: setStyle.color,
@@ -1367,30 +1437,15 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                                 flexShrink: 0,
                               }}
                             >
-                              <IconComponent size={18} style={{ color: setStyle.color }} />
+                              <IconComponent size={19} style={{ color: setStyle.color }} />
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <span style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text)' }}>
-                                  {s.title}
-                                </span>
-                                <span
-                                  style={{
-                                    fontSize: '10px',
-                                    fontWeight: 600,
-                                    padding: '2px 6px',
-                                    borderRadius: '6px',
-                                    background: setStyle.bg,
-                                    color: setStyle.color,
-                                    border: `1px solid ${setStyle.border}`,
-                                  }}
-                                >
-                                  {s.category}
-                                </span>
+                              <div style={{ fontSize: '14.5px', fontWeight: 650, color: 'var(--text)' }}>
+                                {s.title}
                               </div>
                               <div
                                 style={{
-                                  fontSize: '11.5px',
+                                  fontSize: '12px',
                                   color: 'var(--text-3)',
                                   overflow: 'hidden',
                                   textOverflow: 'ellipsis',
@@ -1403,8 +1458,8 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                             </div>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-3)', flexShrink: 0, marginLeft: '8px' }}>
-                            <span style={{ fontSize: '12px', color: 'var(--accent)', fontWeight: 500 }}>Open</span>
-                            <ChevronRight size={15} style={{ color: 'var(--accent)' }} />
+                            <span style={{ fontSize: '12px', color: 'var(--text-3)', fontWeight: 500 }}>Open</span>
+                            <ChevronRight size={15} style={{ color: 'var(--text-3)' }} />
                           </div>
                         </div>
                       );
