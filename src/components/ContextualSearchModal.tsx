@@ -24,15 +24,19 @@ import {
   MessageSquarePlus,
 } from 'lucide-react';
 import { useStore } from '../store';
-import type { ViewName, Trip, Expense } from '../types';
+import type { ViewName, Trip, Expense, Settlement, RecurringRule, Wallet } from '../types';
 import { fmtMoney, fmtDate, friendInitial, getAvatarStyle, groupExpenses, resolveCategoryMeta, type GroupedExpense } from '../utils';
-import { friendBalance, walletBalance } from '../db';
+import { friendBalance, walletBalance, DEFAULT_CATEGORIES } from '../db';
 import CategoryIcon from './CategoryIcon';
+import { renderWalletIcon } from './WalletIconRenderer';
 import { showSoftKeyboard } from '../utils/keyboard';
 import { CURRENT_APP_VERSION } from '../utils/updateManager';
 import { ExpenseDetailDrawer } from './ExpenseDetailDrawer';
 import ExpenseModal from './ExpenseModal';
 import ConfirmDialog from './ConfirmDialog';
+import SettlementDetailModal from './SettlementDetailModal';
+import RecurringModal from './RecurringModal';
+import WalletModal from './WalletModal';
 
 interface Props {
   open: boolean;
@@ -167,7 +171,8 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
 
   const friendsMap = useMemo(() => new Map(friends.map(f => [f.id, f])), [friends]);
   const walletsMap = useMemo(() => new Map(wallets.map(w => [w.id, w])), [wallets]);
-  const categoriesMap = useMemo(() => new Map((settings?.categories || []).map(c => [c.name, c])), [settings?.categories]);
+  const categories = settings?.categories?.length ? settings.categories : DEFAULT_CATEGORIES;
+  const categoriesMap = useMemo(() => new Map(categories.map(c => [c.name, c])), [categories]);
 
   const defaultTab: SearchTab = useMemo(() => {
     if (activeView === 'expenses') return 'expenses';
@@ -193,13 +198,22 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
   const activeTab = selectedTab ?? defaultTab;
   const inputRef = useRef<HTMLInputElement>(null);
   const [selectedDetailGe, setSelectedDetailGe] = useState<GroupedExpense | null>(null);
+  const [selectedSettlement, setSelectedSettlement] = useState<Settlement | null>(null);
+  const [selectedRecurring, setSelectedRecurring] = useState<RecurringRule | null>(null);
+  const [selectedWallet, setSelectedWallet] = useState<Wallet | null>(null);
   const [editExp, setEditExp] = useState<Expense | null>(null);
   const [delExpId, setDelExpId] = useState<string | null>(null);
-  const { deleteExpense, showToast } = useStore();
+  const { deleteExpense, deleteSettlement, showToast } = useStore();
 
   const handleClose = React.useCallback(() => {
     setQuery('');
     setSelectedTab(null);
+    setSelectedDetailGe(null);
+    setSelectedSettlement(null);
+    setSelectedRecurring(null);
+    setSelectedWallet(null);
+    setEditExp(null);
+    setDelExpId(null);
     onClose();
   }, [onClose]);
 
@@ -375,7 +389,7 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 9999,
+        zIndex: 9990,
         display: 'flex',
         alignItems: isMobile ? 'flex-end' : 'flex-start',
         justifyContent: 'center',
@@ -460,7 +474,7 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
               minWidth: 0,
             }}
           >
-            <Search size={20} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
+            <Search size={20} style={{ color: 'var(--accent, #6366f1)', flexShrink: 0 }} />
             <input
               ref={inputRef}
               type="text"
@@ -556,17 +570,17 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                   borderRadius: '20px',
                   fontSize: '12.5px',
                   fontWeight: isSelected ? 650 : 500,
-                  backgroundColor: isSelected ? 'var(--surface)' : 'var(--surface2)',
-                  color: isSelected ? 'var(--text)' : 'var(--text-2)',
-                  border: isSelected ? '1px solid var(--border2)' : '1px solid var(--border)',
-                  boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+                  backgroundColor: isSelected ? 'var(--accent)' : 'var(--surface2)',
+                  color: isSelected ? 'var(--accent-contrast, #ffffff)' : 'var(--text-2)',
+                  border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border)',
+                  boxShadow: isSelected ? '0 1px 4px var(--accent-soft, rgba(0, 0, 0, 0.15))' : 'none',
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
                   flexShrink: 0,
                   transition: 'all 0.15s ease',
                 }}
               >
-                <Icon size={14} style={{ color: isSelected ? 'var(--text)' : 'var(--text-3)' }} />
+                <Icon size={14} style={{ color: isSelected ? 'var(--accent-contrast, #ffffff)' : 'var(--text-3)' }} />
                 <span>{tab.label}</span>
               </button>
             );
@@ -838,7 +852,8 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                     {matchingContacts.map(f => {
                       const bal = friendBalance(db, f.id);
                       const fType = f.type || 'friend';
-                      const avatarStyle = getAvatarStyle(f.name);
+                      const fColor = f.color || (fType === 'vendor' ? '#F59E0B' : fType === 'subscription' ? '#8B5CF6' : undefined);
+                      const avatarStyle = getAvatarStyle(fColor || f.name);
 
                       return (
                         <div
@@ -847,6 +862,8 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                             handleClose();
                             onNavigate('friend-detail', f.id);
                           }}
+                          role="button"
+                          tabIndex={0}
                           style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -857,6 +874,13 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                             borderRadius: '12px',
                             cursor: 'pointer',
                             transition: 'all 0.15s ease',
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              handleClose();
+                              onNavigate('friend-detail', f.id);
+                            }
                           }}
                           onMouseEnter={ev => {
                             ev.currentTarget.style.borderColor = 'var(--accent)';
@@ -879,7 +903,13 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                                 ...avatarStyle,
                               }}
                             >
-                              {fType === 'vendor' ? <Store size={16} /> : fType === 'subscription' ? <Tv size={16} /> : friendInitial(f.name)}
+                              {fType === 'vendor' ? (
+                                <Store size={17} style={{ color: fColor || '#F59E0B' }} />
+                              ) : fType === 'subscription' ? (
+                                <Tv size={17} style={{ color: fColor || '#8B5CF6' }} />
+                              ) : (
+                                friendInitial(f.name, f.avatarNumber)
+                              )}
                             </div>
                             <div style={{ minWidth: 0 }}>
                               <div
@@ -944,10 +974,9 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                       return (
                         <div
                           key={w.id}
-                          onClick={() => {
-                            handleClose();
-                            onNavigate('wallets', w.id);
-                          }}
+                          onClick={() => setSelectedWallet(w)}
+                          role="button"
+                          tabIndex={0}
                           style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -959,6 +988,12 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                             cursor: 'pointer',
                             transition: 'all 0.15s ease',
                           }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              setSelectedWallet(w);
+                            }
+                          }}
                           onMouseEnter={ev => {
                             ev.currentTarget.style.borderColor = 'var(--accent)';
                           }}
@@ -967,29 +1002,22 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
-                            <div
-                              style={{
-                                width: '36px',
-                                height: '36px',
-                                borderRadius: '10px',
-                                backgroundColor: 'var(--surface3)',
-                                border: '1px solid var(--border)',
-                                color: 'var(--accent)',
-                                display: 'grid',
-                                placeItems: 'center',
-                                flexShrink: 0,
-                              }}
-                            >
-                              <WalletIcon size={17} />
+                            <div style={{ width: 36, height: 36, flexShrink: 0, display: 'grid', placeItems: 'center' }}>
+                              {renderWalletIcon(w.icon || w.name, 36, w.color)}
                             </div>
                             <div>
                               <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text)' }}>{w.name}</div>
-                              <div style={{ fontSize: '11.5px', color: 'var(--text-3)' }}>Wallet Account</div>
+                              <div style={{ fontSize: '11.5px', color: 'var(--text-3)' }}>
+                                {w.icon ? `${w.icon} • Wallet` : 'Wallet Account'}
+                              </div>
                             </div>
                           </div>
 
-                          <div style={{ fontSize: '14px', fontWeight: 700, color: bal < 0 ? 'var(--debit, #ef4444)' : 'var(--text)' }}>
-                            {fmtMoney(bal, currency)}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ fontSize: '14px', fontWeight: 700, color: bal < 0 ? 'var(--debit, #ef4444)' : 'var(--text)' }}>
+                              {fmtMoney(bal, currency)}
+                            </div>
+                            <ChevronRight size={15} style={{ color: 'var(--text-3)' }} />
                           </div>
                         </div>
                       );
@@ -1016,14 +1044,20 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {matchingSettlements.map(s => {
-                      const friend = friends.find(f => f.id === s.friendId);
+                      const friend = friendsMap.get(s.friendId);
+                      const amtVal = Number(s.amount) || 0;
+                      const isReceived = amtVal >= 0;
+                      const absAmount = Math.abs(amtVal);
+                      const sColor = isReceived ? '#10B981' : '#F43F5E';
+                      const sBg = isReceived ? 'rgba(16, 185, 129, 0.14)' : 'rgba(244, 63, 94, 0.14)';
+                      const sBorder = isReceived ? 'rgba(16, 185, 129, 0.28)' : 'rgba(244, 63, 94, 0.28)';
+
                       return (
                         <div
                           key={s.id}
-                          onClick={() => {
-                            handleClose();
-                            onNavigate('settlements', s.id);
-                          }}
+                          onClick={() => setSelectedSettlement(s)}
+                          role="button"
+                          tabIndex={0}
                           style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -1034,6 +1068,12 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                             borderRadius: '12px',
                             cursor: 'pointer',
                             transition: 'all 0.15s ease',
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              setSelectedSettlement(s);
+                            }
                           }}
                           onMouseEnter={ev => {
                             ev.currentTarget.style.borderColor = 'var(--accent)';
@@ -1048,26 +1088,31 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                                 width: '36px',
                                 height: '36px',
                                 borderRadius: '10px',
-                                backgroundColor: 'rgba(16, 185, 129, 0.12)',
-                                border: '1px solid var(--credit, #22c55e)',
-                                color: 'var(--credit, #22c55e)',
+                                backgroundColor: sBg,
+                                border: `1px solid ${sBorder}`,
+                                color: sColor,
                                 display: 'grid',
                                 placeItems: 'center',
                                 flexShrink: 0,
                               }}
                             >
-                              <Handshake size={17} />
+                              <Handshake size={17} style={{ color: sColor }} />
                             </div>
                             <div>
                               <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text)' }}>
-                                Settled with {friend?.name || 'Contact'}
+                                {isReceived ? 'Received from' : 'Paid to'} {friend?.name || 'Contact'}
                               </div>
-                              <div style={{ fontSize: '11.5px', color: 'var(--text-3)' }}>{fmtDate(s.date)}</div>
+                              <div style={{ fontSize: '11.5px', color: 'var(--text-3)' }}>
+                                {fmtDate(s.date)} {s.paymentMethod ? `• ${s.paymentMethod}` : ''}
+                              </div>
                             </div>
                           </div>
 
-                          <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--credit, #22c55e)' }}>
-                            +{fmtMoney(Number(s.amount), currency)}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ fontSize: '14px', fontWeight: 700, color: sColor }}>
+                              {isReceived ? '+' : '-'}{fmtMoney(absAmount, currency)}
+                            </div>
+                            <ChevronRight size={15} style={{ color: 'var(--text-3)' }} />
                           </div>
                         </div>
                       );
@@ -1100,6 +1145,8 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                           handleClose();
                           onNavigate('split-trips', t.id);
                         }}
+                        role="button"
+                        tabIndex={0}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -1110,6 +1157,13 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                           borderRadius: '12px',
                           cursor: 'pointer',
                           transition: 'all 0.15s ease',
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleClose();
+                            onNavigate('split-trips', t.id);
+                          }
                         }}
                         onMouseEnter={ev => {
                           ev.currentTarget.style.borderColor = 'var(--accent)';
@@ -1124,15 +1178,15 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                               width: '36px',
                               height: '36px',
                               borderRadius: '10px',
-                              backgroundColor: 'var(--surface3)',
-                              border: '1px solid var(--border)',
-                              color: 'var(--accent)',
+                              backgroundColor: 'rgba(249, 115, 22, 0.14)',
+                              border: '1px solid rgba(249, 115, 22, 0.28)',
+                              color: '#F97316',
                               display: 'grid',
                               placeItems: 'center',
                               flexShrink: 0,
                             }}
                           >
-                            <Compass size={18} />
+                            <Compass size={18} style={{ color: '#F97316' }} />
                           </div>
                           <div>
                             <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text)' }}>{t.name}</div>
@@ -1163,59 +1217,71 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                     <span>Recurring & Subscriptions ({matchingRecurring.length})</span>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {matchingRecurring.map(r => (
-                      <div
-                        key={r.id}
-                        onClick={() => {
-                          handleClose();
-                          onNavigate('recurring', r.id);
-                        }}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '11px 13px',
-                          background: 'var(--surface2)',
-                          border: '1px solid var(--border)',
-                          borderRadius: '12px',
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease',
-                        }}
-                        onMouseEnter={ev => {
-                          ev.currentTarget.style.borderColor = 'var(--accent)';
-                        }}
-                        onMouseLeave={ev => {
-                          ev.currentTarget.style.borderColor = 'var(--border)';
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
-                          <div
-                            style={{
-                              width: '36px',
-                              height: '36px',
-                              borderRadius: '10px',
-                              backgroundColor: 'var(--surface3)',
-                              border: '1px solid var(--border)',
-                              color: 'var(--accent)',
-                              display: 'grid',
-                              placeItems: 'center',
-                              flexShrink: 0,
-                            }}
-                          >
-                            <RefreshCw size={17} />
-                          </div>
-                          <div>
-                            <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text)' }}>{r.title}</div>
-                            <div style={{ fontSize: '11.5px', color: 'var(--text-3)', textTransform: 'capitalize' }}>
-                              {r.frequency} • {r.category}
+                    {matchingRecurring.map(r => {
+                      const rCatMeta = resolveCategoryMeta(r.category || 'Other', categoriesMap.get(r.category || 'Other'), false, categoriesMap);
+
+                      return (
+                        <div
+                          key={r.id}
+                          onClick={() => setSelectedRecurring(r)}
+                          role="button"
+                          tabIndex={0}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '11px 13px',
+                            background: 'var(--surface2)',
+                            border: '1px solid var(--border)',
+                            borderRadius: '12px',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              setSelectedRecurring(r);
+                            }
+                          }}
+                          onMouseEnter={ev => {
+                            ev.currentTarget.style.borderColor = 'var(--accent)';
+                          }}
+                          onMouseLeave={ev => {
+                            ev.currentTarget.style.borderColor = 'var(--border)';
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
+                            <div
+                              style={{
+                                width: '36px',
+                                height: '36px',
+                                borderRadius: '10px',
+                                backgroundColor: rCatMeta.bg,
+                                border: `1px solid ${rCatMeta.border}`,
+                                color: rCatMeta.color,
+                                display: 'grid',
+                                placeItems: 'center',
+                                flexShrink: 0,
+                              }}
+                            >
+                              <CategoryIcon category={rCatMeta.name} icon={rCatMeta.icon} size={18} style={{ color: rCatMeta.color }} />
+                            </div>
+                            <div>
+                              <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text)' }}>{r.title}</div>
+                              <div style={{ fontSize: '11.5px', color: 'var(--text-3)', textTransform: 'capitalize' }}>
+                                {r.frequency} • {r.category || 'Subscription'}
+                              </div>
                             </div>
                           </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)' }}>
+                              {fmtMoney(Number(r.amount), currency)}
+                            </div>
+                            <ChevronRight size={15} style={{ color: 'var(--text-3)' }} />
+                          </div>
                         </div>
-                        <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)' }}>
-                          {fmtMoney(Number(r.amount), currency)}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -1239,6 +1305,20 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {matchingSettings.map(s => {
                       const IconComponent = s.icon;
+                      const getSettingColor = (cat: string) => {
+                        switch (cat) {
+                          case 'General': return { color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.14)', border: 'rgba(59, 130, 246, 0.28)' };
+                          case 'Preferences': return { color: '#6366F1', bg: 'rgba(99, 102, 241, 0.14)', border: 'rgba(99, 102, 241, 0.28)' };
+                          case 'Security': return { color: '#EF4444', bg: 'rgba(239, 68, 68, 0.14)', border: 'rgba(239, 68, 68, 0.28)' };
+                          case 'Data': return { color: '#10B981', bg: 'rgba(16, 185, 129, 0.14)', border: 'rgba(16, 185, 129, 0.28)' };
+                          case 'Features': return { color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.14)', border: 'rgba(245, 158, 11, 0.28)' };
+                          case 'Support': return { color: '#EC4899', bg: 'rgba(236, 72, 153, 0.14)', border: 'rgba(236, 72, 153, 0.28)' };
+                          case 'System': return { color: '#8B5CF6', bg: 'rgba(139, 92, 246, 0.14)', border: 'rgba(139, 92, 246, 0.28)' };
+                          default: return { color: 'var(--accent)', bg: 'var(--accent-soft)', border: 'var(--accent-border-soft)' };
+                        }
+                      };
+                      const setStyle = getSettingColor(s.category);
+
                       return (
                         <div
                           key={s.id}
@@ -1246,6 +1326,8 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                             handleClose();
                             onNavigate('settings', s.id);
                           }}
+                          role="button"
+                          tabIndex={0}
                           style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -1256,6 +1338,13 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                             borderRadius: '12px',
                             cursor: 'pointer',
                             transition: 'all 0.15s ease',
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              handleClose();
+                              onNavigate('settings', s.id);
+                            }
                           }}
                           onMouseEnter={ev => {
                             ev.currentTarget.style.borderColor = 'var(--accent)';
@@ -1270,15 +1359,15 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                                 width: '36px',
                                 height: '36px',
                                 borderRadius: '10px',
-                                backgroundColor: 'var(--surface3)',
-                                border: '1px solid var(--border)',
-                                color: 'var(--accent)',
+                                backgroundColor: setStyle.bg,
+                                border: `1px solid ${setStyle.border}`,
+                                color: setStyle.color,
                                 display: 'grid',
                                 placeItems: 'center',
                                 flexShrink: 0,
                               }}
                             >
-                              <IconComponent size={18} />
+                              <IconComponent size={18} style={{ color: setStyle.color }} />
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -1291,9 +1380,9 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
                                     fontWeight: 600,
                                     padding: '2px 6px',
                                     borderRadius: '6px',
-                                    background: 'var(--surface3)',
-                                    color: 'var(--text-3)',
-                                    border: '1px solid var(--border)',
+                                    background: setStyle.bg,
+                                    color: setStyle.color,
+                                    border: `1px solid ${setStyle.border}`,
                                   }}
                                 >
                                   {s.category}
@@ -1342,6 +1431,35 @@ export default function ContextualSearchModal({ open, onClose, activeView, onNav
             setSelectedDetailGe(null);
             setDelExpId(id);
           }}
+        />
+      )}
+
+      {/* Settlement Detail Modal */}
+      {selectedSettlement && (
+        <SettlementDetailModal
+          settlement={selectedSettlement}
+          onClose={() => setSelectedSettlement(null)}
+          onUndo={(id) => {
+            deleteSettlement(id);
+            showToast('Settlement undone');
+            setSelectedSettlement(null);
+          }}
+        />
+      )}
+
+      {/* Recurring Detail Modal */}
+      {selectedRecurring && (
+        <RecurringModal
+          rule={selectedRecurring}
+          onClose={() => setSelectedRecurring(null)}
+        />
+      )}
+
+      {/* Wallet Modal */}
+      {selectedWallet && (
+        <WalletModal
+          wallet={selectedWallet}
+          onClose={() => setSelectedWallet(null)}
         />
       )}
 

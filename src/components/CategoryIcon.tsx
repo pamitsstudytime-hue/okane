@@ -215,13 +215,15 @@ const iconMap: Record<string, React.ElementType> = {
   other: Tag,
 };
 
-export default function CategoryIcon({ category = '', icon = '', size = 16, className = '', style, ...props }: CategoryIconProps) {
+export function CategoryIcon({ category = '', icon = '', size = 16, className = '', style, ...props }: CategoryIconProps) {
   const iconKey = (icon || '').trim().toLowerCase();
   const categoryKey = (category || '').trim().toLowerCase();
   const IconComponent = iconMap[iconKey] || iconMap[categoryKey] || Tag;
   
   return <IconComponent size={size} className={className} style={{ flexShrink: 0, ...style }} {...props} />;
 }
+
+export default CategoryIcon;
 
 interface CategoryBadgeProps {
   category?: string;

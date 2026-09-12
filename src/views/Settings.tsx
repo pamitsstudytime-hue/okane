@@ -270,7 +270,7 @@ export default function Settings({
       const seeded = seedSampleData(db);
       restoreDB(seeded);
       setShowDummyModal(false);
-      showToast('Dummy data added successfully! Added sample expenses, friends & vendor.');
+      showToast('Dummy data added successfully! Added sample expenses, contacts, and due notifications.');
     } catch (err) {
       console.error('Failed to add dummy data:', err);
       showToast('Failed to add dummy data.');

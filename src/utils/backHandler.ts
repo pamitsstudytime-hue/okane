@@ -76,8 +76,12 @@ class BackHandlerManager {
     });
 
     // Ensure baseline history state exists on web
-    if (!window.history.state || !window.history.state.okaneRoot) {
-      window.history.replaceState({ okaneRoot: true }, '');
+    try {
+      if (!window.history.state || !window.history.state.okaneRoot) {
+        window.history.replaceState({ okaneRoot: true }, '');
+      }
+    } catch {
+      // Ignore if history state manipulation is restricted in iframe
     }
   }
 
@@ -101,7 +105,11 @@ class BackHandlerManager {
 
     // Push browser history state for browser back gesture if requested
     if (entry.pushHistory && typeof window !== 'undefined' && !this.isProcessingHistoryPop) {
-      window.history.pushState({ okaneBackId: entry.id, priority: entry.priority }, '');
+      try {
+        window.history.pushState({ okaneBackId: entry.id, priority: entry.priority }, '');
+      } catch {
+        // Ignore if pushState is restricted
+      }
     }
 
     return () => this.unregister(entry.id);
@@ -113,8 +121,12 @@ class BackHandlerManager {
       const [removed] = this.stack.splice(index, 1);
       // If we pushed history for this entry and we're not inside popstate handling, clean up history
       if (removed.pushHistory && typeof window !== 'undefined' && !this.isProcessingHistoryPop) {
-        if (window.history.state?.okaneBackId === id) {
-          window.history.back();
+        try {
+          if (window.history.state?.okaneBackId === id) {
+            window.history.back();
+          }
+        } catch {
+          // Ignore
         }
       }
     }
@@ -161,8 +173,12 @@ class BackHandlerManager {
     } finally {
       this.isProcessingHistoryPop = false;
       // Re-ensure root state
-      if (!window.history.state || !window.history.state.okaneRoot) {
-        window.history.replaceState({ okaneRoot: true }, '');
+      try {
+        if (!window.history.state || !window.history.state.okaneRoot) {
+          window.history.replaceState({ okaneRoot: true }, '');
+        }
+      } catch {
+        // Ignore
       }
     }
   }

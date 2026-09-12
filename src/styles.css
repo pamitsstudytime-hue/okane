@@ -2508,7 +2508,7 @@ input, textarea, [contenteditable="true"], .selectable-text {
   width: 100vw !important;
   height: 100vh !important;
   height: 100dvh !important;
-  z-index: 1400 !important;
+  z-index: var(--modal-backdrop-z, 100050) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -2530,13 +2530,13 @@ input, textarea, [contenteditable="true"], .selectable-text {
   background: rgba(0, 0, 0, 0.65) !important;
   backdrop-filter: blur(8px) !important;
   -webkit-backdrop-filter: blur(8px) !important;
-  z-index: 1400 !important;
+  z-index: var(--modal-backdrop-z, 100050) !important;
   pointer-events: auto !important;
 }
 
 .modal-dialog-panel {
   position: relative !important;
-  z-index: 1401 !important;
+  z-index: calc(var(--modal-backdrop-z, 100050) + 1) !important;
   width: 100% !important;
   max-width: 440px !important;
   margin: auto !important;

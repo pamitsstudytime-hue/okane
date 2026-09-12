@@ -450,14 +450,21 @@ export function computeNextDueDate(currentDateISO: string, frequency: FrequencyT
   return `${ny}-${nm}-${nd}`;
 }
 
-export function defaultSampleRecurringRules(walletId: string): RecurringRule[] {
+export function defaultSampleRecurringRules(walletId: string, isINR: boolean = true): RecurringRule[] {
   const t = todayISO();
+  const y = (() => {
+    const dt = new Date();
+    dt.setDate(dt.getDate() - 1);
+    return dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
+  })();
+  const val = (usd: number, inr: number) => (isINR ? inr : usd);
+
   return [
     {
       id: 'rec_netflix',
       title: 'Netflix Subscription',
       kind: 'autopay',
-      amount: 199,
+      amount: val(14.99, 199),
       category: 'Entertainment',
       walletId,
       type: 'personal',
@@ -465,17 +472,35 @@ export function defaultSampleRecurringRules(walletId: string): RecurringRule[] {
       frequency: 'monthly',
       intervalValue: 1,
       startDate: t,
-      nextDueDate: t, // Due today for immediate testing
+      nextDueDate: t, // Due today for immediate notification
       autoDeduct: false,
       status: 'active',
       notes: 'Monthly standard HD plan',
       createdAt: Date.now() - 86400000,
     },
     {
+      id: 'rec_spotify',
+      title: 'Spotify Premium',
+      kind: 'autopay',
+      amount: val(9.99, 119),
+      category: 'Entertainment',
+      walletId,
+      type: 'personal',
+      flow: 'out',
+      frequency: 'monthly',
+      intervalValue: 1,
+      startDate: t,
+      nextDueDate: t, // Due today for immediate notification
+      autoDeduct: false,
+      status: 'active',
+      notes: 'Individual music subscription',
+      createdAt: Date.now() - 86400000,
+    },
+    {
       id: 'rec_tiffin',
-      title: 'Daily Tiffin Service',
+      title: isINR ? 'Daily Tiffin Service' : 'Daily Lunch Delivery',
       kind: 'quick_log',
-      amount: 80,
+      amount: val(6.5, 80),
       category: 'Food',
       walletId,
       type: 'personal',
@@ -484,14 +509,15 @@ export function defaultSampleRecurringRules(walletId: string): RecurringRule[] {
       intervalValue: 1,
       startDate: t,
       status: 'active',
-      notes: 'Lunch tiffin box',
+      lastLoggedDate: y, // Logged yesterday -> Due today in notifications
+      notes: 'Daily lunch meal',
       createdAt: Date.now() - 86400000,
     },
     {
       id: 'rec_recharge',
-      title: 'Mobile Recharge (2 Months)',
+      title: isINR ? 'Mobile Recharge (2 Months)' : 'Mobile Plan Renewal',
       kind: 'quick_log',
-      amount: 479,
+      amount: val(35, 479),
       category: 'Utilities',
       walletId,
       type: 'personal',
@@ -500,7 +526,8 @@ export function defaultSampleRecurringRules(walletId: string): RecurringRule[] {
       intervalValue: 2,
       startDate: t,
       status: 'active',
-      notes: 'Prepaid 84 days pack',
+      lastLoggedDate: y, // Logged yesterday -> Due today in notifications
+      notes: 'Prepaid phone plan',
       createdAt: Date.now() - 86400000,
     }
   ];
@@ -709,8 +736,14 @@ export function sanitizeLoadedDB(rawDB: unknown): AppDB {
     ? parsed.settlements.filter(s => s && typeof s === 'object' && s.id)
     : [];
 
+  const seenRuleIds = new Set<string>();
   const recurringRules = Array.isArray(parsed.recurringRules)
-    ? parsed.recurringRules.filter(r => r && typeof r === 'object' && r.id && r.title)
+    ? parsed.recurringRules.filter(r => {
+        if (!r || typeof r !== 'object' || !r.id || !r.title) return false;
+        if (seenRuleIds.has(r.id)) return false;
+        seenRuleIds.add(r.id);
+        return true;
+      })
     : [];
 
   const settings = {
@@ -2667,10 +2700,30 @@ export function seedSampleData(db: AppDB): AppDB {
 
   expenses.forEach(e => { current = addExpense(current, e); });
 
-  const sampleRules = defaultSampleRecurringRules(defaultWal);
+  const sampleRules = defaultSampleRecurringRules(defaultWal, isINR);
+  const existingRules = current.recurringRules || [];
+  
+  // Update any existing matching sample rules so they become active and due today in notifications
+  const sampleMap = new Map(sampleRules.map(r => [r.id, r]));
+  const updatedExisting = existingRules.map(r => {
+    if (sampleMap.has(r.id)) {
+      const sample = sampleMap.get(r.id)!;
+      return {
+        ...r,
+        status: 'active' as const,
+        amount: sample.amount,
+        nextDueDate: sample.kind === 'autopay' ? d(0) : r.nextDueDate,
+        lastLoggedDate: sample.kind === 'quick_log' ? d(-1) : r.lastLoggedDate,
+      };
+    }
+    return r;
+  });
+
+  const existingRuleIds = new Set(existingRules.map(r => r.id));
+  const newRules = sampleRules.filter(r => !existingRuleIds.has(r.id));
   current = {
     ...current,
-    recurringRules: [...(current.recurringRules || []), ...sampleRules],
+    recurringRules: [...updatedExisting, ...newRules],
   };
 
   return current;
