@@ -1,8 +1,30 @@
-import { useState, useMemo } from 'react';
-import { ArrowLeft, Handshake, Plus, Edit2, Trash2, Store, Tv, ExternalLink, RefreshCw, Zap, Play } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  Handshake,
+  Plus,
+  Edit2,
+  Store,
+  Tv,
+  RefreshCw,
+  Zap,
+  Play,
+  X,
+} from 'lucide-react';
 import { useStore } from '../store';
 import { friendBalance, expenseFlow, contactTotalSpent } from '../db';
-import { fmtMoney, fmtDate, friendInitial, getAvatarStyle, typeLabel, cleanExpenseDescription, formatBillingCycleShort, groupExpenses, type GroupedExpense } from '../utils';
+import {
+  fmtMoney,
+  fmtDate,
+  friendInitial,
+  getAvatarStyle,
+  typeLabel,
+  cleanExpenseDescription,
+  formatBillingCycleShort,
+  groupExpenses,
+  type GroupedExpense,
+} from '../utils';
 import type { ViewName, Expense } from '../types';
 import FriendModal from '../components/FriendModal';
 import { renderBrandLogo } from '../components/BrandIcons';
@@ -13,7 +35,6 @@ import RecurringModal from '../components/RecurringModal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { ExpenseDetailDrawer } from '../components/ExpenseDetailDrawer';
 import { useBackButtonModal, BackPriority } from '../utils/backHandler';
-import DesktopSearchBar from '../components/DesktopSearchBar';
 
 interface Props {
   friendId: string;
@@ -21,7 +42,7 @@ interface Props {
 }
 
 export default function FriendDetail({ friendId, onNavigate }: Props) {
-  useBackButtonModal(true, () => onNavigate('friends'), { priority: BackPriority.SUBVIEW });
+  useBackButtonModal(true, () => onNavigate('friends'), { priority: BackPriority.DRAWER });
 
   const { db, deleteExpense, unsettleExpense, triggerAutopayDeduct, quickLogRecurringRule, showToast } = useStore();
   const { settings: { currency } } = db;
@@ -37,28 +58,86 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
   const [showRecurringModal, setShowRecurringModal] = useState(false);
   const [tab, setTab] = useState<'active' | 'settled'>('active');
 
+  const [isMobileScreen, setIsMobileScreen] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 640);
+  useEffect(() => {
+    const handleResize = () => setIsMobileScreen(window.innerWidth <= 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const contactType = friend?.type || 'friend';
+
+  // ESC key listener to close drawer card
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        e.key === 'Escape' &&
+        !showEdit &&
+        !showSettle &&
+        !showAddExp &&
+        !editingExpense &&
+        !deletingExpenseId &&
+        !undoExpId &&
+        !selectedDetailGe &&
+        !showRecurringModal
+      ) {
+        onNavigate('friends');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onNavigate, showEdit, showSettle, showAddExp, editingExpense, deletingExpenseId, undoExpId, selectedDetailGe, showRecurringModal]);
 
   const handleOpenDetail = (e: Expense) => {
     const related = e.groupId
       ? db.expenses.filter(x => x.groupId === e.groupId)
       : [e];
-    const grouped = groupExpenses(related.length > 0 ? related : [e], db.wallets, db.friends, db.settlements);
-    if (grouped.length > 0) {
-      setSelectedDetailGe(grouped[0]);
+    const relevantSettlement = e.settlementId
+      ? db.settlements.filter(s => s.id === e.settlementId)
+      : undefined;
+    const grouped = groupExpenses(
+      related.length > 0 ? related : [e],
+      db.wallets,
+      db.friends,
+      relevantSettlement
+    );
+    const target = grouped.find(
+      ge => ge.id === e.id || (e.groupId && ge.groupId === e.groupId) || ge.items?.some(it => it.id === e.id)
+    ) || grouped[0];
+
+    if (target) {
+      setSelectedDetailGe(target);
+    } else {
+      setSelectedDetailGe({
+        id: e.id,
+        groupId: e.groupId,
+        settlementId: e.settlementId,
+        description: e.description,
+        totalAmount: e.amount,
+        date: e.date,
+        category: e.category || 'General',
+        walletId: e.walletId,
+        flow: expenseFlow(e),
+        createdAt: e.createdAt || 0,
+        items: [e],
+        isSplit: Boolean(e.friendId),
+        personalShare: e.type === 'personal' ? e.amount : 0,
+        friendShare: e.type !== 'personal' ? e.amount : 0,
+        friendIds: e.friendId ? [e.friendId] : [],
+        vendorId: e.vendorId,
+      });
     }
   };
 
   const bal = useMemo(() => friend ? friendBalance(db, friend.id) : { owedToMe: 0, owedByMe: 0, net: 0 }, [db, friend]);
-  const allExps = useMemo(() =>
-    db.expenses
+  
+  const allExps = useMemo(() => {
+    return db.expenses
       .filter(e => e.friendId === friendId || e.vendorId === friendId)
-      .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt),
-    [db.expenses, friendId]
-  );
+      .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
+  }, [db.expenses, friendId]);
 
   const totalSpent = useMemo(() => friend ? contactTotalSpent(db, friend.id) : 0, [db, friend]);
-  const avgOrderVal = useMemo(() => allExps.length > 0 ? totalSpent / allExps.length : 0, [totalSpent, allExps]);
 
   const activeExps = useMemo(() => allExps.filter(e => {
     if (e.friendId === friendId && e.type !== 'personal') return !e.settled;
@@ -75,26 +154,6 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
 
   const shown = useMemo(() => tab === 'active' ? activeExps : settledExps, [tab, activeExps, settledExps]);
 
-  const dateGroupInfo = useMemo(() => {
-    const groupMap: Record<string, number> = {};
-    const isFirstMap: Record<string, boolean> = {};
-    let currentGroup = 0;
-    let prevDate: string | null = null;
-
-    shown.forEach((e) => {
-      if (prevDate !== null && e.date !== prevDate) {
-        currentGroup++;
-        isFirstMap[e.id] = true;
-      } else {
-        isFirstMap[e.id] = prevDate === null;
-      }
-      groupMap[e.id] = currentGroup % 2;
-      prevDate = e.date;
-    });
-
-    return { groupMap, isFirstMap };
-  }, [shown]);
-
   const connectedRules = useMemo(() => {
     if (!friend) return [];
     return (db.recurringRules || []).filter(
@@ -103,548 +162,580 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
   }, [db.recurringRules, friend]);
 
   if (!friend) {
-    return (
-      <div className="view-container">
-        <div className="card" style={{ marginTop: 20 }}>
-          <div className="empty-state">
-            <p>Contact not found.</p>
-            <button
-              type="button"
-              className="btn btn-outline btn-sm"
-              style={{ marginTop: 12 }}
-              onClick={() => onNavigate('friends')}
-            >
-              Return to Contacts
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+    return null;
   }
 
-  return (
-    <div className="view-container">
-      {/* Top Desktop Back Button */}
-      <div className="hide-on-mobile" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 14 }}>
-        <button
-          type="button"
-          className="btn btn-ghost btn-sm"
-          onClick={() => onNavigate('friends')}
-          style={{
-            padding: '6px 12px',
-            fontSize: 13.5,
-            fontWeight: 600,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            borderRadius: 10,
-            border: '1px solid var(--border)',
-            backgroundColor: 'var(--surface2)',
-            color: 'var(--text-1)',
-            cursor: 'pointer'
-          }}
-          title="Back to Contacts"
-        >
-          <ArrowLeft size={16} />
-          <span>Back to Contacts</span>
-        </button>
-        <DesktopSearchBar placeholder={`Search expenses with ${friend.name}...`} defaultTab="expenses" />
-        <div style={{ width: 120 }} />
-      </div>
-
-      {/* Hero Profile & Balance Overview Card */}
+  const drawerContent = (
+    <AnimatePresence>
       <div
-        className="card"
         style={{
-          padding: '16px 18px',
-          marginBottom: 16,
-          background: 'var(--surface)',
-          border: '1px solid var(--border)',
-          borderRadius: 16,
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)',
-          position: 'relative',
+          position: 'fixed',
+          inset: 0,
+          zIndex: 1200,
           display: 'flex',
-          flexDirection: 'column',
-          gap: 16,
+          alignItems: isMobileScreen ? 'flex-end' : 'center',
+          justifyContent: 'center',
+          padding: isMobileScreen ? 0 : 16,
         }}
       >
-        {/* Contact Header */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
-            <div
-              className="avatar"
-              style={{
-                ...getAvatarStyle(friend.color),
-                width: 48,
-                height: 48,
-                fontSize: 18,
-                fontWeight: 700,
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: 12,
-                boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
-              }}
-            >
-              {contactType === 'subscription' ? (
-                renderBrandLogo(friend.name, 24) || <Tv size={22} />
-              ) : contactType === 'vendor' ? (
-                <Store size={22} />
-              ) : (
-                friendInitial(friend.name, friend.avatarNumber)
-              )}
-            </div>
+        {/* Backdrop Overlay */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          onClick={() => onNavigate('friends')}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.65)',
+            backdropFilter: 'blur(5px)',
+            WebkitBackdropFilter: 'blur(5px)',
+          }}
+        />
 
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0, lineHeight: 1.2, color: 'var(--text)' }}>
-                  {friend.name}
-                </h2>
-                <span className={`app-contact-badge ${contactType}`}>
-                  {contactType}
-                </span>
+        {/* Drawer Card Modal Container (Matching image.png) */}
+        <motion.div
+          initial={isMobileScreen ? { y: '100%' } : { opacity: 0, scale: 0.95, y: 16 }}
+          animate={isMobileScreen ? { y: 0 } : { opacity: 1, scale: 1, y: 0 }}
+          exit={isMobileScreen ? { y: '100%' } : { opacity: 0, scale: 0.95, y: 16 }}
+          transition={{ duration: isMobileScreen ? 0.32 : 0.2, ease: [0.22, 1, 0.36, 1] }}
+          style={{
+            position: 'relative',
+            zIndex: 1201,
+            width: '100%',
+            maxWidth: '480px',
+            maxHeight: 'min(88vh, 88dvh)',
+            background: 'var(--drawer-bg, #141416)',
+            color: 'var(--text)',
+            borderRadius: isMobileScreen ? '24px 24px 0 0' : '26px',
+            border: '1px solid var(--border)',
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.6)',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Top Drag Handle Pill */}
+          <div
+            style={{
+              width: 38,
+              height: 4,
+              borderRadius: 9999,
+              background: 'var(--text-3)',
+              opacity: 0.35,
+              margin: '8px auto 4px',
+              flexShrink: 0,
+            }}
+          />
+
+          {/* Drawer Card Header (Image.png style) */}
+          <div
+            style={{
+              padding: '12px 16px 8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+              flexShrink: 0,
+              borderBottom: 'none',
+              background: 'transparent',
+            }}
+          >
+            {/* Contact Avatar & Title */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+              <div
+                style={{
+                  ...getAvatarStyle(friend.color),
+                  width: 42,
+                  height: 42,
+                  fontSize: 16,
+                  fontWeight: 750,
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 13,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                }}
+              >
+                {contactType === 'subscription' ? (
+                  renderBrandLogo(friend.name, 22) || <Tv size={20} />
+                ) : contactType === 'vendor' ? (
+                  <Store size={20} />
+                ) : (
+                  friendInitial(friend.name, friend.avatarNumber)
+                )}
               </div>
 
-              {friend.website && (
-                <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 3, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <a
-                    href={friend.website.startsWith('http') ? friend.website : `https://${friend.website}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ color: 'var(--accent)', display: 'inline-flex', alignItems: 'center', gap: 3, fontWeight: 500 }}
-                  >
-                    <span>Website</span> <ExternalLink size={11} />
-                  </a>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                  <h2 style={{ fontSize: 17, fontWeight: 750, margin: 0, lineHeight: 1.25, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {friend.name}
+                  </h2>
+                  <span className={`app-contact-badge ${contactType}`} style={{ textTransform: 'uppercase', fontSize: 9, letterSpacing: '0.4px', fontWeight: 700, flexShrink: 0 }}>
+                    {contactType}
+                  </span>
                 </div>
-              )}
-              {friend.notes && (
-                <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2, fontStyle: 'italic' }}>
-                  {friend.notes}
+                <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2, fontWeight: 500 }}>
+                  {contactType === 'friend'
+                    ? `${allExps.length} transaction${allExps.length !== 1 ? 's' : ''}`
+                    : contactType === 'vendor'
+                    ? `${allExps.length} order${allExps.length !== 1 ? 's' : ''}`
+                    : friend.billingCycle
+                    ? `${formatBillingCycleShort(friend.billingCycle)} renewal`
+                    : `${allExps.length} payments`}
                 </div>
-              )}
+              </div>
+            </div>
+
+            {/* Right Action Icons: Edit & Close (Image.png circular close style) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+              <button
+                type="button"
+                onClick={() => setShowEdit(true)}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 9999,
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface2)',
+                  color: 'var(--text)',
+                  display: 'grid',
+                  placeItems: 'center',
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  transition: 'all 0.15s ease',
+                }}
+                title="Edit Contact"
+                aria-label="Edit Contact"
+              >
+                <Edit2 size={13} />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onNavigate('friends')}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 9999,
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface2)',
+                  color: 'var(--text)',
+                  display: 'grid',
+                  placeItems: 'center',
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  transition: 'all 0.15s ease',
+                }}
+                title="Close"
+                aria-label="Close"
+              >
+                <X size={15} />
+              </button>
             </div>
           </div>
 
-          {/* Edit Contact Icon */}
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm"
-            onClick={() => setShowEdit(true)}
-            title="Edit Contact"
-            aria-label="Edit Contact"
-            style={{
-              padding: '7px',
-              width: 34,
-              height: 34,
-              borderRadius: '10px',
-              border: '1px solid var(--border)',
-              background: 'var(--surface2)',
-              color: 'var(--text-2)',
-              flexShrink: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <Edit2 size={15} />
-          </button>
-        </div>
-
-        {/* Dynamic Status / Financial Overview Block */}
-        {contactType === 'friend' ? (
+          {/* Drawer Body (Scrollable) */}
           <div
             style={{
-              background: bal.net > 0.004
-                ? 'var(--credit-bg)'
-                : bal.net < -0.004
-                  ? 'var(--debit-bg)'
-                  : 'var(--surface2)',
-              border: `1px solid ${bal.net > 0.004
-                ? 'var(--credit-border)'
-                : bal.net < -0.004
-                  ? 'var(--debit-border)'
-                  : 'var(--border)'
-                }`,
-              borderRadius: 12,
-              padding: '12px 14px',
+              flex: 1,
+              overflowY: 'auto',
+              padding: '14px 16px 20px',
               display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
+              flexDirection: 'column',
               gap: 12,
             }}
           >
-            <div>
-              <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-3)' }}>
-                Net Balance Status
-              </span>
-              <div style={{ fontSize: 20, fontWeight: 750, color: bal.net > 0.004 ? 'var(--credit)' : bal.net < -0.004 ? 'var(--debit)' : 'var(--text-2)', marginTop: 1 }}>
-                {bal.net > 0.004 ? fmtMoney(bal.net, currency) : bal.net < -0.004 ? fmtMoney(Math.abs(bal.net), currency) : 'Settled Up ✓'}
-              </div>
-              <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 1 }}>
-                {bal.net > 0.004 ? `${friend.name} owes you in total` : bal.net < -0.004 ? `You owe ${friend.name} in total` : 'All shared bills are settled'}
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <div style={{ padding: '6px 10px', borderRadius: 8, background: 'var(--surface)', border: '1px solid var(--border)', textAlign: 'center' }}>
-                <div style={{ fontSize: 9.5, textTransform: 'uppercase', color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.3px' }}>Owes You</div>
-                <div style={{ fontSize: 13, fontWeight: 750, color: 'var(--credit)', marginTop: 1 }}>{fmtMoney(bal.owedToMe, currency)}</div>
-              </div>
-              <div style={{ padding: '6px 10px', borderRadius: 8, background: 'var(--surface)', border: '1px solid var(--border)', textAlign: 'center' }}>
-                <div style={{ fontSize: 9.5, textTransform: 'uppercase', color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.3px' }}>You Owe</div>
-                <div style={{ fontSize: 13, fontWeight: 750, color: 'var(--debit)', marginTop: 1 }}>{fmtMoney(bal.owedByMe, currency)}</div>
-              </div>
-            </div>
-          </div>
-        ) : contactType === 'vendor' ? (
-          <div>
-            {Math.abs(bal.net) > 0.004 && (
+            {/* Card 1: TOTAL AMOUNT / NET BALANCE STATUS Card (Image.png inspired) */}
+            {contactType === 'friend' ? (
               <div
                 style={{
-                  background: bal.net > 0.004 ? 'var(--credit-bg)' : 'var(--debit-bg)',
-                  border: `1px solid ${bal.net > 0.004 ? 'var(--credit-border)' : 'var(--debit-border)'}`,
-                  borderRadius: 12,
-                  padding: '10px 14px',
-                  marginBottom: 10,
+                  background: 'var(--surface2)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 18,
+                  padding: '14px 16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 10,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                  <div>
+                    <div style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-3)' }}>
+                      TOTAL NET BALANCE
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 24,
+                        fontWeight: 800,
+                        letterSpacing: '-0.4px',
+                        color: bal.net > 0.004 ? 'var(--credit)' : bal.net < -0.004 ? 'var(--debit)' : 'var(--text)',
+                        marginTop: 2,
+                      }}
+                    >
+                      {bal.net > 0.004
+                        ? `+${fmtMoney(bal.net, currency)}`
+                        : bal.net < -0.004
+                        ? `-${fmtMoney(Math.abs(bal.net), currency)}`
+                        : fmtMoney(0, currency)}
+                    </div>
+                    <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 1, fontWeight: 500 }}>
+                      {bal.net > 0.004
+                        ? `${friend.name} owes you in total`
+                        : bal.net < -0.004
+                        ? `You owe ${friend.name} in total`
+                        : 'All shared bills are settled up'}
+                    </div>
+                  </div>
+
+                  {/* OWES YOU / YOU OWE Pills (Image.png badge style) */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <div
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: 9999,
+                        background: 'rgba(16, 185, 129, 0.12)',
+                        border: '1px solid rgba(16, 185, 129, 0.25)',
+                        color: 'var(--credit)',
+                        fontSize: 10.5,
+                        fontWeight: 750,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                      }}
+                    >
+                      <span>OWES YOU</span>
+                      <span>{fmtMoney(bal.owedToMe, currency)}</span>
+                    </div>
+
+                    <div
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: 9999,
+                        background: 'rgba(239, 68, 68, 0.12)',
+                        border: '1px solid rgba(239, 68, 68, 0.25)',
+                        color: 'var(--debit)',
+                        fontSize: 10.5,
+                        fontWeight: 750,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                      }}
+                    >
+                      <span>YOU OWE</span>
+                      <span>{fmtMoney(bal.owedByMe, currency)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div
+                style={{
+                  background: 'var(--surface2)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 18,
+                  padding: '14px 16px',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
                 }}
               >
                 <div>
-                  <span style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-3)' }}>
-                    Outstanding Balance
+                  <span style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-3)', letterSpacing: '0.5px' }}>
+                    Total Lifetime Spend
                   </span>
-                  <div style={{ fontSize: 18, fontWeight: 750, color: bal.net > 0.004 ? 'var(--credit)' : 'var(--debit)', marginTop: 1 }}>
-                    {bal.net > 0.004 ? fmtMoney(bal.net, currency) : fmtMoney(Math.abs(bal.net), currency)}
+                  <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', marginTop: 2 }}>
+                    {fmtMoney(totalSpent, currency)}
                   </div>
                 </div>
-                <div style={{ fontSize: 11.5, fontWeight: 650, color: bal.net > 0.004 ? 'var(--credit)' : 'var(--debit)' }}>
-                  {bal.net > 0.004 ? 'Owes You' : 'You Owe Vendor'}
+                <div style={{ textAlign: 'right' }}>
+                  <span style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-3)', letterSpacing: '0.5px' }}>
+                    Orders
+                  </span>
+                  <div style={{ fontSize: 18, fontWeight: 750, color: 'var(--text)', marginTop: 2 }}>
+                    {allExps.length}
+                  </div>
                 </div>
               </div>
             )}
-            <div
-              style={{
-                background: 'var(--surface2)',
-                border: '1px solid var(--border)',
-                borderRadius: 12,
-                padding: '10px 14px',
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
-                gap: 10,
-              }}
-            >
-              <div>
-                <span style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-3)' }}>Total Spent</span>
-                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-1)', marginTop: 1 }}>
-                  {fmtMoney(totalSpent, currency)}
-                </div>
-              </div>
 
-              <div>
-                <span style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-3)' }}>Total Orders</span>
-                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-1)', marginTop: 1 }}>
-                  {allExps.length}
-                </div>
-              </div>
-
-              <div>
-                <span style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-3)' }}>Avg / Order</span>
-                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-1)', marginTop: 1 }}>
-                  {fmtMoney(avgOrderVal, currency)}
-                </div>
-              </div>
-
-              <div>
-                <span style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-3)' }}>Category</span>
-                <div style={{ marginTop: 2 }}>
-                  <span style={{ fontSize: 10.5, fontWeight: 600, padding: '2px 7px', borderRadius: 4, background: 'var(--surface)', border: '1px solid var(--border)' }}>
-                    {friend.category || 'General'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div
-            style={{
-              background: 'var(--surface2)',
-              border: '1px solid var(--border)',
-              borderRadius: 14,
-              padding: '14px 16px',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-              gap: 12,
-            }}
-          >
-            <div>
-              <span style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-3)' }}>Plan Cost</span>
-              <div style={{ fontSize: 17, fontWeight: 750, color: 'var(--accent)', marginTop: 1 }}>
-                {friend.defaultAmount ? fmtMoney(friend.defaultAmount, currency) : 'Flexible'} <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-3)' }}>/ {formatBillingCycleShort(friend.billingCycle)}</span>
-              </div>
-            </div>
-
-            <div>
-              <span style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-3)' }}>Lifetime Spend</span>
-              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-1)', marginTop: 1 }}>
-                {fmtMoney(totalSpent, currency)}
-              </div>
-            </div>
-
-            <div>
-              <span style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-3)' }}>Total Payments</span>
-              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-1)', marginTop: 1 }}>
-                {allExps.length}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Primary Action Buttons */}
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button
-            style={{
-              flex: 1,
-              padding: '10px 14px',
-              fontSize: 13,
-              fontWeight: 650,
-              gap: 6,
-              justifyContent: 'center',
-              display: 'inline-flex',
-              alignItems: 'center',
-              borderRadius: 11,
-              border: 'none',
-              background: 'var(--accent-gradient)',
-              color: 'var(--accent-contrast, #ffffff)',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              boxShadow: '0 2px 10px var(--accent-soft)',
-              transition: 'all 0.15s ease',
-            }}
-            onClick={() => setShowAddExp(true)}
-          >
-            <Plus size={16} /> {contactType === 'vendor' ? 'Log Purchase' : contactType === 'subscription' ? 'Log Payment' : 'Add Expense'}
-          </button>
-
-          {activeExps.length > 0 && (
-            <button
-              style={{
-                flex: 1,
-                padding: '10px 14px',
-                fontSize: 13,
-                fontWeight: 650,
-                gap: 6,
-                justifyContent: 'center',
-                display: 'inline-flex',
-                alignItems: 'center',
-                borderRadius: 11,
-                border: '1px solid var(--credit-border)',
-                background: 'var(--credit-bg)',
-                color: 'var(--credit)',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                transition: 'all 0.15s ease',
-              }}
-              onClick={() => setShowSettle(true)}
-            >
-              <Handshake size={16} /> Settle Up
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Connected Autopay & Subscriptions Section */}
-      {(connectedRules.length > 0 || contactType === 'subscription') && (
-        <div
-          className="card"
-          style={{
-            padding: '16px 18px',
-            marginBottom: 16,
-            background: 'var(--surface)',
-            border: '1px solid var(--border)',
-            borderRadius: 16,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: connectedRules.length > 0 ? 12 : 8, flexWrap: 'wrap', gap: 10 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{
-                width: 34, height: 34, borderRadius: 10,
-                background: 'var(--accent-soft)', color: 'var(--accent)',
-                display: 'grid', placeItems: 'center', flexShrink: 0
-              }}>
-                <RefreshCw size={17} />
-              </div>
-              <div>
-                <h3 style={{ fontSize: 14, fontWeight: 700, margin: 0, lineHeight: 1.2, color: 'var(--text)' }}>
-                  Autopay & Subscriptions ({connectedRules.length})
-                </h3>
-                <p style={{ fontSize: 11.5, color: 'var(--text-3)', margin: '2px 0 0 0' }}>
-                  Recurring rules & automated billing for {friend.name}
-                </p>
-              </div>
-            </div>
-
-            <button
-              className="btn btn-secondary btn-sm"
-              style={{ fontSize: 11.5, gap: 5, padding: '5px 12px', borderRadius: 8 }}
-              onClick={() => setShowRecurringModal(true)}
-            >
-              <Plus size={14} /> Add Autopay Rule
-            </button>
-          </div>
-
-          {connectedRules.length === 0 ? (
-            <div style={{
-              background: 'var(--surface2)', borderRadius: 10, padding: '12px 14px',
-              border: '1px dashed var(--border2)', display: 'flex', alignItems: 'center',
-              justifyContent: 'space-between', gap: 10, flexWrap: 'wrap'
-            }}>
-              <span style={{ fontSize: 12, color: 'var(--text-2)' }}>
-                No active autopay or subscription rule connected to {friend.name} yet.
-              </span>
+            {/* Action Buttons (Simplified Pill Buttons) */}
+            <div style={{ display: 'flex', gap: 10 }}>
               <button
-                className="btn btn-primary btn-sm"
-                style={{ fontSize: 11.5, padding: '5px 12px', gap: 5, borderRadius: 8 }}
-                onClick={() => setShowRecurringModal(true)}
+                type="button"
+                onClick={() => setShowAddExp(true)}
+                style={{
+                  flex: 1,
+                  height: 42,
+                  borderRadius: 9999,
+                  fontWeight: 700,
+                  fontSize: 13,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  background: 'var(--text)',
+                  color: 'var(--bg)',
+                  border: 'none',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.16)',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.15s ease',
+                }}
               >
-                <Zap size={13} /> Connect Autopay Rule
+                <Plus size={16} strokeWidth={2.4} />
+                <span>
+                  {contactType === 'vendor' ? 'Log Purchase' : contactType === 'subscription' ? 'Log Payment' : 'Add Expense'}
+                </span>
               </button>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {connectedRules.map(r => (
-                <div
-                  key={r.id}
+
+              {contactType === 'friend' && (
+                <button
+                  type="button"
+                  onClick={() => setShowSettle(true)}
                   style={{
-                    display: 'flex',
+                    flex: 1,
+                    height: 42,
+                    borderRadius: 9999,
+                    fontWeight: 700,
+                    fontSize: 13,
+                    display: 'inline-flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '10px 12px',
+                    justifyContent: 'center',
+                    gap: 8,
                     background: 'var(--surface2)',
-                    borderRadius: 10,
                     border: '1px solid var(--border)',
-                    gap: 10,
-                    flexWrap: 'wrap'
+                    color: 'var(--text)',
+                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.15s ease',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                  <Handshake size={16} strokeWidth={2.2} />
+                  <span>Settle Up</span>
+                </button>
+              )}
+            </div>
+
+            {/* Connected Autopay Section if present */}
+            {(connectedRules.length > 0 || contactType === 'subscription') && (
+              <div
+                style={{
+                  padding: '12px 14px',
+                  background: 'var(--surface2)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 16,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: connectedRules.length > 0 ? 8 : 4, flexWrap: 'wrap', gap: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div style={{
-                      width: 32, height: 32, borderRadius: 8,
-                      background: r.kind === 'autopay' ? 'rgba(56, 189, 248, 0.15)' : 'rgba(251, 191, 36, 0.15)',
-                      color: r.kind === 'autopay' ? 'var(--info)' : '#d97706',
+                      width: 28, height: 28, borderRadius: 8,
+                      background: 'var(--accent-soft)', color: 'var(--accent)',
                       display: 'grid', placeItems: 'center', flexShrink: 0
                     }}>
-                      {r.kind === 'autopay' ? <RefreshCw size={16} /> : <Zap size={16} />}
+                      <RefreshCw size={14} />
                     </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-1)' }}>{r.title}</span>
-                        <span style={{
-                          fontSize: 10, fontWeight: 600, padding: '1px 6px', borderRadius: 4,
-                          background: r.kind === 'autopay' ? 'rgba(56, 189, 248, 0.12)' : 'rgba(251, 191, 36, 0.12)',
-                          color: r.kind === 'autopay' ? 'var(--info)' : '#d97706',
-                          textTransform: 'uppercase'
-                        }}>
-                          {r.kind === 'autopay' ? 'Autopay' : 'Custom'}
-                        </span>
-                      </div>
-                      <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2 }}>
-                        {fmtMoney(r.amount, currency)} / {r.frequency}
-                        {r.nextDueDate && ` · Next due: ${r.nextDueDate}`}
-                        {r.lastDeductedDate && ` · Last paid: ${r.lastDeductedDate}`}
-                      </div>
-                    </div>
+                    <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text)' }}>
+                      Autopay Rules ({connectedRules.length})
+                    </span>
                   </div>
 
                   <button
-                    className="btn btn-primary btn-sm"
-                    style={{ fontSize: 12, padding: '5px 12px', gap: 5, borderRadius: 8 }}
-                    onClick={() => {
-                      if (r.kind === 'autopay') {
-                        triggerAutopayDeduct(r.id);
-                        showToast(`Deducted autopay for "${r.title}"`);
-                      } else {
-                        quickLogRecurringRule(r.id);
-                        showToast(`Logged expense for "${r.title}"`);
-                      }
-                    }}
+                    className="btn btn-secondary btn-sm"
+                    style={{ fontSize: 11, gap: 4, padding: '3px 10px', borderRadius: 9999 }}
+                    onClick={() => setShowRecurringModal(true)}
                   >
-                    <Play size={13} /> {r.kind === 'autopay' ? 'Deduct / Pay Now' : 'Log Now'}
+                    <Plus size={11} /> Add Rule
                   </button>
                 </div>
-              ))}
+
+                {connectedRules.length === 0 ? (
+                  <div style={{
+                    borderRadius: 10, padding: '8px 10px',
+                    border: '1px dashed var(--border)', display: 'flex', alignItems: 'center',
+                    justifyContent: 'space-between', gap: 6, flexWrap: 'wrap'
+                  }}>
+                    <span style={{ fontSize: 11, color: 'var(--text-3)' }}>
+                      No active rule connected.
+                    </span>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      style={{ fontSize: 10.5, padding: '3px 8px', gap: 4, borderRadius: 9999 }}
+                      onClick={() => setShowRecurringModal(true)}
+                    >
+                      <Zap size={11} /> Connect Rule
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {connectedRules.map((r, idx) => (
+                      <div
+                        key={`${r.id}-${idx}`}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '8px 10px',
+                          background: 'var(--surface)',
+                          borderRadius: 10,
+                          border: '1px solid var(--border)',
+                          gap: 8,
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                          <div style={{
+                            width: 26, height: 26, borderRadius: 7,
+                            background: r.kind === 'autopay' ? 'rgba(56, 189, 248, 0.15)' : 'rgba(251, 191, 36, 0.15)',
+                            color: r.kind === 'autopay' ? 'var(--info)' : '#d97706',
+                            display: 'grid', placeItems: 'center', flexShrink: 0
+                          }}>
+                            {r.kind === 'autopay' ? <RefreshCw size={13} /> : <Zap size={13} />}
+                          </div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>{r.title}</div>
+                            <div style={{ fontSize: 10.5, color: 'var(--text-3)' }}>
+                              {fmtMoney(r.amount, currency)} / {r.frequency}
+                            </div>
+                          </div>
+                        </div>
+
+                        <button
+                          className="btn btn-primary btn-sm"
+                          style={{ fontSize: 10.5, padding: '3px 8px', gap: 3, borderRadius: 9999 }}
+                          onClick={() => {
+                            if (r.kind === 'autopay') {
+                              triggerAutopayDeduct(r.id);
+                              showToast(`Deducted autopay for "${r.title}"`);
+                            } else {
+                              quickLogRecurringRule(r.id);
+                              showToast(`Logged expense for "${r.title}"`);
+                            }
+                          }}
+                        >
+                          <Play size={10} /> Pay
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Segmented Control for Active & Settled Tabs (Dark subtle elevated style) */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: 4,
+                borderRadius: 14,
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid var(--border)',
+                width: '100%',
+                marginTop: 2,
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setTab('active')}
+                style={{
+                  flex: 1,
+                  height: 38,
+                  borderRadius: 10,
+                  fontWeight: 700,
+                  fontSize: 13,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  border: tab === 'active' ? '1px solid rgba(255, 255, 255, 0.14)' : '1px solid transparent',
+                  cursor: 'pointer',
+                  transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
+                  background: tab === 'active' ? 'var(--surface2, rgba(255, 255, 255, 0.09))' : 'transparent',
+                  color: tab === 'active' ? 'var(--text)' : 'var(--text-3)',
+                  boxShadow: tab === 'active' ? '0 2px 8px rgba(0, 0, 0, 0.35)' : 'none',
+                }}
+              >
+                <span>Active</span>
+                <span
+                  style={{
+                    fontSize: 10.5,
+                    fontWeight: 800,
+                    padding: '1px 7px',
+                    borderRadius: 9999,
+                    background: tab === 'active' ? 'rgba(255, 255, 255, 0.14)' : 'rgba(255, 255, 255, 0.05)',
+                    color: tab === 'active' ? 'var(--text)' : 'var(--text-3)',
+                  }}
+                >
+                  {activeExps.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setTab('settled')}
+                style={{
+                  flex: 1,
+                  height: 38,
+                  borderRadius: 10,
+                  fontWeight: 700,
+                  fontSize: 13,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  border: tab === 'settled' ? '1px solid rgba(255, 255, 255, 0.14)' : '1px solid transparent',
+                  cursor: 'pointer',
+                  transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
+                  background: tab === 'settled' ? 'var(--surface2, rgba(255, 255, 255, 0.09))' : 'transparent',
+                  color: tab === 'settled' ? 'var(--text)' : 'var(--text-3)',
+                  boxShadow: tab === 'settled' ? '0 2px 8px rgba(0, 0, 0, 0.35)' : 'none',
+                }}
+              >
+                <span>Settled</span>
+                <span
+                  style={{
+                    fontSize: 10.5,
+                    fontWeight: 800,
+                    padding: '1px 7px',
+                    borderRadius: 9999,
+                    background: tab === 'settled' ? 'rgba(255, 255, 255, 0.14)' : 'rgba(255, 255, 255, 0.05)',
+                    color: tab === 'settled' ? 'var(--text)' : 'var(--text-3)',
+                  }}
+                >
+                  {settledExps.length}
+                </span>
+              </button>
             </div>
-          )}
-        </div>
-      )}
 
-      {/* Standalone Filter Tabs: Active vs Settled */}
-      <div style={{ marginBottom: 12 }}>
-        {(contactType === 'friend' || activeExps.length > 0 || settledExps.length > 0) ? (
-          <div className="app-segmented-group" style={{ width: '100%' }}>
-            <button
-              type="button"
-              onClick={() => setTab('active')}
-              className={`app-segmented-item ${tab === 'active' ? 'active' : ''}`}
-            >
-              <span>Active</span>
-              <span className="app-segmented-counter">
-                {activeExps.length}
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setTab('settled')}
-              className={`app-segmented-item ${tab === 'settled' ? 'active' : ''}`}
-            >
-              <span>Settled</span>
-              <span className="app-segmented-counter">
-                {settledExps.length}
-              </span>
-            </button>
-          </div>
-        ) : (
-          <div style={{ fontWeight: 650, fontSize: 14, color: 'var(--text)', padding: '4px 0' }}>
-            Payment & Order History ({allExps.length})
-          </div>
-        )}
-      </div>
-
-      {/* Transactions List (Floating Cards - No Split Lines) */}
-      {shown.length === 0 ? (
-        <div className="card" style={{ padding: '32px 20px', borderRadius: 14, textAlign: 'center', border: '1px solid var(--border)' }}>
-          <div className="empty-state">
-            <p>{contactType === 'friend' ? (tab === 'active' ? 'No active expenses with this friend.' : 'No settled expenses yet.') : 'No recorded transactions yet.'}</p>
-          </div>
-        </div>
-      ) : (
-        <>
-          {/* Desktop Table View */}
-          <div className="table-wrapper desktop-only card" style={{ padding: 0, overflow: 'hidden', borderRadius: 14, border: '1px solid var(--border)' }}>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Description</th>
-                  <th>Amount</th>
-                  <th>Date</th>
-                  <th>Type</th>
-                  <th>Category</th>
-                  <th>Status</th>
-                  <th style={{ textAlign: 'right' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {shown.map(e => {
+            {/* Transactions List */}
+            {shown.length === 0 ? (
+              <div
+                style={{
+                  padding: '24px 16px',
+                  borderRadius: 16,
+                  textAlign: 'center',
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface2)',
+                }}
+              >
+                <p style={{ color: 'var(--text-3)', margin: 0, fontSize: 12.5, fontWeight: 500 }}>
+                  {contactType === 'friend'
+                    ? tab === 'active'
+                      ? 'No active expenses with this friend.'
+                      : 'No settled expenses yet.'
+                    : 'No recorded transactions yet.'}
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {shown.map((e, idx) => {
                   const cat = db.settings.categories.find(c => c.name === e.category);
                   const isIn = expenseFlow(e) === 'in';
-                  const isEvenGroup = dateGroupInfo.groupMap[e.id] === 0;
-                  const isFirstOfDate = dateGroupInfo.isFirstMap[e.id];
-                  const rowClass = `${isEvenGroup ? 'date-row-even' : 'date-row-odd'}${isFirstOfDate ? ' date-row-first' : ''}`;
 
                   const isVendorView = e.vendorId === friendId;
                   const isIncome = expenseFlow(e) === 'in' && e.type === 'personal';
@@ -664,122 +755,63 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
                       : (isPartial ? 'Partially Settled' : (e.type === 'personal' && e.status === 'paid' ? 'Paid' : (e.status === 'unpaid' ? 'Unpaid' : 'Unsettled'))));
 
                   return (
-                    <tr
-                      key={e.id}
-                      className={rowClass}
+                    <div
+                      key={`${e.id}-${idx}`}
                       onClick={() => handleOpenDetail(e)}
-                      style={{ cursor: 'pointer' }}
+                      style={{
+                        padding: '12px 14px',
+                        background: 'var(--surface2)',
+                        border: '1px solid var(--border)',
+                        borderRadius: 14,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 10,
+                        transition: 'all 0.15s ease',
+                      }}
+                      className="hover:border-[var(--border2)]"
                     >
-                      <td style={{ fontWeight: 600, fontSize: 13 }}>{cleanExpenseDescription(e.description)}</td>
-                      <td style={{ fontWeight: 650, color: contactType === 'friend' ? (isIn ? 'var(--credit)' : e.type === 'by_friend' ? 'var(--debit)' : undefined) : 'var(--text-1)' }}>
-                        {contactType === 'friend' ? (isIn ? '+' : '') : ''}{fmtMoney(e.amount, currency)}
-                        {e.originalAmount && Math.abs(e.originalAmount - e.amount) > 0.01 ? (
-                          <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginTop: 1 }}>
-                            og {fmtMoney(e.originalAmount, currency)}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+                        <CategoryBadge category={e.category} color={cat?.color} icon={cat?.icon} size={16} showLabel={false} />
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <div style={{ fontWeight: 650, fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {cleanExpenseDescription(e.description)}
                           </div>
-                        ) : null}
-                      </td>
-                      <td style={{ color: 'var(--text-3)', fontSize: 12 }}>{fmtDate(e.originalDate || e.date)}</td>
-                      <td style={{ fontSize: 12, color: 'var(--text-2)' }}>{typeLabel(e.type, contactType)}</td>
-                      <td>
-                        <CategoryBadge category={e.category} color={cat?.color} icon={cat?.icon} />
-                      </td>
-                      <td>
-                        {statusKey !== 'none' && itemStatusLabel ? (
-                          <span className={`badge badge-${statusKey}`}>
-                            {itemStatusLabel}
-                          </span>
-                        ) : (
-                          <span style={{ color: 'var(--text-3)', fontSize: 12 }}>—</span>
-                        )}
-                      </td>
-                      <td style={{ textAlign: 'right' }} onClick={(ev) => ev.stopPropagation()}>
-                        <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end', alignItems: 'center' }}>
-                          <button className="btn-icon" onClick={() => setEditingExpense(e)} title="Edit"><Edit2 size={15} /></button>
-                          <button className="btn-icon" onClick={() => setDeletingExpenseId(e.groupId || e.id)} title="Delete" style={{ color: 'var(--debit)' }}><Trash2 size={15} /></button>
+                          <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
+                            <span>{fmtDate(e.originalDate || e.date)}</span>
+                            <span>·</span>
+                            <span>{typeLabel(e.type, contactType)}</span>
+                            {statusKey !== 'none' && itemStatusLabel && (
+                              <span className={`badge badge-${statusKey}`} style={{ fontSize: 9.5, padding: '1px 5px', borderRadius: 4 }}>
+                                {itemStatusLabel}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </td>
-                    </tr>
+                      </div>
+
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                        <div
+                          style={{
+                            fontWeight: 750,
+                            fontSize: 13.5,
+                            color: contactType === 'friend' ? (isIn ? 'var(--credit)' : e.type === 'by_friend' ? 'var(--debit)' : 'var(--text)') : 'var(--text)',
+                          }}
+                        >
+                          {contactType === 'friend' ? (isIn ? '+' : '') : ''}{fmtMoney(e.amount, currency)}
+                        </div>
+                      </div>
+                    </div>
                   );
                 })}
-              </tbody>
-            </table>
+              </div>
+            )}
           </div>
+        </motion.div>
+      </div>
 
-          {/* Mobile Cards View - Click to open drawer */}
-          <div className="mobile-expense-list mobile-only">
-            {shown.map(e => {
-              const cat = db.settings.categories.find(c => c.name === e.category);
-              const isIn = expenseFlow(e) === 'in';
-
-              const isVendorView = e.vendorId === friendId;
-              const isIncome = expenseFlow(e) === 'in' && e.type === 'personal';
-              const isSettled = isVendorView
-                ? Boolean(e.vendorSettled || (e.status === 'paid' && e.vendorSettled !== false))
-                : Boolean(e.settled);
-              const isPartial = isVendorView
-                ? Boolean(e.vendorSettledAmount && e.vendorSettledAmount > 0 && !e.vendorSettled)
-                : Boolean((e.settledAmount && e.settledAmount > 0 && !e.settled) || (e.originalAmount && Math.abs(e.originalAmount - e.amount) > 0.01 && e.settled));
-              const statusKey = isIncome
-                ? 'none'
-                : (isSettled ? (isPartial ? 'partial' : 'settled') : (isPartial ? 'partial' : (e.type === 'personal' && e.status === 'paid' ? 'paid' : (e.status || 'unsettled'))));
-              const itemStatusLabel = isIncome
-                ? ''
-                : (isSettled
-                  ? (isPartial ? 'Partially Settled' : 'Settled')
-                  : (isPartial ? 'Partially Settled' : (e.type === 'personal' && e.status === 'paid' ? 'Paid' : (e.status === 'unpaid' ? 'Unpaid' : 'Unsettled'))));
-
-              return (
-                <div
-                  key={e.id}
-                  className="mobile-expense-card"
-                  onClick={() => handleOpenDetail(e)}
-                  role="button"
-                  tabIndex={0}
-                  style={{ cursor: 'pointer' }}
-                  onKeyDown={(ev) => {
-                    if (ev.key === 'Enter' || ev.key === ' ') {
-                      ev.preventDefault();
-                      handleOpenDetail(e);
-                    }
-                  }}
-                >
-                  <div className="mobile-expense-header">
-                    <div className="mobile-expense-top">
-                      <div className="mobile-expense-desc-wrap">
-                        <CategoryBadge category={e.category} color={cat?.color} icon={cat?.icon} size={14} showLabel={false} />
-                        <span className="mobile-expense-title">{cleanExpenseDescription(e.description)}</span>
-                      </div>
-                      <div className="mobile-expense-amount" style={{ color: contactType === 'friend' ? (isIn ? 'var(--credit)' : e.type === 'by_friend' ? 'var(--debit)' : undefined) : 'var(--text-1)' }}>
-                        {contactType === 'friend' ? (isIn ? '+' : '') : ''}{fmtMoney(e.amount, currency)}
-                        {e.originalAmount && Math.abs(e.originalAmount - e.amount) > 0.01 ? (
-                          <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 400 }}>
-                            og {fmtMoney(e.originalAmount, currency)}
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    <div className="mobile-expense-meta">
-                      <div className="mobile-expense-meta-left">
-                        <span>{fmtDate(e.date)}</span>
-                        <span>·</span>
-                        <span>{e.category}</span>
-                        {statusKey !== 'none' && itemStatusLabel && (
-                          <span className={`badge badge-${statusKey}`} style={{ fontSize: 10, padding: '2px 7px', borderRadius: 6 }}>
-                            {itemStatusLabel}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </>
-      )}
-
+      {/* Modals & Dialogs */}
       {selectedDetailGe && (
         <ExpenseDetailDrawer
           ge={selectedDetailGe}
@@ -859,6 +891,8 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
           onClose={() => setUndoExpId(null)}
         />
       )}
-    </div>
+    </AnimatePresence>
   );
+
+  return createPortal(drawerContent, document.body);
 }

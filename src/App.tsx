@@ -255,9 +255,13 @@ function AppInner() {
 
     document.addEventListener('focusin', handleInputInteraction, true);
     document.addEventListener('click', handleInputInteraction, true);
+    document.addEventListener('touchstart', handleInputInteraction, { passive: true, capture: true });
+    document.addEventListener('pointerdown', handleInputInteraction, { passive: true, capture: true });
     return () => {
       document.removeEventListener('focusin', handleInputInteraction, true);
       document.removeEventListener('click', handleInputInteraction, true);
+      document.removeEventListener('touchstart', handleInputInteraction, true);
+      document.removeEventListener('pointerdown', handleInputInteraction, true);
     };
   }, [db.settings?.autoOpenKeyboard]);
 
@@ -514,7 +518,13 @@ function AppInner() {
       case 'expenses': return <Expenses initialArg={viewArg} onClearViewArg={clearViewArg} />;
       case 'wallets': return <Wallets initialArg={viewArg} onClearViewArg={clearViewArg} />;
       case 'friends': return <Friends onNavigate={navigate} />;
-      case 'friend-detail': return <FriendDetail friendId={friendDetailId} onNavigate={navigate} />;
+      case 'friend-detail':
+        return (
+          <>
+            <Friends onNavigate={navigate} />
+            <FriendDetail friendId={friendDetailId} onNavigate={navigate} />
+          </>
+        );
       case 'recurring':
         return <Recurring onNavigate={navigate} initialArg={viewArg} onClearViewArg={clearViewArg} />;
       case 'settlements': return <Settlements initialArg={viewArg} onClearViewArg={clearViewArg} />;
@@ -800,7 +810,7 @@ function AppInner() {
           >
             {/* Left side: Back button or Clean view title (without leading icon) */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0, flexShrink: 1 }}>
-              {(view === 'friend-detail' || view === 'settings') && (
+              {view === 'settings' && (
                 <IconButton
                   size="small"
                   onClick={handleGoBack}

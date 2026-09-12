@@ -419,7 +419,7 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: '100%', minWidth: 0 }}>
-              {recentExpenses.map((ge) => {
+              {recentExpenses.map((ge, idx) => {
                 const cat = db.settings.categories.find(c => c.name === ge.category);
                 const isSettlement = ge.isSettlementGroup || ge.category === 'Settlement';
                 const catMeta = resolveCategoryMeta(ge.category, cat, isSettlement);
@@ -427,7 +427,7 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
                 const friendsInGroup = ge.friendIds.map(fid => db.friends.find(f => f.id === fid)).filter(Boolean);
                 return (
                   <div
-                    key={ge.id}
+                    key={`${ge.id}-${idx}`}
                     onClick={() => setSelectedDetailGe(ge)}
                     role="button"
                     tabIndex={0}
@@ -493,8 +493,8 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
                             <>
                               <span style={{ flexShrink: 0 }}>•</span>
                               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {friendsInGroup.map((f) => f && (
-                                  <span key={f.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 3.5, flexShrink: 0 }}>
+                                {friendsInGroup.map((f, fIdx) => f && (
+                                  <span key={`${f.id}-${fIdx}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 3.5, flexShrink: 0 }}>
                                     <span
                                       className="avatar avatar-sm"
                                       style={{

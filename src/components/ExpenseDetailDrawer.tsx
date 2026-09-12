@@ -259,7 +259,7 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
   }, []);
 
   return createPortal(
-    <div className="modal-backdrop-motion">
+    <div className="modal-backdrop-motion" style={{ position: 'fixed', inset: 0, zIndex: 1400, display: 'flex', alignItems: isMobileScreen ? 'flex-end' : 'center', justifyContent: 'center' }}>
       {/* Backdrop overlay */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -267,6 +267,7 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
         className="modal-backdrop-overlay"
+        style={{ position: 'fixed', inset: 0, zIndex: 1401, background: 'rgba(0, 0, 0, 0.65)', backdropFilter: 'blur(5px)', WebkitBackdropFilter: 'blur(5px)' }}
         onClick={onClose}
       />
 
@@ -278,6 +279,8 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
         transition={{ duration: isMobileScreen ? 0.32 : 0.2, ease: [0.22, 1, 0.36, 1] }}
         className="modal expense-drawer-modal modal-dialog-panel"
         style={{
+          position: 'relative',
+          zIndex: 1402,
           maxHeight: 'min(92vh, 92dvh)',
           display: 'flex',
           flexDirection: 'column',
@@ -908,7 +911,7 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
 
                       return (
                         <div
-                          key={item.id || idx}
+                          key={`${item.id || 'item'}-${idx}`}
                           style={{
                             display: 'flex',
                             justifyContent: 'space-between',

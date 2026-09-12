@@ -125,8 +125,8 @@ export const ExpenseTableRow: React.FC<Props> = React.memo(({
                 {!ge.isSettlementGroup && friendsToShow.length > 0 && <span style={{ flexShrink: 0 }}>•</span>}
                 {friendsToShow.length > 0 && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--text-3)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {friendsToShow.map((f: Friend | undefined) => f && (
-                      <span key={f.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                    {friendsToShow.map((f: Friend | undefined, fIdx: number) => f && (
+                      <span key={`${f.id}-${fIdx}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
                         <div className="avatar avatar-sm" style={{ ...getAvatarStyle(f.color), width: 16, height: 16, fontSize: 8, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                           {friendInitial(f.name, f.avatarNumber)}
                         </div>

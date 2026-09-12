@@ -191,7 +191,7 @@ export const ExpenseMobileCard: React.FC<Props> = React.memo(({
                       <span style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>
                         {friendsToShow.slice(0, 2).map((f, idx) => (
                           <span
-                            key={f.id}
+                            key={`${f.id}-${idx}`}
                             className="avatar avatar-sm"
                             style={{
                               ...getAvatarStyle(f.color),
