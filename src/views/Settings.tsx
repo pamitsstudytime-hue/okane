@@ -356,8 +356,8 @@ export default function Settings({
   const [showSecuritySheet, setShowSecuritySheet] = useState(false);
   const [isPinSetupActive, setIsPinSetupActive] = useState(false);
 
-  const isLockEnabled = Boolean(settings.enableSecurityLock ?? settings.enableBiometricLock);
-  const isBiometricEnabled = Boolean(settings.enableBiometricLock ?? false);
+  const isLockEnabled = Boolean(settings.enableSecurityLock && settings.securityPin);
+  const isBiometricEnabled = Boolean(settings.enableBiometricLock && settings.securityPin && isLockEnabled);
 
   const handleToggleSecurityLock = (enabled: boolean) => {
     if (enabled) {
@@ -4863,22 +4863,6 @@ export default function Settings({
               </button>
             </div>
 
-            {/* Android/Mobile Indicator Tag */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '8px 12px',
-              borderRadius: 10,
-              background: 'var(--surface2)',
-              border: '1px solid var(--border)',
-              marginBottom: 14,
-              fontSize: 12,
-              color: 'var(--text-2)'
-            }}>
-              <Smartphone size={16} style={{ color: 'var(--accent)' }} />
-              <span>Targeted for <strong>Android / Mobile Native</strong> (Supports Fingerprint, Face ID & PIN)</span>
-            </div>
 
             {/* Main Controls List */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

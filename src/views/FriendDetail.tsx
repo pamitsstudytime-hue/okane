@@ -844,10 +844,10 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
                 }}
               />
 
-              {/* Drawer Header (No Split Line, Top Left Icon Blends with Card/Drawer BG) */}
+              {/* Drawer Header with Friend Avatar, Name, Type Pill, and Tx Count */}
               <div
                 style={{
-                  padding: '12px 16px 6px',
+                  padding: '12px 16px 8px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
@@ -856,26 +856,71 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
                   borderBottom: 'none',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
                   <div
                     style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 9999,
-                      background: 'transparent',
-                      display: 'grid',
-                      placeItems: 'center',
-                      color: 'var(--text-2, #a1a1aa)',
+                      ...getAvatarStyle(friend.color),
+                      width: 44,
+                      height: 44,
+                      fontSize: 17,
+                      fontWeight: 750,
+                      flexShrink: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: 14,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.14)',
                     }}
                   >
-                    <History size={18} />
+                    {contactType === 'subscription' ? (
+                      renderBrandLogo(friend.name, 22) || <Tv size={20} />
+                    ) : contactType === 'vendor' ? (
+                      <Store size={20} />
+                    ) : (
+                      friendInitial(friend.name, friend.avatarNumber)
+                    )}
                   </div>
-                  <div>
-                    <h3 style={{ fontSize: 16, fontWeight: 750, margin: 0, color: 'var(--text)' }}>
-                      Transactions
-                    </h3>
-                    <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 1, fontWeight: 500 }}>
-                      {friend.name}
+
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                      <h3
+                        style={{
+                          fontSize: 20,
+                          fontWeight: 800,
+                          margin: 0,
+                          lineHeight: 1.2,
+                          color: 'var(--text)',
+                          letterSpacing: '-0.3px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {friend.name}
+                      </h3>
+                      <span
+                        style={{
+                          textTransform: 'uppercase',
+                          fontSize: 10,
+                          letterSpacing: '0.5px',
+                          fontWeight: 750,
+                          flexShrink: 0,
+                          background: contactType === 'friend' ? 'rgba(99, 102, 241, 0.22)' : contactType === 'vendor' ? 'rgba(236, 72, 153, 0.22)' : 'rgba(16, 185, 129, 0.22)',
+                          color: contactType === 'friend' ? '#a5b4fc' : contactType === 'vendor' ? '#f472b6' : '#6ee7b7',
+                          borderRadius: 6,
+                          padding: '2px 8px',
+                          border: contactType === 'friend' ? '1px solid rgba(165, 180, 252, 0.25)' : contactType === 'vendor' ? '1px solid rgba(244, 114, 182, 0.25)' : '1px solid rgba(110, 231, 183, 0.25)',
+                        }}
+                      >
+                        {contactType}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 3, fontWeight: 500 }}>
+                      {contactType === 'friend'
+                        ? `${allExps.length} transaction${allExps.length !== 1 ? 's' : ''}`
+                        : contactType === 'vendor'
+                        ? `${allExps.length} order${allExps.length !== 1 ? 's' : ''}`
+                        : `${allExps.length} payment${allExps.length !== 1 ? 's' : ''}`}
                     </div>
                   </div>
                 </div>
@@ -895,6 +940,7 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
                     cursor: 'pointer',
                     flexShrink: 0,
                   }}
+                  title="Close transactions"
                 >
                   <X size={15} />
                 </button>

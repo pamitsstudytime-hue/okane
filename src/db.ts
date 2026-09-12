@@ -663,6 +663,7 @@ export function defaultDB(): AppDB {
       sidebarCollapsed: typeof localStorage !== 'undefined' ? localStorage.getItem('sidebar_collapsed') === 'true' : false,
       enableAnimations: true,
       performanceMode: false,
+      enableSecurityLock: false,
       enableBiometricLock: false,
       securityPin: '',
       requireBiometricOnResume: true,
@@ -755,6 +756,8 @@ export function sanitizeLoadedDB(rawDB: unknown): AppDB {
     currency: parsed.settings?.currency || 'INR',
     defaultWalletId: parsed.settings?.defaultWalletId || safeWallets[0].id,
     defaultCategory: parsed.settings?.defaultCategory || safeCategories[0].name,
+    enableSecurityLock: Boolean(parsed.settings?.enableSecurityLock && parsed.settings?.securityPin),
+    enableBiometricLock: Boolean(parsed.settings?.enableBiometricLock && parsed.settings?.securityPin),
   };
 
   return {

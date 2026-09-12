@@ -156,7 +156,7 @@ function AppInner() {
     return () => unregister();
   }, [view, viewHistory]);
 
-  const isSecurityLockActive = Boolean(db.settings?.enableSecurityLock ?? db.settings?.enableBiometricLock);
+  const isSecurityLockActive = Boolean(db.settings?.enableSecurityLock && db.settings?.securityPin);
   const [isAppLocked, setIsAppLocked] = useState<boolean>(() => {
     return isSecurityLockActive;
   });
@@ -1704,7 +1704,7 @@ function AppInner() {
             key="security-lock-modal"
             onUnlock={handleUnlock}
             savedPin={db.settings?.securityPin || ''}
-            enableBiometricLock={db.settings?.enableBiometricLock ?? true}
+            enableBiometricLock={Boolean(db.settings?.enableBiometricLock && db.settings?.securityPin)}
             autoUnlockOnFace={db.settings?.autoUnlockOnFace ?? false}
           />
         )}

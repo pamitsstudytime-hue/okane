@@ -14,6 +14,7 @@ import {
   Sparkles,
   Repeat,
   Check,
+  Hash,
 } from 'lucide-react';
 import { useStore } from '../store';
 import type { Friend, ContactType } from '../types';
@@ -727,24 +728,35 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
                       onClick={() => setShowNumberPicker(!showNumberPicker)}
                       style={{
                         fontSize: 11,
-                        fontWeight: showNumberPicker || avatarNumber ? 650 : 500,
-                        color: showNumberPicker || avatarNumber ? 'var(--text)' : 'var(--text-2)',
-                        background: showNumberPicker || avatarNumber ? 'var(--surface)' : 'var(--surface2)',
-                        border: '1px solid ' + (showNumberPicker || avatarNumber ? 'var(--border2)' : 'var(--border)'),
-                        boxShadow: showNumberPicker || avatarNumber ? '0 1px 3px rgba(0, 0, 0, 0.08)' : 'none',
-                        padding: '3px 10px',
+                        fontWeight: showNumberPicker || avatarNumber ? 700 : 500,
+                        color: showNumberPicker || avatarNumber ? 'var(--bg)' : 'var(--text-2)',
+                        background: showNumberPicker || avatarNumber ? 'var(--text)' : 'var(--surface2)',
+                        border: '1px solid ' + (showNumberPicker || avatarNumber ? 'var(--text)' : 'var(--border)'),
+                        boxShadow: showNumberPicker || avatarNumber ? '0 1px 4px rgba(0, 0, 0, 0.18)' : 'none',
+                        padding: '3px 9px',
                         borderRadius: 9999,
                         cursor: 'pointer',
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: 5,
+                        gap: 4.5,
                         transition: 'all 0.15s ease',
                       }}
-                      title="Secret option: Use custom number badge instead of initial"
+                      title="Custom 2-digit number badge for friend avatar"
                     >
-                      <span># Number Badge</span>
+                      <Hash size={11} style={{ strokeWidth: 2.5 }} />
+                      <span>Number Badge</span>
                       {avatarNumber ? (
-                        <span style={{ background: 'var(--accent)', color: 'var(--accent-contrast, #fff)', padding: '0 5px', borderRadius: 6, fontSize: 9, fontWeight: 700 }}>
+                        <span
+                          style={{
+                            background: showNumberPicker || avatarNumber ? 'var(--bg)' : 'var(--text)',
+                            color: showNumberPicker || avatarNumber ? 'var(--text)' : 'var(--bg)',
+                            padding: '1px 5px',
+                            borderRadius: 6,
+                            fontSize: 9.5,
+                            fontWeight: 800,
+                            lineHeight: 1.2,
+                          }}
+                        >
                           {avatarNumber}
                         </span>
                       ) : null}
@@ -871,72 +883,126 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
                   </div>
                 </div>
 
-                {/* Secret Number Option Box */}
+                {/* Number Badge Section */}
                 {type === 'friend' && showNumberPicker && (
-                  <div
-                    style={{
-                      marginTop: 8,
-                      paddingTop: 8,
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <span style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-2)' }}>
-                        Secret Number Badge (0 to 99)
-                      </span>
+                  <div style={{ marginTop: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontSize: 11,
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.4px',
+                          color: 'var(--text-3)',
+                          margin: 0,
+                          textAlign: 'left',
+                        }}
+                      >
+                        Number Badge (0–99)
+                      </label>
                       {avatarNumber ? (
                         <button
                           type="button"
                           onClick={() => setAvatarNumber('')}
-                          style={{ fontSize: 10, fontWeight: 600, color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 600,
+                            color: 'var(--text-3)',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: 0,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 3.5,
+                            transition: 'color 0.15s ease',
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
+                          onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}
+                          title="Reset to letter initial"
                         >
-                          Reset to Initial ({name ? name.slice(0, 1).toUpperCase() : 'A'})
+                          <RotateCcw size={11} />
+                          <span>Reset to Initial ({name ? name.slice(0, 1).toUpperCase() : 'A'})</span>
                         </button>
                       ) : null}
                     </div>
+
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                      <input
-                        type="text"
-                        maxLength={2}
-                        placeholder="0-99"
-                        value={avatarNumber}
-                        onChange={e => {
-                          const val = e.target.value.replace(/\D/g, '').slice(0, 2);
-                          setAvatarNumber(val);
-                        }}
+                      {/* 2-Digit Input Pill */}
+                      <div
                         style={{
-                          width: 54,
-                          padding: '4px 6px',
-                          fontSize: 12,
-                          fontWeight: 700,
-                          borderRadius: 8,
-                          border: '1px solid var(--border)',
-                          background: 'var(--surface)',
-                          color: 'var(--text)',
-                          textAlign: 'center',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          height: 32,
+                          padding: '0 10px',
+                          borderRadius: 9999,
+                          border: avatarNumber ? '1.5px solid var(--text)' : '1px solid var(--border)',
+                          background: 'var(--surface2)',
+                          boxShadow: avatarNumber ? '0 1px 4px rgba(0, 0, 0, 0.12)' : 'none',
+                          transition: 'all 0.15s ease',
                         }}
-                      />
-                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
-                        {['00', '07', '10', '23', '35', '69', '99'].map(num => (
-                          <button
-                            key={num}
-                            type="button"
-                            onClick={() => setAvatarNumber(num)}
-                            style={{
-                              padding: '2px 7px',
-                              fontSize: 10.5,
-                              fontWeight: avatarNumber === num ? 650 : 500,
-                              borderRadius: 6,
-                              border: avatarNumber === num ? '1px solid var(--border2)' : '1px solid var(--border)',
-                              background: avatarNumber === num ? 'var(--surface)' : 'var(--surface2)',
-                              color: avatarNumber === num ? 'var(--text)' : 'var(--text-2)',
-                              boxShadow: avatarNumber === num ? '0 1px 3px rgba(0, 0, 0, 0.08)' : 'none',
-                              cursor: 'pointer',
-                              transition: 'all 0.12s ease',
-                            }}
-                          >
-                            {num}
-                          </button>
-                        ))}
+                      >
+                        <Hash size={12} style={{ color: avatarNumber ? 'var(--text)' : 'var(--text-3)', strokeWidth: 2.2 }} />
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          maxLength={2}
+                          placeholder="0-99"
+                          value={avatarNumber}
+                          onChange={e => {
+                            const val = e.target.value.replace(/\D/g, '').slice(0, 2);
+                            setAvatarNumber(val);
+                          }}
+                          style={{
+                            width: 36,
+                            fontSize: 13,
+                            fontWeight: 750,
+                            background: 'transparent',
+                            color: 'var(--text)',
+                            border: 'none',
+                            outline: 'none',
+                            padding: 0,
+                            textAlign: 'center',
+                          }}
+                        />
+                      </div>
+
+                      <div style={{ width: 1, height: 18, background: 'var(--border)', margin: '0 2px' }} />
+
+                      {/* Quick Preset Number Pills */}
+                      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', alignItems: 'center' }}>
+                        {['00', '07', '10', '23', '35', '69', '99'].map(num => {
+                          const isSelected = avatarNumber === num;
+                          return (
+                            <button
+                              key={num}
+                              type="button"
+                              onClick={() => setAvatarNumber(isSelected ? '' : num)}
+                              style={{
+                                height: 32,
+                                minWidth: 34,
+                                padding: '0 11px',
+                                fontSize: 12,
+                                fontWeight: isSelected ? 750 : 550,
+                                borderRadius: 9999,
+                                border: isSelected ? '1px solid var(--text)' : '1px solid var(--border)',
+                                background: isSelected ? 'var(--text)' : 'var(--surface2)',
+                                color: isSelected ? 'var(--bg)' : 'var(--text-2)',
+                                boxShadow: isSelected ? '0 2px 6px rgba(0, 0, 0, 0.22)' : 'none',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'all 0.12s ease',
+                              }}
+                            >
+                              {num}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>

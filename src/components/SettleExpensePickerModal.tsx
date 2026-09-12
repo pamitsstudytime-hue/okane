@@ -1,10 +1,11 @@
 import { useState, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Search, Check, ReceiptText, ArrowUpDown, CheckCheck } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { X, Search, Check, ReceiptText, Filter, RotateCcw, CheckCheck, Store } from 'lucide-react';
 import CategoryIcon from './CategoryIcon';
 import type { Friend, Expense, AppDB } from '../types';
 import { expenseFlow } from '../db';
-import { fmtMoney, fmtDate, friendInitial, getAvatarStyle, cleanExpenseDescription } from '../utils';
+import { fmtMoney, fmtDate, friendInitial, getAvatarStyle, cleanExpenseDescription, resolveCategoryMeta } from '../utils';
 import { useBackButtonModal, BackPriority } from '../utils/backHandler';
 
 export type ExpenseSortOption = 'date_desc' | 'date_asc' | 'friend_asc' | 'amount_desc' | 'amount_asc';
@@ -41,6 +42,8 @@ export default function SettleExpensePickerModal({
   const [filterType, setFilterType] = useState<'all' | 'owed_to_me' | 'owed_by_me'>('all');
   const [friendFilter, setFriendFilter] = useState<string>('all'); // 'all' | 'personal' | friendId
   const [sortBy, setSortBy] = useState<ExpenseSortOption>('date_desc');
+  const [showFilterSheet, setShowFilterSheet] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const selectedSet = useMemo(() => {
     return selectedIds instanceof Set ? selectedIds : new Set(selectedIds);
@@ -117,17 +120,6 @@ export default function SettleExpensePickerModal({
     }
     return !isIncoming;
   }, [friend.id]);
-
-  const hasMixedFlows = useMemo(() => {
-    let hasToMe = false;
-    let hasByMe = false;
-    for (const e of expenses) {
-      if (isOwedToMe(e)) hasToMe = true;
-      else hasByMe = true;
-      if (hasToMe && hasByMe) return true;
-    }
-    return false;
-  }, [expenses, isOwedToMe]);
 
   // Helper to get friend name for an expense (only distinct other friends)
   const getExpenseFriend = useCallback((e: Expense): { friend?: Friend; isPersonal: boolean; name: string } => {
@@ -256,12 +248,7 @@ export default function SettleExpensePickerModal({
     }
   };
 
-  const activeFriendObj = friendFilter !== 'all' && friendFilter !== 'personal' ? friendsMap.get(friendFilter) : null;
-  const activeFilterLabel = friendFilter === 'personal'
-    ? 'Personal'
-    : activeFriendObj
-    ? activeFriendObj.name
-    : 'all items';
+  const isFilterActive = sortBy !== 'date_desc' || (isVendor && friendFilter !== 'all');
 
   if (!isOpen) return null;
 
@@ -270,15 +257,15 @@ export default function SettleExpensePickerModal({
       <div
         className="friend-picker-sheet"
         onClick={e => e.stopPropagation()}
-        style={{ display: 'flex', flexDirection: 'column' }}
+        style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}
       >
         {/* Mobile Drag Handle */}
-        <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border2)', margin: '12px auto 6px', flexShrink: 0 }} />
+        <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border2)', margin: '10px auto 2px', flexShrink: 0 }} />
 
         {/* Modal Header */}
         <div
           style={{
-            padding: '12px 20px 10px',
+            padding: '12px 20px 6px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -286,31 +273,41 @@ export default function SettleExpensePickerModal({
             flexShrink: 0,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
             <div
               className="avatar"
               style={{
                 ...getAvatarStyle(friend.color),
-                width: 34,
-                height: 34,
-                fontSize: 13,
+                width: 38,
+                height: 38,
+                borderRadius: 11,
+                fontSize: 13.5,
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 flexShrink: 0,
               }}
             >
-              {friendInitial(friend.name, friend.avatarNumber)}
+              {isVendor ? <Store size={18} /> : friendInitial(friend.name, friend.avatarNumber)}
             </div>
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.2 }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.25 }}>
                 {title}
               </div>
-              <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2 }}>
-                {friend.name} • {expenses.length} pending transaction{expenses.length !== 1 ? 's' : ''}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)' }}>
+                  {friend.name}
+                </span>
+                <span style={{ color: 'var(--text-3)', fontSize: 10, opacity: 0.6 }}>•</span>
+                <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-3)' }}>
+                  {expenses.length} pending transaction{expenses.length !== 1 ? 's' : ''}
+                </span>
               </div>
             </div>
           </div>
           <button
             type="button"
-            className="btn-icon"
             onClick={onClose}
             style={{
               width: 32,
@@ -321,40 +318,58 @@ export default function SettleExpensePickerModal({
               justifyContent: 'center',
               cursor: 'pointer',
               flexShrink: 0,
+              background: 'var(--surface2)',
+              border: '1px solid var(--border)',
+              color: 'var(--text-2)',
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.color = 'var(--text)';
+              e.currentTarget.style.background = 'var(--surface3)';
+              e.currentTarget.style.borderColor = 'var(--border2)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.color = 'var(--text-2)';
+              e.currentTarget.style.background = 'var(--surface2)';
+              e.currentTarget.style.borderColor = 'var(--border)';
             }}
             aria-label="Close modal"
           >
-            <X size={18} />
+            <X size={16} strokeWidth={2.2} />
           </button>
         </div>
 
         {/* Search & Filter Toolbar */}
-        <div style={{ padding: '10px 18px 8px', background: 'var(--surface)', display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
+        <div style={{ padding: '6px 18px 10px', background: 'var(--surface)', display: 'flex', flexDirection: 'column', gap: 9, flexShrink: 0 }}>
           {/* Search Box */}
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               position: 'relative',
-              background: 'var(--surface2)',
-              border: '1px solid var(--border)',
-              borderRadius: 10,
-              padding: '0 10px',
-              height: 36,
-              transition: 'border-color 0.15s ease',
+              background: isSearchFocused ? 'var(--surface)' : 'var(--surface2)',
+              border: isSearchFocused ? '1px solid var(--text-3)' : '1px solid var(--border)',
+              borderRadius: 9999,
+              padding: '0 13px',
+              height: 38,
+              boxShadow: isSearchFocused ? '0 0 0 3px rgba(255, 255, 255, 0.04)' : 'none',
+              transition: 'all 0.15s ease',
             }}
           >
             <Search
-              size={14.5}
+              size={15}
               style={{
-                color: 'var(--text-3)',
-                marginRight: 8,
+                color: isSearchFocused ? 'var(--text)' : 'var(--text-3)',
+                marginRight: 9,
                 flexShrink: 0,
+                transition: 'color 0.15s ease',
               }}
             />
             <input
               type="text"
               value={search}
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setIsSearchFocused(false)}
               onChange={e => setSearch(e.target.value)}
               placeholder={isVendor ? "Search by name, category, or friend..." : "Search expenses by name or category..."}
               style={{
@@ -362,9 +377,10 @@ export default function SettleExpensePickerModal({
                 background: 'transparent',
                 border: 'none',
                 outline: 'none',
-                fontSize: 12.5,
+                fontSize: 13,
+                fontWeight: 500,
                 color: 'var(--text)',
-                padding: '5px 0',
+                padding: '7px 0',
               }}
             />
             {search && (
@@ -372,341 +388,148 @@ export default function SettleExpensePickerModal({
                 type="button"
                 onClick={() => setSearch('')}
                 style={{
-                  background: 'none',
+                  background: 'var(--surface3)',
                   border: 'none',
                   color: 'var(--text-3)',
                   cursor: 'pointer',
-                  padding: 4,
+                  width: 20,
+                  height: 20,
+                  borderRadius: '50%',
                   display: 'grid',
                   placeItems: 'center',
+                  marginLeft: 6,
+                  padding: 0,
+                  flexShrink: 0,
+                  transition: 'all 0.12s ease',
                 }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.color = 'var(--text)';
+                  e.currentTarget.style.background = 'var(--border2)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.color = 'var(--text-3)';
+                  e.currentTarget.style.background = 'var(--surface3)';
+                }}
+                aria-label="Clear search"
               >
-                <X size={13} />
+                <X size={12} strokeWidth={2.5} />
               </button>
             )}
           </div>
 
-          {/* Friend Filter Pills Bar (ONLY for Vendor settlements with multiple participants) */}
-          {isVendor && friendStats.hasMultipleParticipants && (
-            <div
-              className="no-scrollbar"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                overflowX: 'auto',
-                padding: '2px 0',
-                scrollbarWidth: 'none',
-              }}
-            >
-              {/* All Filter Pill */}
+          {/* Filter Toolbar: Chips for All, To You, You Owe + Filter button */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, overflowX: 'auto', scrollbarWidth: 'none' }}>
               <button
                 type="button"
-                onClick={() => setFriendFilter('all')}
+                onClick={() => setFilterType('all')}
                 style={{
-                  border: friendFilter === 'all' ? '1px solid var(--border2)' : '1px solid var(--border)',
-                  background: friendFilter === 'all' ? 'var(--surface)' : 'var(--surface2)',
-                  color: friendFilter === 'all' ? 'var(--text)' : 'var(--text-2)',
-                  fontSize: 11.5,
-                  fontWeight: friendFilter === 'all' ? 650 : 500,
-                  padding: '4px 10px',
-                  borderRadius: 20,
+                  height: 35,
+                  padding: '0 16px',
+                  borderRadius: 9999,
+                  fontSize: 13,
+                  fontWeight: filterType === 'all' ? 700 : 550,
+                  background: filterType === 'all' ? 'var(--text)' : 'var(--surface2)',
+                  color: filterType === 'all' ? 'var(--bg)' : 'var(--text-2)',
+                  border: filterType === 'all' ? '1px solid var(--text)' : '1px solid var(--border)',
                   cursor: 'pointer',
+                  whiteSpace: 'nowrap',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 5,
-                  whiteSpace: 'nowrap',
-                  flexShrink: 0,
-                  boxShadow: friendFilter === 'all' ? '0 1px 3px rgba(0, 0, 0, 0.12)' : 'none',
+                  justifyContent: 'center',
                   transition: 'all 0.15s ease',
                 }}
               >
-                <span>All</span>
-                <span
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 650,
-                    padding: '1px 6px',
-                    borderRadius: 99,
-                    background: friendFilter === 'all' ? 'var(--surface2)' : 'var(--surface3)',
-                    color: friendFilter === 'all' ? 'var(--text)' : 'var(--text-3)',
-                  }}
-                >
-                  {expenses.length}
-                </span>
+                All
               </button>
-
-              {/* You / Personal Filter Pill */}
-              {friendStats.personalCount > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setFriendFilter('personal')}
-                  style={{
-                    border: friendFilter === 'personal' ? '1px solid var(--border2)' : '1px solid var(--border)',
-                    background: friendFilter === 'personal' ? 'var(--surface)' : 'var(--surface2)',
-                    color: friendFilter === 'personal' ? 'var(--text)' : 'var(--text-2)',
-                    fontSize: 11.5,
-                    fontWeight: friendFilter === 'personal' ? 650 : 500,
-                    padding: '4px 10px',
-                    borderRadius: 20,
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 5,
-                    whiteSpace: 'nowrap',
-                    flexShrink: 0,
-                    boxShadow: friendFilter === 'personal' ? '0 1px 3px rgba(0, 0, 0, 0.12)' : 'none',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  <span
-                    style={{
-                      width: 15,
-                      height: 15,
-                      borderRadius: '50%',
-                      background: 'var(--surface2)',
-                      color: 'var(--text-2)',
-                      fontSize: 8.5,
-                      fontWeight: 700,
-                      display: 'grid',
-                      placeItems: 'center',
-                      lineHeight: 1,
-                      flexShrink: 0,
-                      boxShadow: '0 0 0 1px rgba(0,0,0,0.15)',
-                    }}
-                  >
-                    Y
-                  </span>
-                  <span>You</span>
-                  <span
-                    style={{
-                      fontSize: 10,
-                      fontWeight: 650,
-                      padding: '1px 6px',
-                      borderRadius: 99,
-                      background: friendFilter === 'personal' ? 'var(--surface2)' : 'var(--surface3)',
-                      color: friendFilter === 'personal' ? 'var(--text)' : 'var(--text-3)',
-                    }}
-                  >
-                    {friendStats.personalCount}
-                  </span>
-                </button>
-              )}
-
-              {/* Friend Pills */}
-              {friendStats.friends.map(({ friend: f, count }) => {
-                const isActive = friendFilter === f.id;
-                const avatar = getAvatarStyle(f.color);
-                return (
-                  <button
-                    key={f.id}
-                    type="button"
-                    onClick={() => setFriendFilter(f.id)}
-                    style={{
-                      border: isActive ? '1px solid var(--border2)' : '1px solid var(--border)',
-                      background: isActive ? 'var(--surface)' : 'var(--surface2)',
-                      color: isActive ? 'var(--text)' : 'var(--text-2)',
-                      fontSize: 11.5,
-                      fontWeight: isActive ? 650 : 500,
-                      padding: '4px 10px',
-                      borderRadius: 20,
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 5,
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0,
-                      boxShadow: isActive ? '0 1px 3px rgba(0, 0, 0, 0.12)' : 'none',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: 15,
-                        height: 15,
-                        borderRadius: '50%',
-                        background: avatar.background,
-                        color: avatar.color,
-                        fontSize: 8.5,
-                        fontWeight: 700,
-                        display: 'grid',
-                        placeItems: 'center',
-                        lineHeight: 1,
-                        flexShrink: 0,
-                        boxShadow: '0 0 0 1px rgba(0,0,0,0.15)',
-                      }}
-                    >
-                      {friendInitial(f.name, f.avatarNumber)}
-                    </span>
-                    <span>{f.name}</span>
-                    <span
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 650,
-                        padding: '1px 6px',
-                        borderRadius: 99,
-                        background: isActive ? 'var(--surface2)' : 'var(--surface3)',
-                        color: isActive ? 'var(--text)' : 'var(--text-3)',
-                      }}
-                    >
-                      {count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Sub-toolbar: Sort Selector + Flow Tabs + Select All */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap', paddingTop: 2 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-              {/* Sort Selector Dropdown */}
-              <div
+              <button
+                type="button"
+                onClick={() => setFilterType('owed_to_me')}
                 style={{
-                  position: 'relative',
+                  height: 35,
+                  padding: '0 16px',
+                  borderRadius: 9999,
+                  fontSize: 13,
+                  fontWeight: filterType === 'owed_to_me' ? 700 : 550,
+                  background: filterType === 'owed_to_me' ? 'var(--text)' : 'var(--surface2)',
+                  color: filterType === 'owed_to_me' ? 'var(--bg)' : 'var(--text-2)',
+                  border: filterType === 'owed_to_me' ? '1px solid var(--text)' : '1px solid var(--border)',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 4,
-                  background: 'var(--surface2)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 7,
-                  padding: '4px 9px',
-                  fontSize: 11.5,
-                  fontWeight: 500,
-                  color: 'var(--text)',
-                  cursor: 'pointer',
+                  justifyContent: 'center',
+                  transition: 'all 0.15s ease',
                 }}
               >
-                <ArrowUpDown size={11} style={{ color: 'var(--accent)' }} />
-                <span>
-                  {sortBy === 'date_desc'
-                    ? 'Newest'
-                    : sortBy === 'date_asc'
-                    ? 'Oldest'
-                    : sortBy === 'friend_asc'
-                    ? 'Friend A-Z'
-                    : sortBy === 'amount_desc'
-                    ? 'Amt: High'
-                    : 'Amt: Low'}
-                </span>
-                <select
-                  value={sortBy}
-                  onChange={e => setSortBy(e.target.value as ExpenseSortOption)}
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    opacity: 0,
-                    cursor: 'pointer',
-                    width: '100%',
-                    height: '100%',
-                  }}
-                >
-                  <option value="date_desc">Date: Newest First</option>
-                  <option value="date_asc">Date: Oldest First</option>
-                  {isVendor && <option value="friend_asc">Friend Name: A to Z</option>}
-                  <option value="amount_desc">Amount: High to Low</option>
-                  <option value="amount_asc">Amount: Low to High</option>
-                </select>
-              </div>
-
-              {/* Mixed Flow Tabs if any */}
-              {hasMixedFlows && (
-                <div
-                  style={{
-                    display: 'flex',
-                    background: 'var(--surface2)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 7,
-                    padding: 2,
-                    gap: 2,
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setFilterType('all')}
-                    style={{
-                      border: 'none',
-                      background: filterType === 'all' ? 'var(--accent)' : 'transparent',
-                      color: filterType === 'all' ? 'var(--accent-contrast, #ffffff)' : 'var(--text-3)',
-                      fontSize: 11,
-                      fontWeight: filterType === 'all' ? 650 : 500,
-                      padding: '2px 8px',
-                      borderRadius: 5,
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    All Flows
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFilterType('owed_to_me')}
-                    style={{
-                      border: 'none',
-                      background: filterType === 'owed_to_me' ? 'var(--accent)' : 'transparent',
-                      color: filterType === 'owed_to_me' ? 'var(--accent-contrast, #ffffff)' : 'var(--text-3)',
-                      fontSize: 11,
-                      fontWeight: filterType === 'owed_to_me' ? 650 : 500,
-                      padding: '2px 8px',
-                      borderRadius: 5,
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    To You
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFilterType('owed_by_me')}
-                    style={{
-                      border: 'none',
-                      background: filterType === 'owed_by_me' ? 'var(--accent)' : 'transparent',
-                      color: filterType === 'owed_by_me' ? 'var(--accent-contrast, #ffffff)' : 'var(--text-3)',
-                      fontSize: 11,
-                      fontWeight: filterType === 'owed_by_me' ? 650 : 500,
-                      padding: '2px 8px',
-                      borderRadius: 5,
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    You Owe
-                  </button>
-                </div>
-              )}
-
-              <span style={{ fontSize: 11.5, color: 'var(--text-3)', fontWeight: 500 }}>
-                {filteredExpenses.length} item{filteredExpenses.length !== 1 ? 's' : ''}
-              </span>
+                To You
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterType('owed_by_me')}
+                style={{
+                  height: 35,
+                  padding: '0 16px',
+                  borderRadius: 9999,
+                  fontSize: 13,
+                  fontWeight: filterType === 'owed_by_me' ? 700 : 550,
+                  background: filterType === 'owed_by_me' ? 'var(--text)' : 'var(--surface2)',
+                  color: filterType === 'owed_by_me' ? 'var(--bg)' : 'var(--text-2)',
+                  border: filterType === 'owed_by_me' ? '1px solid var(--text)' : '1px solid var(--border)',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                You Owe
+              </button>
             </div>
 
-            {/* Select/Deselect All Button */}
+            {/* Filter button - icon only with new funnel Filter icon */}
             <button
               type="button"
-              onClick={friendFilter !== 'all' || filterType !== 'all' ? handleToggleCurrentFiltered : (allFilteredSelected ? onDeselectAll : onSelectAll)}
+              onClick={() => setShowFilterSheet(true)}
+              aria-label="Filter and Sort"
+              title="Filter and Sort"
               style={{
-                background: 'var(--surface2)',
-                color: 'var(--text)',
-                border: '1px solid var(--border)',
-                borderRadius: 7,
-                fontSize: 11.5,
-                fontWeight: 600,
-                padding: '4px 9px',
+                width: 36,
+                height: 35,
+                borderRadius: 9999,
+                background: isFilterActive ? 'var(--surface3)' : 'var(--surface2)',
+                color: isFilterActive ? 'var(--text)' : 'var(--text-2)',
+                border: isFilterActive ? '1px solid var(--border2)' : '1px solid var(--border)',
                 cursor: 'pointer',
                 flexShrink: 0,
-                whiteSpace: 'nowrap',
+                position: 'relative',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 4.5,
+                justifyContent: 'center',
                 transition: 'all 0.15s ease',
               }}
+              onMouseEnter={e => {
+                e.currentTarget.style.borderColor = 'var(--text-3)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.borderColor = isFilterActive ? 'var(--border2)' : 'var(--border)';
+              }}
             >
-              <CheckCheck size={13} strokeWidth={2.4} />
-              <span>
-                {isVendor && friendFilter !== 'all'
-                  ? (allFilteredSelected ? `Deselect ${activeFilterLabel}` : `Select all ${activeFilterLabel}`)
-                  : (allFilteredSelected ? 'Deselect all' : 'Select all')}
-              </span>
+              <Filter size={15} strokeWidth={2.2} style={{ color: isFilterActive ? 'var(--accent)' : 'var(--text)' }} />
+              {isFilterActive && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: 6,
+                    right: 6,
+                    width: 6,
+                    height: 6,
+                    borderRadius: '50%',
+                    background: 'var(--accent)',
+                  }}
+                />
+              )}
             </button>
           </div>
         </div>
@@ -736,6 +559,7 @@ export default function SettleExpensePickerModal({
           ) : (
             filteredExpenses.map(e => {
               const cat = db.settings.categories?.find(c => c.name === e.category);
+              const catMeta = resolveCategoryMeta(e.category, cat);
               const isToMe = isOwedToMe(e);
               const isSelected = selectedSet.has(e.id);
               const origAmt = typeof e.originalAmount === 'number' ? e.originalAmount : null;
@@ -750,48 +574,61 @@ export default function SettleExpensePickerModal({
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 11,
-                    padding: '10px 13px',
+                    gap: 12,
+                    padding: '11px 14px',
                     background: 'var(--surface2)',
                     border: '1px solid var(--border)',
                     boxShadow: 'none',
                     borderRadius: 12,
                     cursor: 'pointer',
                     userSelect: 'none',
-                    transition: 'border-color 0.12s ease, background 0.12s ease',
+                    transition: 'background 0.12s ease',
                   }}
                 >
                   {/* Custom Checkbox */}
                   <div
                     style={{
-                      width: 18,
-                      height: 18,
-                      borderRadius: 5,
+                      width: 19,
+                      height: 19,
+                      borderRadius: 6,
                       border: isSelected ? 'none' : '1.5px solid var(--border2, var(--text-3))',
-                      background: isSelected ? 'var(--accent)' : 'var(--surface)',
-                      color: 'var(--accent-contrast, #ffffff)',
+                      background: isSelected ? 'var(--text)' : 'transparent',
+                      color: 'var(--bg)',
                       display: 'grid',
                       placeItems: 'center',
                       flexShrink: 0,
                       transition: 'all 0.12s ease',
                     }}
                   >
-                    {isSelected && <Check size={12} strokeWidth={3} />}
+                    {isSelected && <Check size={13} strokeWidth={3} />}
                   </div>
 
-                  {/* Category Icon */}
-                  <CategoryIcon
-                    category={e.category}
-                    size={16}
-                    style={{ color: cat?.color ?? 'var(--accent)', flexShrink: 0 }}
-                  />
+                  {/* Category Icon Container (like image 3) */}
+                  <div
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 10,
+                      backgroundColor: catMeta.bg,
+                      display: 'grid',
+                      placeItems: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <CategoryIcon
+                      category={catMeta.name}
+                      icon={catMeta.icon}
+                      size={18}
+                      style={{ color: catMeta.color }}
+                    />
+                  </div>
 
                   {/* Expense Description & Friend Badge & Meta */}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                       <span
                         style={{
-                          fontSize: 13,
+                          fontSize: 13.5,
                           fontWeight: 650,
                           color: 'var(--text)',
                           lineHeight: 1.3,
@@ -861,8 +698,9 @@ export default function SettleExpensePickerModal({
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
                     <div
                       style={{
-                        fontWeight: 700,
+                        fontWeight: 750,
                         fontSize: 13.5,
+                        letterSpacing: '0.2px',
                         color: isToMe ? 'var(--credit)' : 'var(--debit)',
                       }}
                     >
@@ -880,56 +718,393 @@ export default function SettleExpensePickerModal({
           )}
         </div>
 
-        {/* Modal Sticky Footer with Summary & Confirm Action */}
+        {/* Modal Sticky Footer with Clear and Done */}
         <div
           style={{
-            padding: '12px 18px calc(12px + env(safe-area-inset-bottom, 0px))',
+            padding: '12px 18px calc(14px + env(safe-area-inset-bottom, 0px))',
             background: 'var(--surface)',
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 12,
+            flexDirection: 'column',
+            gap: 10,
             flexShrink: 0,
           }}
         >
-          <div>
-            <div style={{ fontSize: 12.5, fontWeight: 650, color: 'var(--text)' }}>
-              {selectedSet.size} of {expenses.length} selected
+          {/* Beautiful Summary Card */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '10px 14px',
+              background: 'var(--surface2)',
+              borderRadius: 12,
+              border: '1px solid var(--border)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div
+                style={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  background: selectedSet.size > 0 ? 'rgba(34, 197, 94, 0.16)' : 'var(--surface3)',
+                  color: selectedSet.size > 0 ? 'var(--credit)' : 'var(--text-3)',
+                  border: selectedSet.size > 0 ? '1px solid rgba(34, 197, 94, 0.3)' : '1px solid var(--border)',
+                  display: 'grid',
+                  placeItems: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <Check size={12} strokeWidth={2.8} />
+              </div>
+              <span style={{ fontSize: 13, color: 'var(--text-2)' }}>
+                <strong style={{ color: 'var(--text)', fontWeight: 700 }}>{selectedSet.size}</strong> of {expenses.length} selected
+              </span>
             </div>
-            <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 1 }}>
-              Net:{' '}
-              <strong style={{ color: netTotal >= 0 ? 'var(--credit)' : 'var(--debit)' }}>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-3)', letterSpacing: '0.2px' }}>
+                Net Total:
+              </span>
+              <span
+                style={{
+                  fontWeight: 750,
+                  fontSize: 13.5,
+                  letterSpacing: '0.2px',
+                  color: netTotal >= 0 ? 'var(--credit)' : 'var(--debit)',
+                  background: netTotal >= 0 ? 'rgba(34, 197, 94, 0.14)' : 'rgba(239, 68, 68, 0.14)',
+                  border: netTotal >= 0 ? '1px solid rgba(34, 197, 94, 0.28)' : '1px solid rgba(239, 68, 68, 0.28)',
+                  padding: '2.5px 8px',
+                  borderRadius: 7,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                }}
+              >
                 {netTotal >= 0 ? '+' : '-'}{fmtMoney(absNet, currency)}
-              </strong>
+              </span>
             </div>
           </div>
 
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={onClose}
-            style={{
-              height: 40,
-              padding: '0 24px',
-              fontSize: 13,
-              fontWeight: 700,
-              borderRadius: 9999,
-              background: 'var(--text)',
-              border: '1px solid var(--text)',
-              color: 'var(--bg)',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6,
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <Check size={15} style={{ color: 'inherit' }} />
-            <span>Done</span>
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button
+              type="button"
+              onClick={onDeselectAll}
+              disabled={selectedSet.size === 0}
+              style={{
+                flex: 1,
+                height: 42,
+                borderRadius: 9999,
+                fontSize: 13,
+                fontWeight: 650,
+                border: '1px solid var(--border)',
+                background: 'var(--surface2)',
+                color: selectedSet.size === 0 ? 'var(--text-3)' : 'var(--text)',
+                cursor: selectedSet.size === 0 ? 'default' : 'pointer',
+                opacity: selectedSet.size === 0 ? 0.45 : 1,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                transition: 'all 0.15s ease',
+              }}
+              onMouseEnter={e => {
+                if (selectedSet.size > 0) {
+                  e.currentTarget.style.borderColor = 'var(--text-3)';
+                  e.currentTarget.style.background = 'var(--surface3)';
+                }
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.borderColor = 'var(--border)';
+                e.currentTarget.style.background = 'var(--surface2)';
+              }}
+            >
+              <RotateCcw size={14} style={{ strokeWidth: 2.2 }} />
+              <span>Clear</span>
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={onClose}
+              style={{
+                flex: 1.2,
+                height: 42,
+                borderRadius: 9999,
+                fontSize: 13.5,
+                fontWeight: 700,
+                background: 'var(--text)',
+                border: '1px solid var(--text)',
+                color: 'var(--bg)',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <Check size={16} strokeWidth={2.4} style={{ color: 'inherit' }} />
+              <span>Done</span>
+            </button>
+          </div>
         </div>
+
+        {/* Filter Bottom Sheet */}
+        <AnimatePresence>
+          {showFilterSheet && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'rgba(0, 0, 0, 0.65)',
+                zIndex: 40,
+                backdropFilter: 'blur(3px)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'flex-end',
+              }}
+              onClick={() => setShowFilterSheet(false)}
+            >
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+                onClick={e => e.stopPropagation()}
+                style={{
+                  background: 'var(--surface)',
+                  borderTopLeftRadius: 20,
+                  borderTopRightRadius: 20,
+                  borderTop: '1px solid var(--border)',
+                  padding: '14px 20px calc(16px + env(safe-area-inset-bottom, 0px))',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 16,
+                  maxHeight: '82%',
+                  overflowY: 'auto',
+                  boxShadow: '0 -10px 30px rgba(0, 0, 0, 0.3)',
+                }}
+              >
+                {/* Drag Handle */}
+                <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border2)', margin: '0 auto 2px', flexShrink: 0 }} />
+
+                {/* Filter Sheet Header */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Filter size={15} strokeWidth={2.2} style={{ color: 'var(--text-2)' }} />
+                    <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Filter & Sort</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowFilterSheet(false)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'var(--text-3)',
+                      cursor: 'pointer',
+                      padding: 4,
+                      display: 'grid',
+                      placeItems: 'center',
+                    }}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+
+                {/* Sort By Section */}
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-3)', marginBottom: 8 }}>
+                    SORT BY
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {[
+                      { id: 'date_desc', label: 'Newest First' },
+                      { id: 'date_asc', label: 'Oldest First' },
+                      ...(isVendor ? [{ id: 'friend_asc', label: 'Friend A–Z' }] : []),
+                      { id: 'amount_desc', label: 'Amount: High to Low' },
+                      { id: 'amount_asc', label: 'Amount: Low to High' },
+                    ].map(opt => {
+                      const isSelected = sortBy === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => setSortBy(opt.id as ExpenseSortOption)}
+                          style={{
+                            padding: '6px 13px',
+                            borderRadius: 9999,
+                            fontSize: 12,
+                            fontWeight: isSelected ? 700 : 500,
+                            background: isSelected ? 'var(--text)' : 'var(--surface2)',
+                            color: isSelected ? 'var(--bg)' : 'var(--text-2)',
+                            border: isSelected ? '1px solid var(--text)' : '1px solid var(--border)',
+                            cursor: 'pointer',
+                            transition: 'all 0.12s ease',
+                          }}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Quick Selection Section */}
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-3)', marginBottom: 8 }}>
+                    SELECTION
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (allFilteredSelected) {
+                          onDeselectAll();
+                        } else if (friendFilter === 'all' && filterType === 'all' && !search.trim()) {
+                          onSelectAll();
+                        } else {
+                          handleToggleCurrentFiltered();
+                        }
+                      }}
+                      style={{
+                        flex: 1,
+                        padding: '8px 12px',
+                        borderRadius: 10,
+                        fontSize: 12,
+                        fontWeight: 650,
+                        background: 'var(--surface2)',
+                        color: 'var(--text)',
+                        border: '1px solid var(--border)',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 5,
+                      }}
+                    >
+                      <CheckCheck size={14} />
+                      <span>{allFilteredSelected ? 'Deselect Filtered' : `Select All (${filteredExpenses.length})`}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onDeselectAll();
+                      }}
+                      style={{
+                        flex: 1,
+                        padding: '8px 12px',
+                        borderRadius: 10,
+                        fontSize: 12,
+                        fontWeight: 650,
+                        background: 'var(--surface2)',
+                        color: 'var(--text)',
+                        border: '1px solid var(--border)',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 5,
+                      }}
+                    >
+                      <RotateCcw size={13} />
+                      <span>Deselect All</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Participant Filter (If vendor has multiple participants) */}
+                {isVendor && friendStats.hasMultipleParticipants && (
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-3)', marginBottom: 8 }}>
+                      PARTICIPANT
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      <button
+                        type="button"
+                        onClick={() => setFriendFilter('all')}
+                        style={{
+                          padding: '5px 11px',
+                          borderRadius: 9999,
+                          fontSize: 12,
+                          fontWeight: friendFilter === 'all' ? 700 : 500,
+                          background: friendFilter === 'all' ? 'var(--text)' : 'var(--surface2)',
+                          color: friendFilter === 'all' ? 'var(--bg)' : 'var(--text-2)',
+                          border: friendFilter === 'all' ? '1px solid var(--text)' : '1px solid var(--border)',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        All ({expenses.length})
+                      </button>
+                      {friendStats.personalCount > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setFriendFilter('personal')}
+                          style={{
+                            padding: '5px 11px',
+                            borderRadius: 9999,
+                            fontSize: 12,
+                            fontWeight: friendFilter === 'personal' ? 700 : 500,
+                            background: friendFilter === 'personal' ? 'var(--text)' : 'var(--surface2)',
+                            color: friendFilter === 'personal' ? 'var(--bg)' : 'var(--text-2)',
+                            border: friendFilter === 'personal' ? '1px solid var(--text)' : '1px solid var(--border)',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          You ({friendStats.personalCount})
+                        </button>
+                      )}
+                      {friendStats.friends.map(({ friend: f, count }) => {
+                        const isActive = friendFilter === f.id;
+                        return (
+                          <button
+                            key={f.id}
+                            type="button"
+                            onClick={() => setFriendFilter(f.id)}
+                            style={{
+                              padding: '5px 11px',
+                              borderRadius: 9999,
+                              fontSize: 12,
+                              fontWeight: isActive ? 700 : 500,
+                              background: isActive ? 'var(--text)' : 'var(--surface2)',
+                              color: isActive ? 'var(--bg)' : 'var(--text-2)',
+                              border: isActive ? '1px solid var(--text)' : '1px solid var(--border)',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {f.name} ({count})
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Filter Sheet Done Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowFilterSheet(false)}
+                  style={{
+                    height: 40,
+                    borderRadius: 9999,
+                    background: 'var(--text)',
+                    color: 'var(--bg)',
+                    border: 'none',
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    marginTop: 4,
+                  }}
+                >
+                  Apply Filters
+                </button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>,
     document.body

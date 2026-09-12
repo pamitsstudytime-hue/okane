@@ -1,11 +1,11 @@
 import { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
-import { X, Calendar, ReceiptText, Feather, Wallet, Check } from 'lucide-react';
+import { X, Calendar, ReceiptText, Feather, Wallet, Check, RotateCcw, Pencil } from 'lucide-react';
 import { useStore } from '../store';
 import type { Friend } from '../types';
 import { expenseFlow, unsettledExpensesForFriend, todayISO } from '../db';
-import { fmtMoney, friendInitial, getAvatarStyle } from '../utils';
+import { fmtMoney, friendInitial, getAvatarStyle, currencySymbol } from '../utils';
 import SettleExpensePickerModal from './SettleExpensePickerModal';
 import { NoteEditorModal } from './common/NoteEditorModal';
 import { useBackButtonModal, BackPriority } from '../utils/backHandler';
@@ -102,6 +102,16 @@ export default function SettleModal({ friend, onClose }: Props) {
 
   const openNoteModal = () => {
     setIsNoteModalOpen(true);
+  };
+
+  const handleClearToDefault = () => {
+    setSelected(new Set(unsettled.map(e => e.id)));
+    setIsCustomMode(false);
+    setCustomAmountStr('');
+    setSettleDate(todayISO());
+    setSelectedWalletId(db.settings.defaultWalletId || wallets[0]?.id || '');
+    setNote('');
+    showToast('Reset to default');
   };
 
   const handleSettle = () => {
@@ -237,7 +247,7 @@ export default function SettleModal({ friend, onClose }: Props) {
         </div>
 
         {/* Modal Body */}
-        <div className="modal-body" style={{ padding: '16px 20px 20px' }}>
+        <div className="modal-body" style={{ padding: '16px 20px 0px' }}>
           {unsettled.length === 0 ? (
             <div className="empty-state" style={{ padding: '32px 16px' }}>
               <p>No unsettled expenses with {friend.name}.</p>
@@ -249,10 +259,10 @@ export default function SettleModal({ friend, onClose }: Props) {
                 <div
                   onClick={() => setIsPickerOpen(true)}
                   style={{
-                    padding: '12px 16px',
+                    padding: '10px 14px',
                     background: 'var(--surface2)',
                     border: '1px solid var(--border)',
-                    borderRadius: 'var(--radius)',
+                    borderRadius: 12,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -261,22 +271,20 @@ export default function SettleModal({ friend, onClose }: Props) {
                     transition: 'all 0.15s ease',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
                     <div
                       style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 'var(--radius-sm)',
-                        background: 'var(--accent-soft)',
-                        color: 'var(--accent)',
+                        width: 32,
+                        height: 32,
+                        borderRadius: 8,
+                        background: 'transparent',
+                        color: 'var(--text)',
                         display: 'grid',
                         placeItems: 'center',
-                        fontWeight: 700,
-                        fontSize: 14,
                         flexShrink: 0,
                       }}
                     >
-                      <ReceiptText size={18} />
+                      <ReceiptText size={20} style={{ color: 'var(--text)' }} />
                     </div>
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -286,15 +294,25 @@ export default function SettleModal({ friend, onClose }: Props) {
                           ? `All ${unsettled.length} Expenses Selected`
                           : `${selected.size} of ${unsettled.length} Expenses Selected`}
                       </div>
-                      <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
                         {selected.size > 0 ? (
                           <>
-                            Net Total: <strong style={{ color: net >= 0 ? 'var(--credit)' : 'var(--debit)' }}>{fmtMoney(absNet, currency)}</strong>
-                            {' • '}
-                            <span>{unsettled.length} available</span>
+                            <span style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--text-3)' }}>Net Total:</span>
+                            <span
+                              style={{
+                                color: net >= 0 ? 'var(--credit)' : 'var(--debit)',
+                                fontWeight: 750,
+                                fontSize: 12.5,
+                                letterSpacing: '0.2px',
+                              }}
+                            >
+                              {fmtMoney(absNet, currency)}
+                            </span>
                           </>
                         ) : (
-                          `Choose from ${unsettled.length} unsettled transaction${unsettled.length !== 1 ? 's' : ''}`
+                          <span style={{ fontSize: 11.5, color: 'var(--text-3)' }}>
+                            {`Choose from ${unsettled.length} unsettled transaction${unsettled.length !== 1 ? 's' : ''}`}
+                          </span>
                         )}
                       </div>
                     </div>
@@ -302,30 +320,39 @@ export default function SettleModal({ friend, onClose }: Props) {
 
                   <button
                     type="button"
+                    aria-label="Edit selected expenses"
+                    title="Edit selected expenses"
                     style={{
-                      background: 'var(--accent)',
-                      color: 'var(--accent-contrast, #ffffff)',
+                      background: 'transparent',
+                      color: 'var(--text-2)',
                       border: 'none',
-                      padding: '5px 12px',
-                      borderRadius: 'var(--radius-sm)',
-                      fontSize: 12,
-                      fontWeight: 600,
+                      width: 28,
+                      height: 28,
+                      borderRadius: '50%',
                       cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 4,
+                      display: 'grid',
+                      placeItems: 'center',
                       flexShrink: 0,
+                      padding: 0,
+                      transition: 'all 0.15s ease',
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.color = 'var(--text)';
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.color = 'var(--text-2)';
+                      e.currentTarget.style.background = 'transparent';
                     }}
                   >
-                    {selected.size > 0 ? 'Edit' : '+ Select'}
+                    <Pencil size={15} style={{ strokeWidth: 2 }} />
                   </button>
                 </div>
               </div>
 
               {/* Settle Amount Mode Segment Toggle */}
               <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 5 }}>
+                <div style={{ fontSize: 10.5, fontWeight: 750, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 5 }}>
                   Settle Mode
                 </div>
                 <div
@@ -333,7 +360,7 @@ export default function SettleModal({ friend, onClose }: Props) {
                     display: 'flex',
                     background: 'var(--surface2)',
                     border: '1px solid var(--border)',
-                    borderRadius: 8,
+                    borderRadius: 12,
                     padding: 3,
                     gap: 3,
                   }}
@@ -343,81 +370,154 @@ export default function SettleModal({ friend, onClose }: Props) {
                     style={{
                       flex: 1,
                       textAlign: 'center',
-                      padding: '6px 10px',
-                      fontSize: 12,
-                      fontWeight: !isCustomMode ? 650 : 500,
-                      borderRadius: 6,
-                      border: !isCustomMode ? '1px solid var(--border2)' : '1px solid transparent',
-                      background: !isCustomMode ? 'var(--surface)' : 'transparent',
-                      color: !isCustomMode ? 'var(--text)' : 'var(--text-3)',
-                      boxShadow: !isCustomMode ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                      padding: '8px 12px',
+                      fontSize: 12.5,
+                      fontWeight: !isCustomMode ? 700 : 550,
+                      borderRadius: 9,
+                      border: !isCustomMode ? '1px solid var(--text)' : '1px solid transparent',
+                      background: !isCustomMode ? 'var(--text)' : 'transparent',
+                      color: !isCustomMode ? 'var(--bg)' : 'var(--text-3)',
+                      boxShadow: !isCustomMode ? '0 2px 6px rgba(0,0,0,0.25)' : 'none',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease',
+                      userSelect: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 6,
+                      whiteSpace: 'nowrap',
                     }}
                     onClick={() => {
                       setIsCustomMode(false);
                       setCustomAmountStr('');
                     }}
                   >
-                    Full ({fmtMoney(absNet, currency)})
+                    <span>Full</span>
+                    <span
+                      style={{
+                        fontSize: 12,
+                        fontWeight: !isCustomMode ? 750 : 550,
+                        opacity: !isCustomMode ? 0.95 : 0.65,
+                        letterSpacing: '0.15px',
+                      }}
+                    >
+                      {fmtMoney(absNet, currency)}
+                    </span>
                   </button>
                   <button
                     type="button"
                     style={{
                       flex: 1,
                       textAlign: 'center',
-                      padding: '6px 10px',
-                      fontSize: 12,
-                      fontWeight: isCustomMode ? 650 : 500,
-                      borderRadius: 6,
-                      border: isCustomMode ? '1px solid var(--border2)' : '1px solid transparent',
-                      background: isCustomMode ? 'var(--surface)' : 'transparent',
-                      color: isCustomMode ? 'var(--text)' : 'var(--text-3)',
-                      boxShadow: isCustomMode ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                      padding: '8px 12px',
+                      fontSize: 12.5,
+                      fontWeight: isCustomMode ? 700 : 550,
+                      borderRadius: 9,
+                      border: isCustomMode ? '1px solid var(--text)' : '1px solid transparent',
+                      background: isCustomMode ? 'var(--text)' : 'transparent',
+                      color: isCustomMode ? 'var(--bg)' : 'var(--text-3)',
+                      boxShadow: isCustomMode ? '0 2px 6px rgba(0,0,0,0.25)' : 'none',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease',
+                      userSelect: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      whiteSpace: 'nowrap',
                     }}
                     onClick={() => {
                       setIsCustomMode(true);
                       if (!customAmountStr) setCustomAmountStr(String(absNet));
                     }}
                   >
-                    Custom / Partial
+                    Custom
                   </button>
                 </div>
               </div>
 
-              {/* Compact Custom Amount Input Field */}
+              {/* Styled Custom Amount Input Field */}
               {isCustomMode && (
-                <div style={{ marginBottom: 12, padding: '10px 12px', background: 'var(--surface2)', borderRadius: 8, border: '1px solid var(--border)' }}>
+                <div style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                    <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-2)' }}>
-                      Custom Amount ({currency})
-                    </span>
-                    <span style={{ fontSize: 11, color: 'var(--text-3)' }}>
-                      Total due: {fmtMoney(absNet, currency)}
+                    <label style={{ fontSize: 10.5, fontWeight: 750, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+                      Custom Amount
+                    </label>
+                    <span style={{ fontSize: 11.5, color: 'var(--text-3)', fontWeight: 500 }}>
+                      Total due: <span style={{ color: 'var(--text)', fontWeight: 700 }}>{fmtMoney(absNet, currency)}</span>
                     </span>
                   </div>
-                  <input
-                    type="number"
-                    step="any"
-                    placeholder={`Enter amount (e.g. ${Math.round(absNet / 2)})`}
-                    value={customAmountStr}
-                    onChange={e => setCustomAmountStr(e.target.value)}
+
+                  <div
                     style={{
-                      width: '100%',
-                      fontWeight: 700,
-                      fontSize: 14,
-                      height: 38,
-                      background: 'var(--surface)',
-                      color: 'var(--text)',
-                      borderRadius: 6,
+                      display: 'flex',
+                      alignItems: 'center',
+                      background: 'var(--surface2)',
                       border: '1px solid var(--border)',
-                      padding: '0 10px',
-                      outline: 'none',
-                      boxSizing: 'border-box',
+                      borderRadius: 12,
+                      padding: '0 12px',
+                      height: 42,
+                      transition: 'all 0.15s ease',
+                      gap: 8,
                     }}
-                  />
+                  >
+                    <span
+                      style={{
+                        fontSize: 16,
+                        fontWeight: 750,
+                        color: 'var(--accent, #10b981)',
+                        userSelect: 'none',
+                        lineHeight: 1,
+                      }}
+                    >
+                      {currencySymbol(currency)}
+                    </span>
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      max={absNet}
+                      placeholder="0.00"
+                      value={customAmountStr}
+                      onChange={e => setCustomAmountStr(e.target.value)}
+                      style={{
+                        flex: 1,
+                        minWidth: 0,
+                        fontWeight: 750,
+                        fontSize: 15,
+                        background: 'transparent',
+                        color: 'var(--text)',
+                        border: 'none',
+                        outline: 'none',
+                        padding: 0,
+                        boxSizing: 'border-box',
+                        width: '100%',
+                      }}
+                      autoFocus
+                    />
+                    {customAmountStr && (
+                      <button
+                        type="button"
+                        onClick={() => setCustomAmountStr('')}
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.08)',
+                          border: 'none',
+                          color: 'var(--text-2)',
+                          cursor: 'pointer',
+                          width: 22,
+                          height: 22,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: 9999,
+                          padding: 0,
+                          flexShrink: 0,
+                        }}
+                        title="Clear amount"
+                      >
+                        <X size={12} />
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -425,26 +525,26 @@ export default function SettleModal({ friend, onClose }: Props) {
               <div
                 style={{
                   background: 'var(--surface2)',
-                  borderRadius: 'var(--radius)',
+                  borderRadius: 12,
                   padding: '10px 14px',
                   marginBottom: 14,
                   border: '1px solid var(--border)',
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12.5, marginBottom: 5 }}>
-                  <span style={{ color: 'var(--text-3)' }}>Total Debt Selected</span>
-                  <span style={{ fontWeight: 600, color: 'var(--text)' }}>{fmtMoney(absNet, currency)}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+                  <span style={{ color: 'var(--text-3)', fontWeight: 550, fontSize: 11.5 }}>Total Debt Selected</span>
+                  <span style={{ fontWeight: 700, color: 'var(--text-2)', fontSize: 12.5, letterSpacing: '0.2px' }}>{fmtMoney(absNet, currency)}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, marginBottom: remainingBalance > 0 ? 5 : 0 }}>
-                  <span style={{ color: 'var(--text-2)', fontWeight: 500 }}>Amount Settling Now</span>
-                  <span style={{ fontWeight: 700, color: net >= 0 ? 'var(--credit)' : 'var(--debit)', fontSize: 13.5 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: remainingBalance > 0 ? 5 : 0 }}>
+                  <span style={{ color: 'var(--text)', fontWeight: 700, fontSize: 13 }}>Amount Settling Now</span>
+                  <span style={{ fontWeight: 800, color: net >= 0 ? 'var(--credit)' : 'var(--debit)', fontSize: 14.5, letterSpacing: '0.2px' }}>
                     {net >= 0 ? '+' : '-'}{fmtMoney(effectiveSettleAmt, currency)}
                   </span>
                 </div>
                 {isCustomMode && remainingBalance > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: 'var(--text-3)', borderTop: '1px dashed var(--border)', paddingTop: 6, marginTop: 5 }}>
-                    <span>Remaining Balance</span>
-                    <span style={{ fontWeight: 600, color: 'var(--accent)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: 5, marginTop: 5 }}>
+                    <span style={{ color: 'var(--text-3)', fontWeight: 500, fontSize: 11.5 }}>Remaining Balance</span>
+                    <span style={{ fontWeight: 700, color: 'var(--text)', fontSize: 12.5, letterSpacing: '0.2px' }}>
                       {fmtMoney(remainingBalance, currency)}
                     </span>
                   </div>
@@ -452,7 +552,7 @@ export default function SettleModal({ friend, onClose }: Props) {
               </div>
 
               {/* Date & Payment Method in One Row */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 6 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 0 }}>
                 {/* Settle Date */}
                 <div>
                   <label style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-2)', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
@@ -527,7 +627,7 @@ export default function SettleModal({ friend, onClose }: Props) {
         <div
           className="modal-footer"
           style={{
-            padding: '10px 20px 16px',
+            padding: '16px 20px 18px',
             display: 'flex',
             gap: 10,
             borderTop: 'none',
@@ -535,60 +635,89 @@ export default function SettleModal({ friend, onClose }: Props) {
             flexShrink: 0,
           }}
         >
-          <button
-            type="button"
-            className="btn"
-            onClick={onClose}
-            style={{
-              flex: 1,
-              height: 40,
-              borderRadius: 9999,
-              fontSize: 13,
-              fontWeight: 650,
-              border: '1px solid var(--border)',
-              background: 'var(--surface2)',
-              color: 'var(--text)',
-              cursor: 'pointer',
-              padding: '0 16px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6,
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <X size={15} style={{ color: 'var(--text)' }} />
-            <span>Cancel</span>
-          </button>
-          {unsettled.length > 0 && (
+          {unsettled.length === 0 ? (
             <button
               type="button"
-              className="btn btn-primary"
-              disabled={!selected.size || (isCustomMode && (!customAmountStr || effectiveSettleAmt <= 0))}
-              onClick={handleSettle}
+              className="btn"
+              onClick={onClose}
               style={{
-                flex: 1.35,
+                flex: 1,
                 height: 40,
                 borderRadius: 9999,
                 fontSize: 13,
-                fontWeight: 700,
-                background: 'var(--text)',
-                border: '1px solid var(--text)',
-                color: 'var(--bg)',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+                fontWeight: 650,
+                border: '1px solid var(--border)',
+                background: 'var(--surface2)',
+                color: 'var(--text)',
                 cursor: 'pointer',
-                padding: '0 18px',
+                padding: '0 16px',
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 6,
-                whiteSpace: 'nowrap',
                 transition: 'all 0.15s ease',
               }}
             >
-              <Check size={15} style={{ color: 'inherit' }} />
-              <span>Settle ({fmtMoney(effectiveSettleAmt, currency)})</span>
+              <X size={15} style={{ color: 'var(--text)' }} />
+              <span>Close</span>
             </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="btn"
+                onClick={handleClearToDefault}
+                style={{
+                  flex: 1,
+                  height: 40,
+                  borderRadius: 9999,
+                  fontSize: 13,
+                  fontWeight: 650,
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface2)',
+                  color: 'var(--text)',
+                  cursor: 'pointer',
+                  padding: '0 16px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  transition: 'all 0.15s ease',
+                }}
+                title="Reset to default values"
+              >
+                <RotateCcw size={14} style={{ color: 'var(--text)' }} />
+                <span>Clear</span>
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={!selected.size || (isCustomMode && (!customAmountStr || effectiveSettleAmt <= 0))}
+                onClick={handleSettle}
+                style={{
+                  flex: 1.35,
+                  height: 40,
+                  borderRadius: 9999,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  background: 'var(--text)',
+                  border: '1px solid var(--text)',
+                  color: 'var(--bg)',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+                  cursor: 'pointer',
+                  padding: '0 18px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <Check size={15} style={{ color: 'inherit' }} />
+                <span>Settle ({fmtMoney(effectiveSettleAmt, currency)})</span>
+              </button>
+            </>
           )}
         </div>
       </motion.div>
