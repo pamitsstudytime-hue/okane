@@ -618,7 +618,7 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
                         gap: 12,
                         transition: 'all 0.15s ease',
                       }}
-                      onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--accent-border-soft, var(--accent))')}
+                      onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--text)')}
                       onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
@@ -816,7 +816,7 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
                             borderRadius: '50%',
                             background: c,
                             border: isSelected ? '2px solid var(--surface)' : '1px solid rgba(0,0,0,0.15)',
-                            outline: isSelected ? '2px solid var(--accent)' : 'none',
+                            outline: isSelected ? '2px solid var(--text)' : 'none',
                             outlineOffset: 1,
                             cursor: 'pointer',
                             padding: 0,
@@ -853,7 +853,7 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
                           ? color
                           : 'conic-gradient(from 0deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)',
                         border: !FRIEND_PALETTE.includes(color) ? '2px solid var(--surface)' : '1px solid var(--border)',
-                        outline: !FRIEND_PALETTE.includes(color) ? '2px solid var(--accent)' : 'none',
+                        outline: !FRIEND_PALETTE.includes(color) ? '2px solid var(--text)' : 'none',
                         outlineOffset: 1,
                         cursor: 'pointer',
                         padding: 0,
@@ -1092,31 +1092,75 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
         {isCycleModalOpen && (
           <div
             className="modal-backdrop"
-            style={{ zIndex: 100085, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }}
+            style={{ zIndex: 100085, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)' }}
             onClick={e => { if (e.target === e.currentTarget) setIsCycleModalOpen(false); }}
           >
-            <div className="modal friend-drawer-modal" style={{ maxWidth: 420, maxHeight: '88vh', display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 20, background: 'var(--surface)', animation: 'slidein 0.15s ease' }}>
-              <div className="modal-handle-bar">
-                <div className="modal-handle" />
-              </div>
-              <div className="modal-header" style={{ padding: '14px 18px', borderBottom: 'none' }}>
+            <div
+              className="modal friend-drawer-modal"
+              style={{
+                maxWidth: 420,
+                width: '100%',
+                maxHeight: '90vh',
+                display: 'flex',
+                flexDirection: 'column',
+                border: '1px solid var(--border)',
+                borderRadius: 24,
+                background: 'var(--surface)',
+                overflow: 'hidden',
+                boxShadow: '0 20px 50px rgba(0, 0, 0, 0.4)',
+                animation: 'slidein 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
+              }}
+            >
+              {/* Drag Handle Indicator */}
+              <div
+                style={{
+                  width: 38,
+                  height: 4,
+                  borderRadius: 9999,
+                  background: 'var(--border2)',
+                  margin: '12px auto 6px',
+                  flexShrink: 0,
+                }}
+              />
+
+              {/* Drawer Header */}
+              <div className="modal-header" style={{ padding: '4px 20px 14px', borderBottom: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: 8, background: 'var(--accent-soft)', color: 'var(--accent)', display: 'grid', placeItems: 'center' }}>
-                    <Repeat size={15} />
+                  <div style={{ width: 32, height: 32, borderRadius: 8, background: 'transparent', color: 'var(--text)', display: 'grid', placeItems: 'center' }}>
+                    <Repeat size={18} />
                   </div>
                   <div>
-                    <div className="modal-title" style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>
+                    <div className="modal-title" style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>
                       Select Billing Cycle
                     </div>
-                    <div style={{ fontSize: 11, color: 'var(--text-3)' }}>
+                    <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 1 }}>
                       Choose how frequently this subscription recurs
                     </div>
                   </div>
                 </div>
-                <button className="btn-icon" onClick={() => setIsCycleModalOpen(false)} style={{ borderRadius: 8, background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text-2)' }}><X size={16} /></button>
+                <button
+                  className="btn-icon"
+                  type="button"
+                  onClick={() => setIsCycleModalOpen(false)}
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    background: 'var(--surface2)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text-2)',
+                    display: 'grid',
+                    placeItems: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <X size={16} />
+                </button>
               </div>
 
-              <div className="modal-body" style={{ padding: '12px 18px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {/* Drawer Body */}
+              <div className="modal-body" style={{ padding: '12px 20px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {BILLING_CYCLE_CHOICES.map(choice => {
                   const isSelected = tempCycle === choice.id;
                   const ChoiceIcon = choice.icon;
@@ -1126,160 +1170,209 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
                       role="button"
                       tabIndex={0}
                       onClick={() => setTempCycle(choice.id)}
+                      onMouseEnter={e => !isSelected && (e.currentTarget.style.borderColor = 'var(--border2)')}
+                      onMouseLeave={e => !isSelected && (e.currentTarget.style.borderColor = 'var(--border)')}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '11px 13px',
-                        borderRadius: 10,
-                        border: isSelected ? '1px solid var(--border2)' : '1px solid var(--border)',
-                        background: isSelected ? 'var(--surface)' : 'var(--surface2)',
-                        boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+                        padding: '16px 18px',
+                        borderRadius: 16,
+                        border: isSelected ? '1.5px solid var(--text)' : '1px solid var(--border)',
+                        background: 'var(--surface2)',
+                        boxShadow: isSelected ? '0 2px 10px rgba(0, 0, 0, 0.15)' : 'none',
                         cursor: 'pointer',
-                        transition: 'all 0.12s ease',
+                        outline: 'none',
+                        transition: 'all 0.15s ease',
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
                         <div
                           style={{
-                            width: 30,
-                            height: 30,
-                            borderRadius: 8,
-                            background: isSelected ? 'var(--accent-gradient, var(--accent))' : 'var(--surface)',
-                            color: isSelected ? 'var(--accent-contrast, #ffffff)' : 'var(--text-2)',
+                            width: 24,
+                            height: 24,
+                            borderRadius: 0,
+                            background: 'transparent',
+                            color: isSelected ? 'var(--text)' : 'var(--text-3)',
                             display: 'grid',
                             placeItems: 'center',
                             flexShrink: 0,
+                            transition: 'all 0.15s ease',
                           }}
                         >
-                          <ChoiceIcon size={15} />
+                          <ChoiceIcon size={20} />
                         </div>
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <span style={{ fontSize: 13, fontWeight: isSelected ? 700 : 600, color: isSelected ? 'var(--accent)' : 'var(--text-1)' }}>
-                              {choice.title}
-                            </span>
-                            {choice.badge && (
-                              <span
-                                style={{
-                                  fontSize: 10,
-                                  fontWeight: 700,
-                                  padding: '1px 6px',
-                                  borderRadius: 99,
-                                  background: choice.badgeType === 'success' ? 'rgba(16, 185, 129, 0.15)' : 'var(--accent-soft)',
-                                  color: choice.badgeType === 'success' ? 'var(--credit)' : 'var(--accent)',
-                                  border: choice.badgeType === 'success' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid var(--accent-border-soft)',
-                                }}
-                              >
-                                {choice.badge}
-                              </span>
-                            )}
-                          </div>
-                          <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 1 }}>
-                            {choice.subtitle}
-                          </div>
-                        </div>
+                        <span style={{ fontSize: 15, fontWeight: isSelected ? 700 : 550, color: 'var(--text)' }}>
+                          {choice.title}
+                        </span>
                       </div>
 
                       <div
                         style={{
-                          width: 18,
-                          height: 18,
+                          width: 22,
+                          height: 22,
                           borderRadius: '50%',
                           border: isSelected ? 'none' : '1.5px solid var(--border2)',
-                          background: isSelected ? 'var(--accent)' : 'transparent',
-                          color: 'var(--accent-contrast, #ffffff)',
+                          background: isSelected ? 'var(--text)' : 'transparent',
+                          color: 'var(--bg)',
                           display: 'grid',
                           placeItems: 'center',
                           flexShrink: 0,
-                          marginLeft: 8,
+                          marginLeft: 12,
+                          transition: 'all 0.15s ease',
                         }}
                       >
-                        {isSelected && <Check size={11} strokeWidth={3} />}
+                        {isSelected && <Check size={13} strokeWidth={3} />}
                       </div>
                     </div>
                   );
                 })}
 
-                {/* If Custom Months is selected, show streamlined month presets & input */}
+                {/* If Custom Months is selected, show streamlined custom months card */}
                 {tempCycle === 'custom' && (
                   <div
                     style={{
-                      padding: '10px 12px',
-                      borderRadius: 10,
-                      background: 'var(--surface3, var(--surface))',
-                      border: '1px solid var(--accent-border-soft, var(--border))',
+                      padding: '16px 18px',
+                      borderRadius: 16,
+                      background: 'var(--surface2)',
+                      border: '1px solid var(--border)',
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: 8,
+                      gap: 14,
+                      marginTop: 2,
                     }}
                   >
+                    {/* Header with high contrast badge */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-2)' }}>
-                        Select number of months:
+                      <span style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text)' }}>
+                        Custom Interval
                       </span>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)' }}>
+                      <span
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: 'var(--bg)',
+                          background: 'var(--text)',
+                          padding: '4px 12px',
+                          borderRadius: 9999,
+                          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.2)',
+                        }}
+                      >
                         Every {customMonths} Month{customMonths > 1 ? 's' : ''}
                       </span>
                     </div>
 
-                    {/* Quick Month Chips */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 5 }}>
-                      {[2, 3, 6, 9].map(m => {
+                    {/* Clean Presets: 2, 3, and 6 Months */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                      {[2, 3, 6].map(m => {
                         const isChipSelected = customMonths === m;
                         return (
                           <button
                             key={m}
                             type="button"
                             onClick={() => setCustomMonths(m)}
+                            onMouseEnter={e => !isChipSelected && (e.currentTarget.style.borderColor = 'var(--border2)')}
+                            onMouseLeave={e => !isChipSelected && (e.currentTarget.style.borderColor = 'var(--border)')}
                             style={{
-                              padding: '5px 0',
-                              fontSize: 11.5,
-                              fontWeight: isChipSelected ? 650 : 500,
-                              borderRadius: 8,
-                              border: isChipSelected ? '1px solid var(--border2)' : '1px solid var(--border)',
-                              background: isChipSelected ? 'var(--surface)' : 'var(--surface2)',
-                              color: isChipSelected ? 'var(--text)' : 'var(--text-2)',
-                              boxShadow: isChipSelected ? '0 1px 2px rgba(0, 0, 0, 0.08)' : 'none',
+                              height: 38,
+                              fontSize: 12.5,
+                              fontWeight: isChipSelected ? 700 : 550,
+                              borderRadius: 9999,
+                              border: isChipSelected ? '1.5px solid var(--text)' : '1px solid var(--border)',
+                              background: isChipSelected ? 'var(--text)' : 'var(--surface)',
+                              color: isChipSelected ? 'var(--bg)' : 'var(--text-2)',
+                              boxShadow: isChipSelected ? '0 2px 8px rgba(0, 0, 0, 0.18)' : 'none',
                               cursor: 'pointer',
+                              outline: 'none',
+                              transition: 'all 0.15s ease',
+                              whiteSpace: 'nowrap',
                             }}
                           >
-                            {m} Mo
+                            {m} Months
                           </button>
                         );
                       })}
                     </div>
 
-                    {/* Stepper / Direct Input */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
-                      <span style={{ fontSize: 11.5, color: 'var(--text-3)' }}>Or custom value:</span>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
-                        <button
-                          type="button"
-                          className="btn-icon"
-                          style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid var(--border)', background: 'var(--surface2)' }}
-                          onClick={() => setCustomMonths(prev => Math.max(1, prev - 1))}
+                    {/* Exact duration stepper row (no split lines) */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: 13, fontWeight: 550, color: 'var(--text-2)' }}>
+                        Exact duration
+                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            background: 'var(--surface)',
+                            border: '1px solid var(--border)',
+                            borderRadius: 9999,
+                            padding: '3px 6px',
+                            gap: 2,
+                          }}
                         >
-                          -
-                        </button>
-                        <input
-                          type="number"
-                          min="1"
-                          max="60"
-                          className="form-input"
-                          style={{ height: 28, textAlign: 'center', fontSize: 12.5, fontWeight: 700, padding: '2px 6px', width: 60, borderRadius: 6, background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)' }}
-                          value={customMonths}
-                          onChange={e => setCustomMonths(Math.max(1, parseInt(e.target.value) || 1))}
-                        />
-                        <button
-                          type="button"
-                          className="btn-icon"
-                          style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid var(--border)', background: 'var(--surface2)' }}
-                          onClick={() => setCustomMonths(prev => Math.min(60, prev + 1))}
-                        >
-                          +
-                        </button>
-                        <span style={{ fontSize: 11.5, color: 'var(--text-2)', marginLeft: 4 }}>months</span>
+                          <button
+                            type="button"
+                            className="btn-icon"
+                            style={{
+                              width: 30,
+                              height: 30,
+                              borderRadius: '50%',
+                              border: '1px solid var(--border)',
+                              background: 'var(--surface2)',
+                              color: 'var(--text)',
+                              display: 'grid',
+                              placeItems: 'center',
+                              cursor: 'pointer',
+                              fontSize: 16,
+                              fontWeight: 700,
+                            }}
+                            onClick={() => setCustomMonths(prev => Math.max(1, prev - 1))}
+                          >
+                            -
+                          </button>
+                          <input
+                            type="number"
+                            min="1"
+                            max="60"
+                            className="form-input"
+                            style={{
+                              height: 30,
+                              textAlign: 'center',
+                              fontSize: 14,
+                              fontWeight: 700,
+                              width: 42,
+                              borderRadius: 0,
+                              background: 'transparent',
+                              border: 'none',
+                              color: 'var(--text)',
+                              padding: 0,
+                            }}
+                            value={customMonths}
+                            onChange={e => setCustomMonths(Math.max(1, parseInt(e.target.value) || 1))}
+                          />
+                          <button
+                            type="button"
+                            className="btn-icon"
+                            style={{
+                              width: 30,
+                              height: 30,
+                              borderRadius: '50%',
+                              border: '1px solid var(--border)',
+                              background: 'var(--surface2)',
+                              color: 'var(--text)',
+                              display: 'grid',
+                              placeItems: 'center',
+                              cursor: 'pointer',
+                              fontSize: 16,
+                              fontWeight: 700,
+                            }}
+                            onClick={() => setCustomMonths(prev => Math.min(60, prev + 1))}
+                          >
+                            +
+                          </button>
+                        </div>
+                        <span style={{ fontSize: 13, fontWeight: 550, color: 'var(--text-2)' }}>months</span>
                       </div>
                     </div>
                   </div>
@@ -1289,32 +1382,30 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
                 {defaultAmount && parseFloat(defaultAmount) > 0 && (
                   <div
                     style={{
-                      marginTop: 2,
-                      padding: '8px 12px',
-                      borderRadius: 10,
-                      background: 'var(--surface3, var(--surface))',
+                      padding: '14px 18px',
+                      borderRadius: 16,
+                      background: 'var(--surface2)',
                       border: '1px solid var(--border)',
                       display: 'flex',
                       justifyContent: 'space-around',
                       alignItems: 'center',
-                      fontSize: 11,
-                      color: 'var(--text-2)',
+                      marginTop: 4,
                     }}
                   >
                     <div style={{ textAlign: 'center' }}>
-                      <div style={{ color: 'var(--text-3)', fontSize: 10 }}>Monthly Equivalent</div>
-                      <div style={{ fontWeight: 700, color: 'var(--text-1)', marginTop: 1 }}>
+                      <div style={{ color: 'var(--text-3)', fontSize: 11, fontWeight: 600 }}>Monthly Equivalent</div>
+                      <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--text)', marginTop: 3 }}>
                         {db.settings.currency} {tempCycle === 'yearly'
-                          ? (parseFloat(defaultAmount) / 12).toFixed(1)
+                          ? (parseFloat(defaultAmount) / 12).toFixed(0)
                           : tempCycle === 'custom'
-                          ? (parseFloat(defaultAmount) / customMonths).toFixed(1)
+                          ? (parseFloat(defaultAmount) / customMonths).toFixed(0)
                           : parseFloat(defaultAmount).toLocaleString()}
                       </div>
                     </div>
-                    <div style={{ width: 1, height: 20, background: 'var(--border)' }} />
+                    <div style={{ width: 1, height: 28, background: 'var(--border)' }} />
                     <div style={{ textAlign: 'center' }}>
-                      <div style={{ color: 'var(--text-3)', fontSize: 10 }}>Annualized Cost</div>
-                      <div style={{ fontWeight: 700, color: 'var(--accent)', marginTop: 1 }}>
+                      <div style={{ color: 'var(--text-3)', fontSize: 11, fontWeight: 600 }}>Annualized Cost</div>
+                      <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--text)', marginTop: 3 }}>
                         {db.settings.currency} {tempCycle === 'yearly'
                           ? parseFloat(defaultAmount).toLocaleString()
                           : tempCycle === 'monthly'
@@ -1326,17 +1417,58 @@ export default function FriendModal({ friend, defaultType = 'friend', onClose, o
                 )}
               </div>
 
-              <div className="modal-footer" style={{ padding: '12px 18px', display: 'flex', justifyContent: 'flex-end', gap: 8, borderTop: 'none', background: 'var(--surface)' }}>
-                <button type="button" className="btn btn-secondary btn-sm" style={{ borderRadius: 8, fontSize: 12, height: 34, background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)' }} onClick={() => setIsCycleModalOpen(false)}>
-                  Cancel
+              {/* Drawer Footer Actions */}
+              <div className="modal-footer" style={{ padding: '16px 20px 20px', display: 'flex', justifyContent: 'space-between', gap: 10, borderTop: 'none', background: 'var(--surface)' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{
+                    flex: 1,
+                    borderRadius: 9999,
+                    fontSize: 13.5,
+                    fontWeight: 650,
+                    height: 44,
+                    background: 'var(--surface2)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text)',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                  }}
+                  onClick={() => {
+                    setTempCycle('monthly');
+                    setCustomMonths(3);
+                    setIsCycleModalOpen(false);
+                  }}
+                >
+                  <RotateCcw size={14} style={{ color: 'var(--text)' }} />
+                  <span>Clear</span>
                 </button>
                 <button
                   type="button"
-                  className="btn btn-primary btn-sm"
-                  style={{ borderRadius: 8, fontSize: 12, padding: '0 16px', height: 34, background: 'var(--accent-gradient, var(--accent))', color: 'var(--accent-contrast, #ffffff)', border: '1px solid var(--accent-dark, var(--accent))' }}
+                  className="btn btn-primary"
+                  style={{
+                    flex: 1,
+                    borderRadius: 9999,
+                    fontSize: 13.5,
+                    fontWeight: 700,
+                    height: 44,
+                    background: 'var(--text)',
+                    color: 'var(--bg)',
+                    border: 'none',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                  }}
                   onClick={saveCycleFromModal}
                 >
-                  ✓ Apply Cycle
+                  <Check size={15} style={{ color: 'inherit' }} />
+                  <span>Apply</span>
                 </button>
               </div>
             </div>

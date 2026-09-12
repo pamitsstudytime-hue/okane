@@ -507,7 +507,7 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
               >
                 <Plus size={16} strokeWidth={2.4} />
                 <span>
-                  {contactType === 'vendor' ? 'Log Purchase' : contactType === 'subscription' ? 'Log Payment' : 'Add Expense'}
+                  {contactType === 'subscription' ? 'Log Payment' : 'Add Expense'}
                 </span>
               </button>
 
