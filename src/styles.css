@@ -7687,53 +7687,51 @@ body.no-animations *::after,
 }
 /* Settlement History Visual Enhancements */
 .settlement-history-header {
-  padding: 16px 18px 12px 18px;
+  padding: 14px 16px 12px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: nowrap;
 }
 
 .settlement-history-title-wrap {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 8px;
   min-width: 0;
   flex: 1;
 }
 
 .settlement-history-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
-  background: var(--accent-soft);
+  width: auto;
+  height: auto;
+  background: transparent;
   color: var(--accent);
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
 .settlement-history-title {
-  font-size: 15px;
+  font-size: 14.5px;
   font-weight: 700;
   color: var(--text);
   margin: 0;
   white-space: nowrap;
-  letter-spacing: -0.15px;
+  letter-spacing: -0.01em;
 }
 
 .settlement-count-badge {
   font-size: 11px;
-  font-weight: 700;
-  color: var(--accent);
-  background: var(--accent-soft);
-  min-width: 20px;
-  height: 20px;
-  padding: 0 7px;
+  font-weight: 650;
+  color: var(--text-2);
+  background: var(--surface2);
+  padding: 1.5px 7.5px;
   border-radius: 999px;
-  white-space: nowrap;
-  letter-spacing: 0.1px;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -7741,50 +7739,82 @@ body.no-animations *::after,
   border: none;
 }
 
-/* Timeframe Date Filter Button */
+.settlement-history-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* Timeframe Date Filter Button - Fully blended with card bg */
 .settlement-timeframe-btn-wrap {
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 10px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
   color: var(--text);
-  font-size: 12px;
-  font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
   user-select: none;
   flex-shrink: 0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  box-shadow: none;
 }
 
 .settlement-timeframe-btn-wrap:hover {
-  background: var(--surface3);
-  border-color: var(--border2);
-  transform: translateY(-0.5px);
+  background: var(--surface2, rgba(125, 125, 125, 0.08));
+  color: var(--accent);
 }
 
 .settlement-timeframe-btn-wrap .timeframe-icon {
-  color: var(--accent);
+  color: var(--text);
   flex-shrink: 0;
+  transition: color 0.15s ease;
+}
+
+.settlement-timeframe-btn-wrap:hover .timeframe-icon {
+  color: var(--accent);
 }
 
 .settlement-timeframe-btn-wrap .timeframe-label {
-  white-space: nowrap;
-  font-weight: 650;
+  display: none !important;
 }
 
 .settlement-timeframe-btn-wrap .timeframe-chevron {
-  color: var(--text-3);
-  flex-shrink: 0;
-  transition: transform 0.15s ease;
+  display: none !important;
 }
 
-.settlement-timeframe-btn-wrap:hover .timeframe-chevron {
+.settlement-filter-btn-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: transparent !important;
+  border: none !important;
   color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  box-shadow: none !important;
+}
+
+.settlement-filter-btn-wrap:hover {
+  background: transparent !important;
+  color: var(--accent);
+}
+
+.settlement-filter-btn-wrap.active {
+  background: transparent !important;
+  color: var(--accent);
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .settlement-timeframe-select {
@@ -7798,7 +7828,7 @@ body.no-animations *::after,
 }
 
 .settlement-section-padding {
-  padding: 0 18px 16px 18px;
+  padding: 0 16px 14px 16px;
 }
 
 @media (max-width: 640px) {
@@ -7811,61 +7841,22 @@ body.no-animations *::after,
     gap: 7px;
   }
 
-  .settlement-history-icon {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-  }
-
   .settlement-history-title {
-    font-size: 13px;
+    font-size: 13.5px;
   }
 
   .settlement-timeframe-btn-wrap {
-    padding: 6px 8px;
-    font-size: 11.5px;
-    border-radius: 8px;
-    gap: 0;
-    min-width: 32px;
-    height: 32px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    width: 30px;
+    height: 30px;
   }
 
-  .settlement-timeframe-btn-wrap .timeframe-label {
-    display: none !important;
-  }
-
-  .settlement-timeframe-btn-wrap .timeframe-chevron {
-    display: none !important;
-  }
-
-  .settlement-timeframe-btn-wrap .timeframe-icon {
-    width: 15px;
-    height: 15px;
+  .settlement-filter-btn-wrap {
+    width: 30px;
+    height: 30px;
   }
 
   .settlement-section-padding {
-    padding: 0 10px 12px 10px;
-  }
-
-  .settlement-stats-grid {
-    padding: 8px 4px;
-    margin-bottom: 10px;
-  }
-
-  .settlement-stat-card {
-    padding: 0 4px;
-  }
-
-  .settlement-stat-label {
-    font-size: 8.5px;
-    letter-spacing: 0.02em;
-  }
-
-  .settlement-stat-value {
-    font-size: 11.5px;
+    padding: 0 12px 12px 12px;
   }
 }
 
@@ -7911,18 +7902,93 @@ body.no-animations *::after,
   }
 }
 
-/* Pending Settlements Grid View */
+/* Pending Settlements List View */
 .pending-settlements-desktop-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
 }
 
-@media (max-width: 640px) {
-  .pending-settlements-desktop-grid {
-    grid-template-columns: 1fr;
-    gap: 7px;
-  }
+.pending-settlement-subcard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  background: transparent;
+  border-radius: 12px;
+  border: none;
+  box-shadow: none;
+  cursor: default;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.pending-settlement-subcard:hover {
+  background-color: var(--surface2) !important;
+}
+
+.pending-settlement-subcard:active {
+  background-color: var(--surface3) !important;
+}
+
+[data-color-scheme="dark"] .pending-settlement-subcard {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+[data-color-scheme="dark"] .pending-settlement-subcard:hover {
+  background-color: var(--surface2) !important;
+}
+
+[data-color-scheme="dark"] .pending-settlement-subcard:active {
+  background-color: var(--surface3) !important;
+}
+
+.pending-settle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 9999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-2);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  user-select: none;
+}
+
+.pending-settle-btn:hover {
+  background-color: var(--surface3);
+  border-color: var(--border2);
+  color: var(--text);
+}
+
+.pending-settle-btn:active {
+  transform: scale(0.96);
+  background-color: var(--surface3);
+}
+
+[data-color-scheme="dark"] .pending-settle-btn {
+  background: var(--surface2);
+  border-color: var(--border);
+  color: var(--text-2);
+}
+
+[data-color-scheme="dark"] .pending-settle-btn:hover {
+  background: var(--surface3);
+  border-color: var(--border2);
+  color: var(--text);
 }
 
 .pending-settlements-grid {
@@ -8058,66 +8124,61 @@ body.no-animations *::after,
   }
 }
 
-/* 3 KPI Summary Strip */
+/* 2 KPI Summary Grid - Bigger, clean modern cards for Received and Paid */
 .settlement-stats-grid {
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 9px 4px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
   margin-bottom: 12px;
 }
 
 .settlement-stat-card {
-  background: transparent;
-  border: none;
-  padding: 0 8px;
-  flex: 1;
+  background: var(--surface2);
+  border: 1px solid transparent;
+  border-radius: 13px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
-  text-align: center;
   min-width: 0;
+  transition: all 0.15s ease;
 }
 
-.settlement-stat-card + .settlement-stat-card {
-  border-left: 1px solid var(--border);
-}
-
-.settlement-stat-icon {
-  display: none;
+.settlement-stat-card:hover {
+  background: var(--surface3, rgba(125, 125, 125, 0.08));
 }
 
 .settlement-stat-content {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
   min-width: 0;
 }
 
+.settlement-stat-header-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .settlement-stat-label {
-  font-size: 9.5px;
-  font-weight: 700;
+  font-size: 12.5px;
+  font-weight: 600;
   color: var(--text-3);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: -0.01em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .settlement-stat-value {
-  font-size: 13.5px;
-  font-weight: 800;
+  font-size: 17.5px;
+  font-weight: 750;
   color: var(--text);
-  margin-top: 2px;
+  margin-top: 3.5px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: -0.015em;
 }
 
 .settlement-stat-value.credit {
@@ -8126,6 +8187,78 @@ body.no-animations *::after,
 
 .settlement-stat-value.debit {
   color: var(--debit);
+}
+
+@media (max-width: 480px) {
+  .settlement-stats-grid {
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .settlement-stat-card {
+    padding: 10px 12px;
+    border-radius: 11px;
+  }
+  .settlement-stat-label {
+    font-size: 11.5px;
+  }
+  .settlement-stat-value {
+    font-size: 15.5px;
+  }
+}
+
+/* Modern Beautiful Search Input */
+.settlement-search-container {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  background: var(--surface2);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 0 12px;
+  height: 40px;
+  transition: all 0.18s ease;
+  box-sizing: border-box;
+}
+
+.settlement-search-container:focus-within {
+  background: var(--surface);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.settlement-search-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  padding: 8px 0;
+}
+
+.settlement-search-input::placeholder {
+  color: var(--text-3);
+}
+
+.settlement-search-clear-btn {
+  background: var(--surface3, rgba(125, 125, 125, 0.12));
+  border: none;
+  color: var(--text-2);
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  margin-left: 6px;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.settlement-search-clear-btn:hover {
+  background: var(--surface, #fff);
+  color: var(--text);
 }
 
 /* Single Row Toolbar for Settlement Filters & Search */
@@ -8310,12 +8443,13 @@ body.no-animations *::after,
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 9px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  color: var(--text-2);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: var(--text);
   font-size: 12px;
   cursor: pointer;
   flex-shrink: 0;
@@ -8324,16 +8458,15 @@ body.no-animations *::after,
 }
 
 .settlement-filter-btn-wrap:hover {
-  background: var(--surface3);
-  border-color: var(--border2);
-  color: var(--text);
+  background: transparent !important;
+  color: var(--accent);
 }
 
 .settlement-filter-btn-wrap.active {
-  background: var(--surface);
-  border-color: var(--border2);
-  color: var(--text);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: transparent !important;
+  border: none !important;
+  color: var(--accent);
+  box-shadow: none !important;
 }
 
 .settlement-filter-btn-wrap .filter-btn-icon {
@@ -8745,20 +8878,16 @@ body.no-animations *::after,
 .settlement-compact-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 8px 16px 20px 16px;
-  max-width: 860px;
-  margin: 0 auto;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
   width: 100%;
   box-sizing: border-box;
 }
 
 @media (min-width: 641px) {
   .settlement-compact-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    gap: 12px;
-    padding: 10px 20px 24px 20px;
+    padding: 0;
   }
 }
 
@@ -8766,35 +8895,192 @@ body.no-animations *::after,
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 11px 14px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
   border-radius: 12px !important;
+  box-shadow: none;
   cursor: pointer;
-  transition: all 0.15s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: background-color 0.15s ease, transform 0.1s ease;
   position: relative;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.settlement-compact-card:hover,
+.settlement-wallet-name-desktop {
+  display: none;
+}
+
+@media (min-width: 641px) {
+  .settlement-wallet-name-desktop {
+    display: inline;
+  }
+}
+
+.settlement-compact-card:hover {
+  background-color: var(--surface2) !important;
+  border-color: transparent;
+  box-shadow: none;
+  transform: none;
+}
+
 .settlement-compact-card:active {
-  background: var(--surface3);
-  border-color: var(--border2);
-  transform: translateY(-1px);
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+  background-color: var(--surface3) !important;
+  transform: scale(0.995);
 }
 
 [data-color-scheme="dark"] .settlement-compact-card {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
-[data-color-scheme="dark"] .settlement-compact-card:hover,
+[data-color-scheme="dark"] .settlement-compact-card:hover {
+  background-color: var(--surface2) !important;
+  border-color: transparent;
+  box-shadow: none;
+}
+
 [data-color-scheme="dark"] .settlement-compact-card:active {
+  background-color: var(--surface3) !important;
+}
+
+/* Beautiful Undo Button */
+.settlement-undo-btn {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  transition: all 0.15s ease;
+}
+
+/* Card Blended Search Pill */
+.card-search-pill {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 9999px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
+}
+
+.card-search-pill:hover {
   background: var(--surface3);
-  border-color: var(--accent);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  border-color: var(--border2);
+}
+
+.card-search-pill:focus-within {
+  background: var(--surface);
+  border-color: var(--border2);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.05);
+}
+
+[data-color-scheme="dark"] .card-search-pill:focus-within {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.08);
+}
+
+.card-search-pill-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-3);
+  flex-shrink: 0;
+  transition: color 0.15s ease;
+}
+
+.card-search-pill:hover .card-search-pill-icon,
+.card-search-pill:focus-within .card-search-pill-icon {
+  color: var(--text-2);
+}
+
+.card-search-pill-input {
+  width: 100%;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  font-size: 13.5px;
+  font-family: inherit;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  padding: 0 !important;
+}
+
+.card-search-pill-input::placeholder {
+  color: var(--text-3);
+  opacity: 0.9;
+}
+
+.card-search-pill-clear {
+  background: none;
+  border: none;
+  color: var(--text-3);
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.card-search-pill-clear:hover {
+  background-color: var(--surface3);
+  color: var(--text);
+}
+
+.settlement-undo-btn:hover {
+  background: var(--surface2);
+  border-color: var(--border2);
+  color: var(--text);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transform: scale(1.08) rotate(-15deg);
+}
+
+.settlement-undo-btn:active {
+  transform: scale(0.92) rotate(-25deg);
+}
+
+[data-color-scheme="dark"] .settlement-undo-btn {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text-3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+[data-color-scheme="dark"] .settlement-undo-btn:hover {
+  background: var(--surface3);
+  border-color: var(--border2);
+  color: #ffffff;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+}
+
+.settlement-wallet-name {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .settlement-wallet-name {
+    display: inline;
+    color: var(--text-2);
+    font-size: 12px;
+    font-weight: 500;
+  }
 }
 
 /* Compact Table Layout for Desktop */
@@ -9428,6 +9714,101 @@ body.no-animations *::after,
     margin: auto;
     padding-bottom: 0;
   }
+}
+
+/* Note Rich Editor & Mode Switcher */
+.note-rich-editor {
+  width: 100%;
+  min-height: 105px;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 14px 28px;
+  font-size: 13.5px;
+  color: var(--text);
+  outline: none;
+  line-height: 1.55;
+  font-family: inherit;
+  box-sizing: border-box;
+  white-space: pre-wrap;
+  word-break: break-word;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  cursor: text;
+}
+
+.note-rich-editor:focus {
+  border-color: var(--border2);
+  box-shadow: 0 0 0 1px var(--border2);
+}
+
+.note-rich-editor:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-3);
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+.note-rich-editor ul,
+.note-rich-editor ol {
+  margin: 4px 0 4px 20px;
+  padding: 0;
+}
+
+.note-rich-editor li {
+  margin: 2px 0;
+}
+
+.note-rich-editor code {
+  background: var(--surface3);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9em;
+  border: 1px solid var(--border);
+}
+
+.note-task-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 3px 0;
+}
+
+.note-mode-toggle-btn {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--text-3);
+  padding: 2.5px 9px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.15s ease;
+  user-select: none;
+  z-index: 2;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.note-mode-toggle-btn:hover {
+  background: var(--surface2);
+  color: var(--text);
+  border-color: var(--border2);
+}
+
+.note-mode-toggle-btn.active-md {
+  background: var(--surface);
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
 

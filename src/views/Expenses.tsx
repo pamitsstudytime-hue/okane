@@ -1,39 +1,17 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Layers, ArrowUpRight, ArrowDownLeft, ReceiptText, ChevronDown, Filter, X, RotateCcw } from 'lucide-react';
+import { useState, useMemo, useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
+import { AnimatePresence } from 'motion/react';
+import { Plus, ArrowUpRight, ArrowDownLeft, ReceiptText, Filter, X, Layers, RotateCcw } from 'lucide-react';
 import { useStore } from '../store';
 import type { Expense, GroupedExpense } from '../types';
-import { cleanExpenseDescription, getGroupSettlementStatus, groupExpenses, fmtMoney, fmtDate } from '../utils';
-import { todayISO } from '../db';
+import { cleanExpenseDescription, getGroupSettlementStatus, groupExpenses } from '../utils';
 import ExpenseModal from '../components/ExpenseModal';
 import ExpenseDetailDrawer from '../components/ExpenseDetailDrawer';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { ExpenseFilterBar } from '../components/expense/ExpenseFilterBar';
-import { ExpenseTableRow } from '../components/expenses/ExpenseTableRow';
-import { ExpenseMobileCard } from '../components/expenses/ExpenseMobileCard';
 import DesktopSearchBar from '../components/DesktopSearchBar';
-
-function getRelativeDateLabel(dateStr: string): string | null {
-  const today = todayISO();
-  if (dateStr === today) return 'Today';
-  const y = new Date();
-  y.setDate(y.getDate() - 1);
-  const yesterday = y.getFullYear() + '-' + String(y.getMonth() + 1).padStart(2, '0') + '-' + String(y.getDate()).padStart(2, '0');
-  if (dateStr === yesterday) return 'Yesterday';
-  return null;
-}
-
-function fmtDateWithDay(iso: string): string {
-  if (!iso) return '—';
-  const d = new Date(iso + 'T00:00:00');
-  if (isNaN(d.getTime())) return fmtDate(iso);
-  const nowYear = new Date().getFullYear();
-  const dYear = d.getFullYear();
-  if (dYear === nowYear) {
-    return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-  }
-  return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-}
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { useScrollMargin } from '../hooks/useScrollMargin';
+import { ExpenseDateCard } from '../components/expenses/ExpenseDateCard';
 
 export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: string; onClearViewArg?: () => void }) {
   const { db, deleteExpense, unsettleExpense, showToast } = useStore();
@@ -50,6 +28,17 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
 
   const [editExp, setEditExp] = useState<Expense | null>(null);
   const [selectedDetailGe, setSelectedDetailGe] = useState<GroupedExpense | null>(null);
+
+  const isMobileScreen = useSyncExternalStore(
+    (callback) => {
+      if (typeof window === 'undefined') return () => {};
+      const mq = window.matchMedia('(max-width: 768px)');
+      mq.addEventListener('change', callback);
+      return () => mq.removeEventListener('change', callback);
+    },
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches,
+    () => false
+  );
 
   const grouped = useMemo(() => groupExpenses(expenses, db.wallets, db.friends, db.settlements), [expenses, db.wallets, db.friends, db.settlements]);
 
@@ -81,7 +70,7 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
   const [delId, setDelId] = useState<string | null>(null);
   const [undoExpId, setUndoExpId] = useState<string | null>(null);
   const [collapsedDates, setCollapsedDates] = useState<Record<string, boolean>>({});
-  const [displayLimit, setDisplayLimit] = useState(60);
+  const [displayLimit, setDisplayLimit] = useState(120);
 
   const activeFilterCount = (catFilter ? 1 : 0) + (typeFilter ? 1 : 0) + (walletFilter ? 1 : 0) + (sort !== 'date-desc' ? 1 : 0);
 
@@ -274,6 +263,45 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
       setCollapsedDates(next);
     }
   }, [allCollapsed, dateGroups]);
+
+  // Virtualization setup for Expenses view
+  const listContainerRef = useRef<HTMLDivElement>(null);
+  const scrollMargin = useScrollMargin(listContainerRef, [
+    search,
+    catFilter,
+    typeFilter,
+    statusFilter,
+    flowFilter,
+    walletFilter,
+    sort,
+    dateGroups.length,
+  ]);
+
+  const virtualizer = useVirtualizer({
+    count: dateGroups.length,
+    getScrollElement: () => listContainerRef.current?.closest<HTMLElement>('.main-content') || document.querySelector<HTMLElement>('.main-content'),
+    estimateSize: (index) => {
+      const group = dateGroups[index];
+      if (!group || collapsedDates[group.date]) return 56;
+      return 56 + group.items.length * (isMobileScreen ? 76 : 52);
+    },
+    getItemKey: (index) => dateGroups[index]?.date || index,
+    overscan: 4,
+    scrollMargin,
+    gap: 12,
+    paddingEnd: 90,
+  });
+
+  // Seamless auto-pagination as user approaches the bottom of loaded set
+  const virtualItems = virtualizer.getVirtualItems();
+  const lastVirtualIndex = virtualItems.length > 0 ? virtualItems[virtualItems.length - 1].index : -1;
+
+  useEffect(() => {
+    if (lastVirtualIndex < 0) return;
+    if (lastVirtualIndex >= dateGroups.length - 2 && filtered.length > displayLimit) {
+      setDisplayLimit(prev => Math.min(filtered.length, prev + 80));
+    }
+  }, [lastVirtualIndex, dateGroups.length, filtered.length, displayLimit]);
 
   return (
     <div className="view-container">
@@ -525,171 +553,73 @@ export default function Expenses({ initialArg, onClearViewArg }: { initialArg?: 
         </div>
       ) : (
         <>
-          {/* List of distinct date cards separated with gap */}
-          <div className="expense-date-cards-container">
-            {dateGroups.map((group, gIdx) => {
+          {/* List of distinct date cards rendered via virtualizer */}
+          <div
+            ref={listContainerRef}
+            className="expense-date-cards-container"
+            style={{
+              position: 'relative',
+              height: `${virtualizer.getTotalSize()}px`,
+              display: 'block',
+              width: '100%',
+            }}
+          >
+            {virtualizer.getVirtualItems().map((virtualItem) => {
+              const group = dateGroups[virtualItem.index];
+              if (!group) return null;
               const isCollapsed = !!collapsedDates[group.date];
-              const relativeLabel = getRelativeDateLabel(group.date);
 
               return (
-                <motion.div
-                  key={`${group.date}-${gIdx}`}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.24, ease: "easeOut" }}
-                  className="expense-date-card"
+                <div
+                  key={virtualItem.key}
+                  ref={virtualizer.measureElement}
+                  data-index={virtualItem.index}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualItem.start - scrollMargin}px)`,
+                  }}
                 >
-                  {/* Collapsible Date Card Header */}
-                  <div
-                    className={`expense-date-card-header ${isCollapsed ? 'is-collapsed' : 'is-expanded'}`}
-                    onClick={() => toggleDateCollapse(group.date)}
-                    role="button"
-                    tabIndex={0}
-                    aria-expanded={!isCollapsed}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        toggleDateCollapse(group.date);
-                      }
-                    }}
-                  >
-                    <div className="expense-date-header-left">
-                      <div className="expense-date-chevron">
-                        <ChevronDown size={15} className={`chevron-icon ${isCollapsed ? 'rotated' : ''}`} />
-                      </div>
-                      <div className="expense-date-label-wrap">
-                        <span className="expense-date-title">{fmtDateWithDay(group.date)}</span>
-                        {relativeLabel && <span className="badge-relative-date">{relativeLabel}</span>}
-                      </div>
-                      <span className="expense-date-count">
-                        {group.items.length}
-                      </span>
-                    </div>
-
-                    <div className="expense-date-header-right">
-                      {group.totalOut > 0 && (
-                        <span className="expense-date-stat debit">-{fmtMoney(group.totalOut, currency)}</span>
-                      )}
-                      {group.totalIn > 0 && (
-                        <span className="expense-date-stat credit">+{fmtMoney(group.totalIn, currency)}</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Card Content when extended */}
-                  <AnimatePresence initial={false}>
-                    {!isCollapsed && (
-                      <motion.div
-                        key="content"
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.25, ease: "easeInOut" }}
-                        className="overflow-hidden"
-                      >
-                        <div className="expense-date-card-body">
-                          {/* Desktop Table View */}
-                          <div className="table-wrapper desktop-only">
-                            <table className="modern-tx-table">
-                              <colgroup>
-                                <col style={{ width: '30%' }} />
-                                <col style={{ width: '22%' }} />
-                                <col style={{ width: '20%' }} />
-                                <col style={{ width: '16%' }} />
-                                <col style={{ width: '12%', minWidth: '80px' }} />
-                              </colgroup>
-                              <tbody>
-                                {group.items.map((ge, idx) => {
-                                  const cat = categoriesMap.get(ge.category);
-                                  const stl = ge.items.reduce<typeof db.settlements[0] | null | undefined>((found, item) => {
-                                    if (found) return found;
-                                    if (item.settlementId) return settlementsMap.get(item.settlementId);
-                                    return undefined;
-                                  }, null) || (ge.settlementId ? settlementsMap.get(ge.settlementId) : null);
-                                  const stlWallet = stl?.walletId ? walletsMap.get(stl.walletId) : undefined;
-                                  const wallet = ge.items.reduce<typeof db.wallets[0] | null | undefined>((found, item) => {
-                                    if (found) return found;
-                                    return item.walletId ? walletsMap.get(item.walletId) : null;
-                                  }, null) || walletsMap.get(ge.walletId) || stlWallet;
-
-                                  const groupStatus = getGroupSettlementStatus(ge);
-
-                                  return (
-                                    <ExpenseTableRow
-                                      key={`${ge.id}-${idx}`}
-                                      ge={ge}
-                                      currency={currency}
-                                      onEdit={setEditExp}
-                                      onDelete={setDelId}
-                                      onUndo={setUndoExpId}
-                                      groupStatus={groupStatus}
-                                      categoryObj={cat}
-                                      walletObj={wallet}
-                                      friendsMap={friendsMap}
-                                      walletsMap={walletsMap}
-                                      settlementObj={stl}
-                                      onSelectDetail={setSelectedDetailGe}
-                                    />
-                                  );
-                                })}
-                              </tbody>
-                            </table>
-                          </div>
-
-                          {/* Mobile Expandable Cards View */}
-                          <div className="mobile-expense-list mobile-only">
-                            {group.items.map((ge, idx) => {
-                              const cat = categoriesMap.get(ge.category);
-                              const stl = ge.items.reduce<typeof db.settlements[0] | null | undefined>((found, item) => {
-                                if (found) return found;
-                                if (item.settlementId) return settlementsMap.get(item.settlementId);
-                                return undefined;
-                              }, null) || (ge.settlementId ? settlementsMap.get(ge.settlementId) : null);
-                              const stlWallet = stl?.walletId ? walletsMap.get(stl.walletId) : undefined;
-                              const wallet = ge.items.reduce<typeof db.wallets[0] | null | undefined>((found, item) => {
-                                if (found) return found;
-                                return item.walletId ? walletsMap.get(item.walletId) : null;
-                              }, null) || walletsMap.get(ge.walletId) || stlWallet;
-
-                              const groupStatus = getGroupSettlementStatus(ge);
-
-                              return (
-                                <ExpenseMobileCard
-                                  key={`${ge.id}-${idx}`}
-                                  ge={ge}
-                                  currency={currency}
-                                  onSelectDetail={setSelectedDetailGe}
-                                  onEdit={setEditExp}
-                                  onDelete={setDelId}
-                                  onUndo={setUndoExpId}
-                                  groupStatus={groupStatus}
-                                  categoryObj={cat}
-                                  walletObj={wallet}
-                                  friendsMap={friendsMap}
-                                  walletsMap={walletsMap}
-                                  settlementObj={stl}
-                                />
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
+                  <ExpenseDateCard
+                    group={group}
+                    isCollapsed={isCollapsed}
+                    onToggleCollapse={toggleDateCollapse}
+                    currency={currency}
+                    isMobileScreen={isMobileScreen}
+                    categoriesMap={categoriesMap}
+                    settlementsMap={settlementsMap}
+                    walletsMap={walletsMap}
+                    friendsMap={friendsMap}
+                    onSelectDetail={setSelectedDetailGe}
+                    onEdit={setEditExp}
+                    onDelete={setDelId}
+                    onUndo={setUndoExpId}
+                    getGroupSettlementStatus={getGroupSettlementStatus}
+                  />
+                </div>
               );
             })}
           </div>
 
           {filtered.length > displayLimit && (
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px', gap: '8px' }}>
               <button
                 type="button"
                 className="btn btn-secondary"
                 style={{ fontSize: 12.5, padding: '8px 20px' }}
-                onClick={() => setDisplayLimit(prev => prev + 60)}
+                onClick={() => setDisplayLimit(prev => Math.min(filtered.length, prev + 120))}
               >
                 Showing {displayLimit} of {filtered.length} transactions — Load More
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ fontSize: 12.5, padding: '8px 16px' }}
+                onClick={() => setDisplayLimit(filtered.length)}
+              >
+                Show All
               </button>
             </div>
           )}

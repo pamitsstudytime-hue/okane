@@ -4,13 +4,13 @@ import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import {
   X,
-  SlidersHorizontal,
+  Filter,
   RotateCcw,
   Check,
   Users,
-  Calendar,
-  TrendingUp,
-  TrendingDown,
+  Layers,
+  ArrowDownLeft,
+  ArrowUpRight,
   Search,
 } from 'lucide-react';
 import { showSoftKeyboard } from '../utils/keyboard';
@@ -147,85 +147,103 @@ export const SettlementFilterDrawer: React.FC<Props> = ({
         {/* Drawer Header */}
         <div
           style={{
-            padding: '12px 20px 8px',
+            padding: '16px 20px 6px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             backgroundColor: 'var(--surface)',
+            borderBottom: 'none',
             flexShrink: 0,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div
               style={{
-                width: 36,
-                height: 36,
-                borderRadius: 10,
-                backgroundColor: 'transparent',
+                width: 32,
+                height: 32,
                 display: 'grid',
                 placeItems: 'center',
                 color: 'var(--text)',
+                flexShrink: 0,
               }}
             >
-              <SlidersHorizontal size={19} strokeWidth={2.2} />
+              <Filter size={18} strokeWidth={2.2} />
             </div>
             <div>
               <div
                 id="settlement-filter-title"
-                style={{ fontSize: '15.5px', fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}
+                style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}
               >
-                Filter Settlements
+                Filters &amp; Sorting
               </div>
-              <div style={{ fontSize: '11.5px', color: activeFilterCount > 0 ? 'var(--accent)' : 'var(--text-3)', fontWeight: 500 }}>
-                {activeFilterCount > 0
-                  ? `${activeFilterCount} active filter${activeFilterCount === 1 ? '' : 's'}`
-                  : 'Customize layout & filter records'}
-              </div>
+              {activeFilterCount > 0 ? (
+                <div style={{ fontSize: '11.5px', color: 'var(--text-3)', fontWeight: 550, marginTop: 2 }}>
+                  {activeFilterCount} active filter{activeFilterCount === 1 ? '' : 's'}
+                </div>
+              ) : (
+                <div style={{ fontSize: '11.5px', color: 'var(--text-3)', fontWeight: 500, marginTop: 2 }}>
+                  Refine transaction view
+                </div>
+              )}
             </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <button
               type="button"
-              className="btn-icon"
               onClick={onClose}
               style={{
                 width: 32,
                 height: 32,
-                borderRadius: 9999,
+                borderRadius: '50%',
+                backgroundColor: 'var(--surface2)',
+                border: '1px solid var(--border)',
+                color: 'var(--text)',
+                cursor: 'pointer',
                 display: 'grid',
                 placeItems: 'center',
-                cursor: 'pointer',
+                padding: 0,
                 transition: 'all 0.15s ease',
               }}
-              title="Close filter drawer"
+              aria-label="Close filters"
             >
-              <X size={18} />
+              <X size={16} />
             </button>
           </div>
         </div>
 
         {/* Drawer Scrollable Content */}
-        <div className="filter-drawer-content" style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-          {/* SECTION 1: TRANSACTION TYPE (ALL, RECEIVED, PAID) */}
+        <div
+          className="filter-drawer-content no-scrollbar"
+          style={{
+            flex: '1 1 auto',
+            minHeight: 0,
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            padding: '4px 20px 16px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 18,
+          }}
+        >
+          {/* SECTION 1: TRANSACTION FLOW (ALL, RECEIVED, PAID) */}
           <div>
             <div
               style={{
-                fontSize: '11px',
+                fontSize: '11.5px',
                 fontWeight: 700,
                 textTransform: 'uppercase',
-                letterSpacing: '0.06em',
+                letterSpacing: '0.6px',
                 color: 'var(--text-3)',
-                marginBottom: 8,
+                marginBottom: 10,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <TrendingUp size={13} />
-                <span>Transaction Flow</span>
-              </div>
+              <span>Transaction Flow</span>
               {typeFilter !== 'all' && (
                 <button
                   type="button"
@@ -233,7 +251,7 @@ export const SettlementFilterDrawer: React.FC<Props> = ({
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: 'var(--accent)',
+                    color: 'var(--text-2)',
                     fontSize: '11px',
                     fontWeight: 600,
                     cursor: 'pointer',
@@ -245,109 +263,63 @@ export const SettlementFilterDrawer: React.FC<Props> = ({
               )}
             </div>
 
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: 6,
-                backgroundColor: 'var(--surface2)',
-                padding: 4,
-                borderRadius: 12,
-                border: '1px solid var(--border)',
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => setTypeFilter('all')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 5,
-                  padding: '8px 6px',
-                  borderRadius: 9,
-                  border: 'none',
-                  backgroundColor: typeFilter === 'all' ? 'var(--surface)' : 'transparent',
-                  color: typeFilter === 'all' ? 'var(--text)' : 'var(--text-2)',
-                  fontSize: '12.5px',
-                  fontWeight: typeFilter === 'all' ? 700 : 500,
-                  cursor: 'pointer',
-                  boxShadow: typeFilter === 'all' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <span>All</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setTypeFilter('received')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 5,
-                  padding: '8px 6px',
-                  borderRadius: 9,
-                  border: 'none',
-                  backgroundColor: typeFilter === 'received' ? 'var(--credit-bg)' : 'transparent',
-                  color: typeFilter === 'received' ? 'var(--credit)' : 'var(--text-2)',
-                  fontSize: '12.5px',
-                  fontWeight: typeFilter === 'received' ? 700 : 500,
-                  cursor: 'pointer',
-                  boxShadow: typeFilter === 'received' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <TrendingUp size={13} strokeWidth={2.4} />
-                <span>Received</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setTypeFilter('paid')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 5,
-                  padding: '8px 6px',
-                  borderRadius: 9,
-                  border: 'none',
-                  backgroundColor: typeFilter === 'paid' ? 'var(--debit-bg)' : 'transparent',
-                  color: typeFilter === 'paid' ? 'var(--debit)' : 'var(--text-2)',
-                  fontSize: '12.5px',
-                  fontWeight: typeFilter === 'paid' ? 700 : 500,
-                  cursor: 'pointer',
-                  boxShadow: typeFilter === 'paid' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <TrendingDown size={13} strokeWidth={2.4} />
-                <span>Paid</span>
-              </button>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+              {[
+                { id: 'all' as const, label: 'All', icon: Layers },
+                { id: 'received' as const, label: 'Received', icon: ArrowDownLeft, color: 'var(--credit, #22c55e)' },
+                { id: 'paid' as const, label: 'Paid', icon: ArrowUpRight, color: 'var(--debit, #ef4444)' },
+              ].map(f => {
+                const isSelected = typeFilter === f.id;
+                const Icon = f.icon;
+                return (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => setTypeFilter(f.id)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 6,
+                      padding: '10px 8px',
+                      borderRadius: 12,
+                      fontSize: '12.5px',
+                      fontWeight: isSelected ? 700 : 550,
+                      backgroundColor: isSelected ? 'var(--accent)' : 'var(--surface2)',
+                      color: isSelected ? 'var(--accent-contrast)' : 'var(--text-2)',
+                      border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border)',
+                      boxShadow: isSelected ? '0 2px 8px var(--accent-soft)' : 'none',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <Icon
+                      size={14}
+                      style={{ color: isSelected ? 'var(--accent-contrast)' : f.color || 'var(--text-3)' }}
+                    />
+                    <span>{f.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* SECTION 3: TIMEFRAME */}
+          {/* SECTION 2: TIMEFRAME */}
           <div>
             <div
               style={{
-                fontSize: '11px',
+                fontSize: '11.5px',
                 fontWeight: 700,
                 textTransform: 'uppercase',
-                letterSpacing: '0.06em',
+                letterSpacing: '0.6px',
                 color: 'var(--text-3)',
-                marginBottom: 8,
+                marginBottom: 10,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <Calendar size={13} />
-                <span>Timeframe</span>
-              </div>
+              <span>Timeframe</span>
               {timeframe !== 'this_month' && (
                 <button
                   type="button"
@@ -355,7 +327,7 @@ export const SettlementFilterDrawer: React.FC<Props> = ({
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: 'var(--accent)',
+                    color: 'var(--text-2)',
                     fontSize: '11px',
                     fontWeight: 600,
                     cursor: 'pointer',
@@ -367,7 +339,7 @@ export const SettlementFilterDrawer: React.FC<Props> = ({
               )}
             </div>
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, padding: '1px' }}>
               {timeframeOptions.map(opt => {
                 const isSelected = timeframe === opt.id;
                 return (
@@ -376,22 +348,22 @@ export const SettlementFilterDrawer: React.FC<Props> = ({
                     type="button"
                     onClick={() => setTimeframe(opt.id)}
                     style={{
-                      padding: '6px 12px',
-                      borderRadius: 18,
-                      border: isSelected ? '1px solid var(--border2)' : '1px solid var(--border)',
-                      backgroundColor: isSelected ? 'var(--surface)' : 'var(--surface2)',
-                      color: isSelected ? 'var(--text)' : 'var(--text-2)',
-                      fontSize: '12px',
-                      fontWeight: isSelected ? 650 : 500,
-                      cursor: 'pointer',
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: 4,
-                      boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+                      gap: 6,
+                      padding: '7px 14px',
+                      borderRadius: 9999,
+                      fontSize: '12.5px',
+                      fontWeight: isSelected ? 700 : 550,
+                      backgroundColor: isSelected ? 'var(--accent)' : 'var(--surface2)',
+                      color: isSelected ? 'var(--accent-contrast)' : 'var(--text-2)',
+                      border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border)',
+                      boxShadow: isSelected ? '0 2px 8px var(--accent-soft)' : 'none',
+                      cursor: 'pointer',
                       transition: 'all 0.15s ease',
                     }}
                   >
-                    {isSelected && <Check size={12} strokeWidth={2.5} />}
+                    {isSelected && <Check size={13} style={{ color: 'var(--accent-contrast)' }} />}
                     <span>{opt.label}</span>
                   </button>
                 );
@@ -399,25 +371,22 @@ export const SettlementFilterDrawer: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* SECTION 4: FRIENDS FILTER */}
+          {/* SECTION 3: FRIENDS FILTER */}
           <div>
             <div
               style={{
-                fontSize: '11px',
+                fontSize: '11.5px',
                 fontWeight: 700,
                 textTransform: 'uppercase',
-                letterSpacing: '0.06em',
+                letterSpacing: '0.6px',
                 color: 'var(--text-3)',
-                marginBottom: 8,
+                marginBottom: 10,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <Users size={13} />
-                <span>Friend ({timeframeFriends.length})</span>
-              </div>
+              <span>Friend ({timeframeFriends.length})</span>
               {friendFilter !== 'all' && (
                 <button
                   type="button"
@@ -425,7 +394,7 @@ export const SettlementFilterDrawer: React.FC<Props> = ({
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: 'var(--accent)',
+                    color: 'var(--text-2)',
                     fontSize: '11px',
                     fontWeight: 600,
                     cursor: 'pointer',
@@ -437,21 +406,21 @@ export const SettlementFilterDrawer: React.FC<Props> = ({
               )}
             </div>
 
-            {/* Optional Friend Search if there are many friends */}
-            {timeframeFriends.length > 5 && (
+            {/* Friend Search Bar */}
+            {timeframeFriends.length > 4 && (
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   backgroundColor: 'var(--surface2)',
                   border: '1px solid var(--border)',
-                  borderRadius: 8,
-                  padding: '0 8px',
-                  height: 32,
+                  borderRadius: 9999,
+                  padding: '0 14px',
+                  height: 38,
                   marginBottom: 10,
                 }}
               >
-                <Search size={12.5} style={{ color: 'var(--text-3)', marginRight: 6 }} />
+                <Search size={14} style={{ color: 'var(--text-3)', marginRight: 8, flexShrink: 0 }} />
                 <input
                   ref={searchRef}
                   type="text"
@@ -463,7 +432,7 @@ export const SettlementFilterDrawer: React.FC<Props> = ({
                     background: 'transparent',
                     border: 'none',
                     outline: 'none',
-                    fontSize: '12px',
+                    fontSize: '12.5px',
                     color: 'var(--text)',
                   }}
                 />
@@ -471,7 +440,15 @@ export const SettlementFilterDrawer: React.FC<Props> = ({
                   <button
                     type="button"
                     onClick={() => setFriendSearch('')}
-                    style={{ background: 'none', border: 'none', color: 'var(--text-3)', cursor: 'pointer', padding: 2 }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--text-3)',
+                      cursor: 'pointer',
+                      padding: 2,
+                      display: 'grid',
+                      placeItems: 'center',
+                    }}
                   >
                     <X size={12} />
                   </button>
@@ -479,37 +456,37 @@ export const SettlementFilterDrawer: React.FC<Props> = ({
               </div>
             )}
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, maxHeight: '180px', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, maxHeight: '200px', overflowY: 'auto', padding: '1px' }}>
               {/* All Friends Option */}
               <button
                 type="button"
                 onClick={() => setFriendFilter('all')}
                 style={{
-                  border: friendFilter === 'all' ? '1px solid var(--border2)' : '1px solid var(--border)',
-                  background: friendFilter === 'all' ? 'var(--surface)' : 'var(--surface2)',
-                  color: friendFilter === 'all' ? 'var(--text)' : 'var(--text-2)',
-                  fontSize: 12,
-                  fontWeight: friendFilter === 'all' ? 650 : 500,
-                  padding: '5px 11px',
-                  borderRadius: 20,
-                  cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 6,
-                  boxShadow: friendFilter === 'all' ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+                  padding: '7px 14px',
+                  borderRadius: 9999,
+                  fontSize: '12.5px',
+                  fontWeight: friendFilter === 'all' ? 700 : 550,
+                  backgroundColor: friendFilter === 'all' ? 'var(--accent)' : 'var(--surface2)',
+                  color: friendFilter === 'all' ? 'var(--accent-contrast)' : 'var(--text-2)',
+                  border: friendFilter === 'all' ? '1px solid var(--accent)' : '1px solid var(--border)',
+                  boxShadow: friendFilter === 'all' ? '0 2px 8px var(--accent-soft)' : 'none',
+                  cursor: 'pointer',
                   transition: 'all 0.15s ease',
                 }}
               >
-                <Users size={13} strokeWidth={2.4} />
+                <Users size={13} style={{ color: friendFilter === 'all' ? 'var(--accent-contrast)' : 'var(--text-3)' }} />
                 <span>All Friends</span>
                 <span
                   style={{
-                    fontSize: '10px',
-                    fontWeight: 650,
+                    fontSize: '10.5px',
+                    fontWeight: 700,
                     padding: '1px 6px',
                     borderRadius: 99,
-                    background: friendFilter === 'all' ? 'var(--surface2)' : 'var(--surface3)',
-                    color: friendFilter === 'all' ? 'var(--text)' : 'var(--text-3)',
+                    backgroundColor: friendFilter === 'all' ? 'rgba(255, 255, 255, 0.2)' : 'var(--surface3)',
+                    color: friendFilter === 'all' ? 'var(--accent-contrast)' : 'var(--text-3)',
                   }}
                 >
                   {totalTimeframeCount}
@@ -518,37 +495,37 @@ export const SettlementFilterDrawer: React.FC<Props> = ({
 
               {/* Individual Friend Chips */}
               {filteredFriendList.map(({ friend: f, count }) => {
-                const isActive = friendFilter === f.id;
+                const isSelected = friendFilter === f.id;
                 const avatar = getAvatarStyle(f.color);
                 return (
                   <button
                     key={f.id}
                     type="button"
-                    onClick={() => setFriendFilter(f.id)}
+                    onClick={() => setFriendFilter(isSelected ? 'all' : f.id)}
                     style={{
-                      border: isActive ? '1px solid var(--border2)' : '1px solid var(--border)',
-                      background: isActive ? 'var(--surface)' : 'var(--surface2)',
-                      color: isActive ? 'var(--text)' : 'var(--text-2)',
-                      fontSize: 12,
-                      fontWeight: isActive ? 650 : 500,
-                      padding: '4px 10px',
-                      borderRadius: 20,
-                      cursor: 'pointer',
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: 6,
-                      boxShadow: isActive ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+                      padding: '6px 12px',
+                      borderRadius: 9999,
+                      fontSize: '12.5px',
+                      fontWeight: isSelected ? 700 : 550,
+                      backgroundColor: isSelected ? 'var(--accent)' : 'var(--surface2)',
+                      color: isSelected ? 'var(--accent-contrast)' : 'var(--text-2)',
+                      border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border)',
+                      boxShadow: isSelected ? '0 2px 8px var(--accent-soft)' : 'none',
+                      cursor: 'pointer',
                       transition: 'all 0.15s ease',
                     }}
                   >
                     <span
                       style={{
-                        width: 16,
-                        height: 16,
-                        borderRadius: '50%',
-                        background: avatar.background,
-                        color: avatar.color,
-                        fontSize: '9px',
+                        width: 18,
+                        height: 18,
+                        borderRadius: 5,
+                        background: isSelected ? 'rgba(255,255,255,0.25)' : avatar.background,
+                        color: isSelected ? '#fff' : avatar.color,
+                        fontSize: '9.5px',
                         fontWeight: 700,
                         display: 'grid',
                         placeItems: 'center',
@@ -561,12 +538,12 @@ export const SettlementFilterDrawer: React.FC<Props> = ({
                     <span>{f.name}</span>
                     <span
                       style={{
-                        fontSize: '10px',
-                        fontWeight: 650,
+                        fontSize: '10.5px',
+                        fontWeight: 700,
                         padding: '1px 6px',
                         borderRadius: 99,
-                        background: isActive ? 'var(--surface2)' : 'var(--surface3)',
-                        color: isActive ? 'var(--text)' : 'var(--text-3)',
+                        backgroundColor: isSelected ? 'rgba(255, 255, 255, 0.2)' : 'var(--surface3)',
+                        color: isSelected ? 'var(--accent-contrast)' : 'var(--text-3)',
                       }}
                     >
                       {count}
@@ -584,74 +561,71 @@ export const SettlementFilterDrawer: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Drawer Sticky Footer */}
+        {/* Drawer Sticky Footer: 2 Action Buttons (Clear & Apply) */}
         <div
           style={{
-            padding: '12px 20px calc(14px + env(safe-area-inset-bottom, 0px))',
-            backgroundColor: 'var(--surface)',
+            padding: '12px 18px 16px',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 10,
+            gap: 12,
+            backgroundColor: 'var(--surface)',
+            borderTop: 'none',
             flexShrink: 0,
+            paddingBottom: isMobile ? 'calc(env(safe-area-inset-bottom, 0px) + 16px)' : '16px',
           }}
         >
-          <div style={{ fontSize: '12px', color: 'var(--text-3)' }}>
-            Showing <strong style={{ color: 'var(--text)' }}>{filteredCount}</strong> result{filteredCount === 1 ? '' : 's'}
-          </div>
+          <button
+            type="button"
+            onClick={onResetFilters}
+            disabled={activeFilterCount === 0}
+            style={{
+              flex: 1,
+              height: 44,
+              borderRadius: 9999,
+              fontSize: '13.5px',
+              fontWeight: 650,
+              backgroundColor: 'var(--surface2)',
+              border: '1px solid var(--border)',
+              color: activeFilterCount > 0 ? 'var(--text)' : 'var(--text-3)',
+              cursor: activeFilterCount > 0 ? 'pointer' : 'default',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              opacity: activeFilterCount > 0 ? 1 : 0.5,
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <RotateCcw size={14} />
+            <span>Clear</span>
+          </button>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {activeFilterCount > 0 && (
-              <button
-                type="button"
-                onClick={onResetFilters}
-                className="btn"
-                style={{
-                  height: 40,
-                  borderRadius: 9999,
-                  fontSize: 13,
-                  fontWeight: 650,
-                  border: '1px solid var(--border)',
-                  background: 'var(--surface2)',
-                  color: 'var(--text)',
-                  cursor: 'pointer',
-                  padding: '0 16px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <RotateCcw size={14} style={{ color: 'var(--text)' }} />
-                <span>Reset</span>
-              </button>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              flex: 1.6,
+              height: 44,
+              borderRadius: 9999,
+              fontSize: '13.5px',
+              fontWeight: 700,
+              backgroundColor: 'var(--accent)',
+              color: 'var(--accent-contrast)',
+              border: 'none',
+              boxShadow: '0 3px 12px var(--accent-soft)',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <span>Apply</span>
+            {filteredCount !== undefined && (
+              <span style={{ fontSize: '12px', opacity: 0.85, fontWeight: 600 }}>({filteredCount})</span>
             )}
-
-            <button
-              type="button"
-              onClick={onClose}
-              className="btn btn-primary"
-              style={{
-                height: 40,
-                padding: '0 24px',
-                borderRadius: 9999,
-                backgroundColor: 'var(--text)',
-                border: '1px solid var(--text)',
-                color: 'var(--bg)',
-                fontSize: 13,
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              <Check size={15} style={{ color: 'inherit' }} />
-              <span>Done</span>
-            </button>
-          </div>
+          </button>
         </div>
       </div>
     </div>,

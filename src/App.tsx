@@ -40,7 +40,7 @@ import {
 import { StoreProvider, useStore } from './store';
 import { useColorMode } from './theme';
 import type { ViewName } from './types';
-import { expenseFlow, friendBalance, todayISO, monthKey } from './db';
+import { expenseFlow, overallBalance, todayISO, monthKey } from './db';
 import { fmtMoney } from './utils';
 import Dashboard from './views/Dashboard';
 import Expenses from './views/Expenses';
@@ -357,11 +357,10 @@ function AppInner() {
     return () => window.removeEventListener('app-filter-count-update', handleCountUpdate);
   }, [view]);
 
-  const showFilterInTopbar = ['expenses', 'friends', 'settlements'].includes(view);
+  const showFilterInTopbar = ['expenses', 'friends'].includes(view);
 
-  const { expenses, friends, currency } = useMemo(() => ({
+  const { expenses, currency } = useMemo(() => ({
     expenses: db.expenses,
-    friends: db.friends,
     currency: db.settings.currency,
   }), [db]);
 
@@ -378,8 +377,10 @@ function AppInner() {
       .filter(e => monthKey(e.date) === curMonth && expenseFlow(e) === 'in' && e.type === 'personal')
       .reduce((s, e) => s + Number(e.amount), 0);
   }, [expenses]);
-  const friendCredit = useMemo(() => friends.reduce((s, f) => (f.type || 'friend') === 'friend' ? s + Math.max(0, friendBalance(db, f.id).net) : s, 0), [friends, db]);
-  const friendDebt = useMemo(() => friends.reduce((s, f) => (f.type || 'friend') === 'friend' ? s + Math.max(0, -friendBalance(db, f.id).net) : s, 0), [friends, db]);
+  const { friendCredit, friendDebt } = useMemo(() => {
+    const ob = overallBalance(db);
+    return { friendCredit: ob.credit, friendDebt: ob.debit };
+  }, [db]);
 
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>(() => {
     try {

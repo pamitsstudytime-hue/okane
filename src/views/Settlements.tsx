@@ -5,10 +5,8 @@ import {
   ArrowUpRight,
   ArrowDownLeft,
   Clock,
-  Calendar,
   Search,
   X,
-  SlidersHorizontal,
   Store,
   Tv,
   ChevronDown,
@@ -18,12 +16,15 @@ import {
 import { useStore } from '../store';
 import type { Friend, Settlement, Expense } from '../types';
 import { friendBalance, todayISO, unsettledExpensesForFriend } from '../db';
-import { fmtMoney, fmtDate, friendInitial, getAvatarStyle } from '../utils';
+import { fmtMoney, friendInitial, getAvatarStyle } from '../utils';
 import SettleModal from '../components/SettleModal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import SettlementDetailModal from '../components/SettlementDetailModal';
 import SettlementFilterDrawer from '../components/SettlementFilterDrawer';
 import DesktopSearchBar from '../components/DesktopSearchBar';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { useScrollMargin } from '../hooks/useScrollMargin';
+import { SettlementCompactCard } from '../components/settlements/SettlementCompactCard';
 
 export type SettlementTimeframe = 'today' | 'yesterday' | 'this_week' | 'this_month' | 'last_month' | 'last_3_months' | 'this_year' | 'all';
 
@@ -34,7 +35,7 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
   const currency = settings?.currency || 'INR';
   const friends = useMemo(() => db?.friends || [], [db?.friends]);
   const expenses = useMemo(() => db?.expenses || [], [db?.expenses]);
-  const wallets = db?.wallets || [];
+  const wallets = useMemo(() => db?.wallets || [], [db?.wallets]);
 
   const [settleFriend, setSettleFriend] = useState<Friend | null>(null);
   const [delId, setDelId] = useState<string | null>(null);
@@ -100,6 +101,7 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
   }, [activeFilterCount]);
 
   const handleResetFilters = () => {
+    setSearchQuery('');
     setTypeFilter('all');
     setFriendFilter('all');
     setTimeframe('this_month');
@@ -289,6 +291,24 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
     });
   }, [timeframeFiltered, friendFilter, typeFilter, searchQuery, friends, settlementExpensesMap]);
 
+  // Virtualization setup for Settlement History
+  const friendsMap = useMemo(() => new Map(friends.map(f => [f.id, f])), [friends]);
+  const walletsMap = useMemo(() => new Map(wallets.map(w => [w.id, w])), [wallets]);
+
+  const listContainerRef = useRef<HTMLDivElement>(null);
+
+  const scrollMargin = useScrollMargin(listContainerRef, [timeframe, friendFilter, typeFilter, searchQuery]);
+
+  const virtualizer = useVirtualizer({
+    count: filteredSettlements.length,
+    getScrollElement: () => listContainerRef.current?.closest<HTMLElement>('.main-content') || document.querySelector<HTMLElement>('.main-content'),
+    estimateSize: () => 56,
+    overscan: 5,
+    scrollMargin,
+    gap: 4,
+    paddingEnd: 16,
+  });
+
   const handleDelete = (id: string) => {
     deleteSettlement(id);
     setDelId(null);
@@ -359,8 +379,8 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
           className="card"
           style={{
             marginBottom: 18,
-            padding: '12px 14px',
-            borderRadius: 14,
+            padding: '14px 16px',
+            borderRadius: 16,
             background: 'var(--surface)',
             border: '1px solid var(--border)',
             boxShadow: '0 1px 4px rgba(0, 0, 0, 0.03)',
@@ -372,40 +392,26 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              marginBottom: isPendingExpanded ? 10 : 0,
+              marginBottom: isPendingExpanded ? 12 : 0,
               cursor: 'pointer',
               userSelect: 'none',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div
-                style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 8,
-                  background: 'var(--accent-soft)',
-                  color: 'var(--accent)',
-                  display: 'grid',
-                  placeItems: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <Handshake size={16} strokeWidth={2.2} />
-              </div>
-              <h2 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', margin: 0, letterSpacing: '-0.1px' }}>
+              <Handshake size={18} strokeWidth={2.2} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+              <h2 style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--text)', margin: 0, letterSpacing: '-0.01em' }}>
                 Pending Settlements
               </h2>
               <span
                 style={{
                   fontSize: 11,
-                  fontWeight: 700,
-                  color: 'var(--accent)',
-                  background: 'var(--accent-soft)',
-                  padding: '1px 7px',
+                  fontWeight: 650,
+                  color: 'var(--text-2)',
+                  background: 'var(--surface2)',
+                  padding: '1.5px 7.5px',
                   borderRadius: 999,
-                  minWidth: 18,
-                  textAlign: 'center',
-                  lineHeight: 1.4,
+                  lineHeight: 1.3,
+                  letterSpacing: '-0.01em',
                 }}
               >
                 {friendsWithUnsettled.length}
@@ -439,46 +445,36 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
                 return (
                   <div
                     key={`${f.id}-${idx}`}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: 10,
-                      padding: '8px 12px',
-                      background: 'var(--surface2)',
-                      borderRadius: 11,
-                      border: '1px solid var(--border)',
-                      transition: 'all 0.15s ease',
-                    }}
+                    className="pending-settlement-subcard"
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 11, minWidth: 0, flex: 1 }}>
                       <div
                         className="avatar"
                         style={{
                           ...getAvatarStyle(f.color),
-                          width: 34,
-                          height: 34,
-                          fontSize: 12.5,
+                          width: 38,
+                          height: 38,
+                          fontSize: 13.5,
                           fontWeight: 700,
-                          borderRadius: '50%',
+                          borderRadius: 11,
                           flexShrink: 0,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                         }}
                       >
-                        {f.type === 'vendor' ? <Store size={15} /> : f.type === 'subscription' ? <Tv size={15} /> : friendInitial(f.name, f.avatarNumber)}
+                        {f.type === 'vendor' ? <Store size={16} /> : f.type === 'subscription' ? <Tv size={16} /> : friendInitial(f.name, f.avatarNumber)}
                       </div>
                       <div style={{ minWidth: 0, flex: 1 }}>
                         <div
                           style={{
-                            fontWeight: 700,
-                            fontSize: 13.5,
+                            fontWeight: 600,
+                            fontSize: 14.5,
                             color: 'var(--text)',
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
-                            lineHeight: 1.2,
+                            lineHeight: 1.3,
                           }}
                         >
                           {f.name || 'Friend'}
@@ -487,47 +483,49 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
                           style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: 4.5,
+                            gap: 6,
                             flexWrap: 'nowrap',
                             overflow: 'hidden',
-                            marginTop: 2,
+                            marginTop: 2.5,
                           }}
                         >
                           {youOwe ? (
                             <span
                               style={{
-                                fontSize: 11.5,
+                                fontSize: 12.5,
                                 fontWeight: 700,
                                 color: 'var(--debit)',
                                 whiteSpace: 'nowrap',
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 gap: 2.5,
+                                fontVariantNumeric: 'tabular-nums',
                               }}
                             >
-                              <ArrowUpRight size={11.5} strokeWidth={2.6} /> {fmtMoney(Math.abs(netVal), currency)}
+                              <ArrowUpRight size={12.5} strokeWidth={2.6} /> {fmtMoney(Math.abs(netVal), currency)}
                             </span>
                           ) : owesYou ? (
                             <span
                               style={{
-                                fontSize: 11.5,
+                                fontSize: 12.5,
                                 fontWeight: 700,
                                 color: 'var(--credit)',
                                 whiteSpace: 'nowrap',
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 gap: 2.5,
+                                fontVariantNumeric: 'tabular-nums',
                               }}
                             >
-                              <ArrowDownLeft size={11.5} strokeWidth={2.6} /> {fmtMoney(netVal, currency)}
+                              <ArrowDownLeft size={12.5} strokeWidth={2.6} /> {fmtMoney(netVal, currency)}
                             </span>
                           ) : (
-                            <span style={{ fontSize: 11.5, color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
+                            <span style={{ fontSize: 12.5, color: 'var(--text-3)', whiteSpace: 'nowrap', fontWeight: 600 }}>
                               Net 0
                             </span>
                           )}
-                          <span style={{ fontSize: 10.5, color: 'var(--text-3)', opacity: 0.5 }}>•</span>
-                          <span style={{ fontSize: 11, color: 'var(--text-3)', whiteSpace: 'nowrap', fontWeight: 500 }}>
+                          <span style={{ opacity: 0.5, lineHeight: 1 }}>•</span>
+                          <span style={{ fontSize: 12.5, color: 'var(--text-3)', whiteSpace: 'nowrap', fontWeight: 500 }}>
                             {unsettledCount} unsettled
                           </span>
                         </div>
@@ -535,26 +533,12 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
                     </div>
 
                     <button
-                      className="btn btn-primary"
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 650,
-                        padding: '4px 12px',
-                        borderRadius: 8,
-                        gap: 4,
-                        background: 'var(--accent-gradient)',
-                        color: 'var(--accent-contrast, #ffffff)',
-                        whiteSpace: 'nowrap',
-                        flexShrink: 0,
-                        height: 28,
-                        boxShadow: '0 1px 4px var(--accent-shadow, rgba(225, 29, 72, 0.2))',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
+                      type="button"
+                      className="pending-settle-btn"
                       onClick={() => setSettleFriend(f)}
                     >
-                      <Handshake size={13} strokeWidth={2.2} /> Settle
+                      <Handshake size={13.5} strokeWidth={2} />
+                      <span>Settle</span>
                     </button>
                   </div>
                 );
@@ -565,188 +549,208 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
       )}
 
       {/* History Card Container */}
-      <div className="card" style={{ padding: 0, borderRadius: 16, overflow: 'hidden' }}>
+      <div
+        className="card"
+        style={{
+          padding: '14px 16px',
+          borderRadius: 16,
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          boxShadow: '0 1px 4px rgba(0, 0, 0, 0.03)',
+        }}
+      >
         {/* Header */}
-        <div className="settlement-history-header">
-          <div className="settlement-history-title-wrap">
-            <div className="settlement-history-icon">
-              <Clock size={16} strokeWidth={2.2} />
-            </div>
-            <h2 className="settlement-history-title">
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 12,
+            userSelect: 'none',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Clock size={18} strokeWidth={2.2} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+            <h2 style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--text)', margin: 0, letterSpacing: '-0.01em' }}>
               Settlement History
             </h2>
-            <span className="settlement-count-badge">
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 650,
+                color: 'var(--text-2)',
+                background: 'var(--surface2)',
+                padding: '1.5px 7.5px',
+                borderRadius: 999,
+                lineHeight: 1.3,
+                letterSpacing: '-0.01em',
+              }}
+            >
               {filteredSettlements.length}
             </span>
           </div>
 
-          {/* Timeframe Date Filter Button on Right Side */}
-          <div className="settlement-timeframe-btn-wrap" title="Filter timeframe">
-            <Calendar size={13.5} strokeWidth={2.2} className="timeframe-icon" />
-            <span className="timeframe-label">
-              {timeframe === 'today'
-                ? 'Today'
-                : timeframe === 'yesterday'
-                ? 'Yesterday'
-                : timeframe === 'this_week'
-                ? 'This Week'
-                : timeframe === 'this_month'
-                ? 'This Month'
-                : timeframe === 'last_month'
-                ? 'Last Month'
-                : timeframe === 'last_3_months'
-                ? 'Last 3M'
-                : timeframe === 'this_year'
-                ? 'This Year'
-                : 'All Time'}
-            </span>
-            <ChevronDown size={11} className="timeframe-chevron" />
-            <select
-              value={timeframe}
-              onChange={e => setTimeframe(e.target.value as SettlementTimeframe)}
-              className="settlement-timeframe-select"
+          {/* Controls on Right Side (Filter funnel on left, Calendar on right) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            {/* Filter Funnel Button */}
+            <button
+              type="button"
+              className={`settlement-filter-btn-wrap ${activeFilterCount > 0 ? 'active' : ''}`}
+              onClick={() => setShowFilterDrawer(true)}
+              title="Filter settlements"
+              aria-label="Filter settlements"
+              style={{
+                position: 'relative',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 28,
+                height: 28,
+                borderRadius: 6,
+                background: 'transparent',
+                border: 'none',
+                color: activeFilterCount > 0 ? 'var(--accent)' : 'var(--text)',
+                cursor: 'pointer',
+                padding: 0,
+              }}
             >
-              <option value="today">Today</option>
-              <option value="yesterday">Yesterday</option>
-              <option value="this_week">This Week</option>
-              <option value="this_month">This Month</option>
-              <option value="last_month">Last Month</option>
-              <option value="last_3_months">Last 3 Months</option>
-              <option value="this_year">This Year</option>
-              <option value="all">All Time</option>
-            </select>
+              <Filter size={16} strokeWidth={2.1} />
+              {activeFilterCount > 0 && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: -2,
+                    right: -2,
+                    fontSize: 9,
+                    fontWeight: 800,
+                    minWidth: 14,
+                    height: 14,
+                    padding: '0 3px',
+                    borderRadius: 99,
+                    backgroundColor: 'var(--accent)',
+                    color: '#fff',
+                    display: 'grid',
+                    placeItems: 'center',
+                    lineHeight: 1,
+                  }}
+                >
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
           </div>
         </div>
 
         {/* Summary KPI Cards inside History section */}
         {sorted.length > 0 && (
-          <div className="settlement-section-padding">
-            {/* 3 KPI Columns in 1 Unified Rounded Strip */}
-            <div className="settlement-stats-grid">
-              <div className="settlement-stat-card">
-                <div className="settlement-stat-content">
-                  <div className="settlement-stat-label">Received</div>
-                  <div className="settlement-stat-value credit">
-                    +{fmtMoney(kpiSummary.received, currency)}
-                  </div>
+          <div style={{ marginBottom: 10 }}>
+            {/* 2 KPI Modern Discrete Cards: Received and Paid */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: 8,
+                marginBottom: 8,
+              }}
+            >
+              <div
+                style={{
+                  background: 'var(--surface2)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 12,
+                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+                  padding: '10px 14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  minWidth: 0,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <ArrowDownLeft size={14} strokeWidth={2.4} style={{ color: 'var(--credit)', flexShrink: 0 }} />
+                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-3)', letterSpacing: '-0.01em' }}>
+                    Received
+                  </span>
+                </div>
+                <div
+                  style={{
+                    fontSize: 15,
+                    fontWeight: 700,
+                    color: 'var(--credit)',
+                    marginTop: 2,
+                    letterSpacing: '-0.01em',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  +{fmtMoney(kpiSummary.received, currency)}
                 </div>
               </div>
 
-              <div className="settlement-stat-card">
-                <div className="settlement-stat-content">
-                  <div className="settlement-stat-label">Paid</div>
-                  <div className="settlement-stat-value debit">
-                    -{fmtMoney(kpiSummary.paid, currency)}
-                  </div>
+              <div
+                style={{
+                  background: 'var(--surface2)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 12,
+                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+                  padding: '10px 14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  minWidth: 0,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <ArrowUpRight size={14} strokeWidth={2.4} style={{ color: 'var(--debit)', flexShrink: 0 }} />
+                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-3)', letterSpacing: '-0.01em' }}>
+                    Paid
+                  </span>
                 </div>
-              </div>
-
-              <div className="settlement-stat-card">
-                <div className="settlement-stat-content">
-                  <div className="settlement-stat-label">Net Flow</div>
-                  <div className={`settlement-stat-value ${kpiSummary.net >= 0 ? 'credit' : 'debit'}`}>
-                    {kpiSummary.net >= 0 ? '+' : '-'}{fmtMoney(Math.abs(kpiSummary.net), currency)}
-                  </div>
+                <div
+                  style={{
+                    fontSize: 15,
+                    fontWeight: 700,
+                    color: 'var(--debit)',
+                    marginTop: 2,
+                    letterSpacing: '-0.01em',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  -{fmtMoney(kpiSummary.paid, currency)}
                 </div>
               </div>
             </div>
 
             {/* Search and Filter Row */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
                 {/* Search Input */}
-                <div
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    background: 'var(--surface2)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 10,
-                    padding: '0 10px',
-                    height: 38,
-                    transition: 'border-color 0.15s ease',
-                  }}
-                >
-                  <Search size={15} style={{ color: 'var(--text-3)', marginRight: 8, flexShrink: 0 }} />
+                <div className="card-search-pill">
+                  <div className="card-search-pill-icon">
+                    <Search size={15} strokeWidth={2} />
+                  </div>
                   <input
                     type="text"
+                    className="card-search-pill-input"
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     placeholder="Search settlements by friend, note, wallet, or expense..."
-                    style={{
-                      width: '100%',
-                      background: 'transparent',
-                      border: 'none',
-                      outline: 'none',
-                      fontSize: 13,
-                      color: 'var(--text)',
-                      padding: '5px 0',
-                    }}
                   />
                   {searchQuery && (
                     <button
                       type="button"
+                      className="card-search-pill-clear"
                       onClick={() => setSearchQuery('')}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--text-3)',
-                        cursor: 'pointer',
-                        padding: 3,
-                        display: 'grid',
-                        placeItems: 'center',
-                      }}
                       title="Clear search"
+                      aria-label="Clear search"
                     >
-                      <X size={13} />
+                      <X size={13} strokeWidth={2.2} />
                     </button>
                   )}
                 </div>
-
-                {/* Filter Drawer Button on Right */}
-                <button
-                  type="button"
-                  onClick={() => setShowFilterDrawer(true)}
-                  style={{
-                    height: 38,
-                    padding: activeFilterCount > 0 ? '0 12px' : '0 11px',
-                    borderRadius: 10,
-                    border: activeFilterCount > 0 ? '1px solid var(--border2)' : '1px solid var(--border)',
-                    backgroundColor: activeFilterCount > 0 ? 'var(--surface)' : 'var(--surface2)',
-                    color: activeFilterCount > 0 ? 'var(--text)' : 'var(--text-2)',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 6,
-                    cursor: 'pointer',
-                    flexShrink: 0,
-                    transition: 'all 0.15s ease',
-                    boxShadow: activeFilterCount > 0 ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
-                  }}
-                  title="Filter settlements"
-                >
-                  <SlidersHorizontal size={15} strokeWidth={2.2} />
-                  {activeFilterCount > 0 && (
-                    <span
-                      style={{
-                        fontSize: 10.5,
-                        fontWeight: 750,
-                        minWidth: 17,
-                        height: 17,
-                        padding: '0 4.5px',
-                        borderRadius: 99,
-                        backgroundColor: 'var(--text)',
-                        color: 'var(--surface)',
-                        display: 'grid',
-                        placeItems: 'center',
-                        lineHeight: 1,
-                      }}
-                    >
-                      {activeFilterCount}
-                    </span>
-                  )}
-                </button>
               </div>
 
               {/* Active Filter Chips Bar (if active filters exist) */}
@@ -755,17 +759,13 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 6,
+                    gap: 8,
                     overflowX: 'auto',
                     scrollbarWidth: 'none',
                     padding: '2px 0',
                   }}
                   className="no-scrollbar"
                 >
-                  <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-3)', marginRight: 2 }}>
-                    Filtered:
-                  </span>
-
                   {friendFilter !== 'all' && (
                     <span className="app-filter-chip">
                       <span className="app-filter-chip-label">Friend:</span>
@@ -787,13 +787,13 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
                       style={{
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: 4,
-                        padding: '3px 8px',
-                        borderRadius: 99,
+                        gap: 6,
+                        padding: '4px 10px',
+                        borderRadius: 9999,
                         backgroundColor: typeFilter === 'received' ? 'var(--credit-bg)' : 'var(--debit-bg)',
                         border: `1px solid ${typeFilter === 'received' ? 'var(--credit-border, rgba(74,222,128,0.3))' : 'var(--debit-border, rgba(248,113,113,0.3))'}`,
                         color: typeFilter === 'received' ? 'var(--credit)' : 'var(--debit)',
-                        fontSize: 11.5,
+                        fontSize: 12.5,
                         fontWeight: 600,
                       }}
                     >
@@ -811,7 +811,7 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
                           padding: 0,
                         }}
                       >
-                        <X size={11} />
+                        <X size={12} strokeWidth={2.5} />
                       </button>
                     </span>
                   )}
@@ -849,7 +849,33 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
                   <button
                     type="button"
                     onClick={handleResetFilters}
-                    className="app-filter-clear-btn"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '5px 13px',
+                      borderRadius: 9999,
+                      background: 'var(--surface2)',
+                      border: '1px solid var(--border)',
+                      color: 'var(--text-2)',
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      lineHeight: 1.3,
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.background = 'var(--surface3)';
+                      e.currentTarget.style.color = 'var(--text)';
+                      e.currentTarget.style.borderColor = 'var(--border2, var(--border))';
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background = 'var(--surface2)';
+                      e.currentTarget.style.color = 'var(--text-2)';
+                      e.currentTarget.style.borderColor = 'var(--border)';
+                    }}
                     title="Clear all filters"
                   >
                     <RotateCcw size={13} strokeWidth={2.2} />
@@ -862,108 +888,112 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
         )}
 
         {sorted.length === 0 ? (
-          <div className="card empty-state-card">
-            <div className="empty-state">
-              <div className="empty-state-icon-badge">
-                <Handshake size={24} strokeWidth={1.8} />
-              </div>
-              <div className="empty-state-title">No settlements yet</div>
-              <p className="empty-state-desc">When you settle up with friends, detailed settlement records will appear here.</p>
+          <div className="empty-state" style={{ padding: '36px 20px', textAlign: 'center' }}>
+            <div
+              className="empty-state-icon-badge"
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 14,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: 'var(--surface2)',
+                color: 'var(--text-3)',
+                margin: '0 auto 14px',
+              }}
+            >
+              <Handshake size={24} strokeWidth={1.8} />
             </div>
+            <div className="empty-state-title" style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>
+              No settlements yet
+            </div>
+            <p className="empty-state-desc" style={{ fontSize: '13px', color: 'var(--text-3)', maxWidth: 280, margin: '0 auto' }}>
+              When you settle up with friends, detailed settlement records will appear here.
+            </p>
           </div>
         ) : filteredSettlements.length === 0 ? (
-          <div className="card empty-state-card">
-            <div className="empty-state" style={{ padding: '36px 20px' }}>
-              <div className="empty-state-icon-badge" style={{ marginBottom: 14 }}>
-                <Filter size={22} strokeWidth={1.8} />
-              </div>
-              <div className="empty-state-title" style={{ fontSize: '15px' }}>No matching settlements</div>
-              <p className="empty-state-desc" style={{ marginBottom: 16 }}>Try adjusting your search query or filters.</p>
-              <button
-                className="btn btn-secondary btn-sm"
-                onClick={() => {
-                  setSearchQuery('');
-                  setFriendFilter('all');
-                  setTypeFilter('all');
-                }}
-              >
-                Reset Filters
-              </button>
+          <div className="empty-state" style={{ padding: '40px 20px', textAlign: 'center' }}>
+            <div
+              className="empty-state-icon-badge"
+              style={{
+                width: 52,
+                height: 52,
+                borderRadius: 16,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: 'var(--surface2)',
+                color: 'var(--text-3)',
+                margin: '0 auto 14px',
+              }}
+            >
+              <Filter size={24} strokeWidth={1.8} />
             </div>
+            <div className="empty-state-title" style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>
+              No matching settlements
+            </div>
+            <p className="empty-state-desc" style={{ fontSize: '13.5px', color: 'var(--text-3)', marginBottom: 20, maxWidth: 300, margin: '0 auto 20px' }}>
+              Try adjusting your search query or filters.
+            </p>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={handleResetFilters}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                padding: '10px 24px',
+                borderRadius: 12,
+                fontSize: 14,
+                fontWeight: 600,
+                minHeight: 42,
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+                cursor: 'pointer',
+              }}
+            >
+              <RotateCcw size={15} strokeWidth={2.2} />
+              Reset Filters
+            </button>
           </div>
         ) : (
-          <div className="settlement-compact-list">
-            {filteredSettlements.map((s, idx) => {
+          <div
+            ref={listContainerRef}
+            className="settlement-compact-list"
+            style={{
+              position: 'relative',
+              height: `${virtualizer.getTotalSize()}px`,
+              width: '100%',
+              display: 'block',
+            }}
+          >
+            {virtualizer.getVirtualItems().map((virtualRow) => {
+              const s = filteredSettlements[virtualRow.index];
               if (!s) return null;
-              const friend = friends.find(f => f && f.id === s.friendId);
-              const wallet = wallets.find(w => w && w.id === s.walletId);
-              const walletName = wallet?.name || s.paymentMethod;
-              const amtVal = Number(s.amount) || 0;
-              const isReceived = amtVal >= 0;
 
               return (
                 <div
-                  key={`${s.id}-${idx}`}
-                  className="settlement-compact-card"
-                  onClick={() => setDetailSettlement(s)}
+                  key={virtualRow.key}
+                  ref={virtualizer.measureElement}
+                  data-index={virtualRow.index}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualRow.start - scrollMargin}px)`,
+                  }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
-                    {friend && (
-                      <div
-                        className="avatar"
-                        style={{
-                          ...getAvatarStyle(friend.color),
-                          width: 32,
-                          height: 32,
-                          fontSize: 12,
-                          fontWeight: 700,
-                          flexShrink: 0,
-                          borderRadius: '50%',
-                          display: 'grid',
-                          placeItems: 'center',
-                        }}
-                      >
-                        {friendInitial(friend.name, friend.avatarNumber)}
-                      </div>
-                    )}
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ fontWeight: 600, fontSize: 13.5, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {friend ? friend.name : 'Deleted friend'}
-                      </div>
-                      <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {fmtDate(s.date)}{walletName ? ` · ${walletName}` : ''}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 10 }}>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontWeight: 700, fontSize: 14, color: isReceived ? 'var(--credit)' : 'var(--debit)' }}>
-                        {isReceived ? '+' : '-'}{fmtMoney(Math.abs(amtVal), currency)}
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      className="btn btn-undo"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDelId(s.id);
-                      }}
-                      title="Undo settlement"
-                      style={{
-                        width: 28,
-                        height: 28,
-                        padding: 0,
-                        borderRadius: 7,
-                        display: 'grid',
-                        placeItems: 'center',
-                        cursor: 'pointer',
-                        flexShrink: 0,
-                      }}
-                    >
-                      <RotateCcw size={12.5} strokeWidth={2} />
-                    </button>
-                  </div>
+                  <SettlementCompactCard
+                    settlement={s}
+                    friend={friendsMap.get(s.friendId)}
+                    wallet={s.walletId ? walletsMap.get(s.walletId) : undefined}
+                    currency={currency}
+                    onSelect={setDetailSettlement}
+                    onUndo={setDelId}
+                  />
                 </div>
               );
             })}
