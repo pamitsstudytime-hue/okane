@@ -357,7 +357,7 @@ function AppInner() {
     return () => window.removeEventListener('app-filter-count-update', handleCountUpdate);
   }, [view]);
 
-  const showFilterInTopbar = ['expenses', 'friends', 'settlements'].includes(view);
+  const showFilterInTopbar = ['expenses', 'friends'].includes(view);
 
   const { expenses, currency } = useMemo(() => ({
     expenses: db.expenses,
