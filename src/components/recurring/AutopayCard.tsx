@@ -15,6 +15,7 @@ import {
 import type { RecurringRule, ViewName, Category, Friend, Wallet } from '../../types';
 import { fmtMoney, fmtDate } from '../../utils';
 import CategoryIcon from '../CategoryIcon';
+import { MarkdownNote } from '../common/MarkdownNote';
 
 interface Props {
   rule: RecurringRule;
@@ -326,7 +327,7 @@ export const AutopayCard: React.FC<Props> = ({
               }}
               title={rule.notes}
             >
-              {rule.notes}
+              <MarkdownNote content={rule.notes} inline />
             </span>
           ) : null}
         </div>

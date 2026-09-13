@@ -15,6 +15,7 @@ import {
   VendorQuickAdd,
 } from './expense';
 import { NoteEditorModal } from './common/NoteEditorModal';
+import { NotePreviewCard } from './common/NotePreviewCard';
 import { getFrequentTasks } from '../utils/frequentTasks';
 
 export interface ExpenseInitialData {
@@ -979,50 +980,11 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                       onChange={e => handleDescriptionChange(e.target.value)}
                       placeholder={splitMode === 'pay_debt' ? "e.g. Settling dinner debt" : "What did you spend on?"}
                     />
-                    {notes && (
-                      <div
-                        onClick={() => setIsNoteModalOpen(true)}
-                        style={{
-                          marginTop: 4,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          background: 'var(--surface2)',
-                          border: 'none',
-                          borderRadius: 10,
-                          padding: '5px 12px',
-                          fontSize: 11.5,
-                          color: 'var(--text-2)',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, overflow: 'hidden' }}>
-                          <Feather size={12} style={{ color: '#38bdf8', flexShrink: 0 }} />
-                          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {notes}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setNotes('');
-                          }}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            color: 'var(--text-3)',
-                            cursor: 'pointer',
-                            padding: 2,
-                            display: 'grid',
-                            placeItems: 'center',
-                          }}
-                          title="Remove note"
-                        >
-                          <X size={12} />
-                        </button>
-                      </div>
-                    )}
+                    <NotePreviewCard
+                      notes={notes}
+                      onEdit={() => setIsNoteModalOpen(true)}
+                      onClear={() => setNotes('')}
+                    />
                     {frequentDescriptions.length > 0 && (
                       <div
                         style={{
@@ -1289,50 +1251,11 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                           onChange={e => setDesc(e.target.value)}
                           placeholder="e.g. Monthly Salary, Pocket Money from Parents"
                         />
-                        {notes && (
-                          <div
-                            onClick={() => setIsNoteModalOpen(true)}
-                            style={{
-                              marginTop: 4,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              background: 'var(--surface2)',
-                              border: '1px solid var(--border)',
-                              borderRadius: 8,
-                              padding: '4px 10px',
-                              fontSize: 11.5,
-                              color: 'var(--text-2)',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, overflow: 'hidden' }}>
-                              <Feather size={12} style={{ color: '#38bdf8', flexShrink: 0 }} />
-                              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {notes}
-                              </span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setNotes('');
-                              }}
-                              style={{
-                                background: 'none',
-                                border: 'none',
-                                color: 'var(--text-3)',
-                                cursor: 'pointer',
-                                padding: 2,
-                                display: 'grid',
-                                placeItems: 'center',
-                              }}
-                              title="Remove note"
-                            >
-                              <X size={12} />
-                            </button>
-                          </div>
-                        )}
+                        <NotePreviewCard
+                          notes={notes}
+                          onEdit={() => setIsNoteModalOpen(true)}
+                          onClear={() => setNotes('')}
+                        />
                         {/* Quick Presets for Speed */}
                         <div
                           style={{

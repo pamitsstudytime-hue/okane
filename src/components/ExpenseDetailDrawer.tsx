@@ -19,6 +19,7 @@ import type { Expense, Friend, Wallet, Category, Settlement } from '../types';
 import { renderWalletIcon } from './WalletIconRenderer';
 import { useStore } from '../store';
 import { friendBalance } from '../db';
+import { MarkdownNote } from './common/MarkdownNote';
 
 interface ExpenseDetailDrawerProps {
   ge: GroupedExpense;
@@ -712,22 +713,20 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
 
             {/* Notes if exists */}
             {primaryItem.notes && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 3, paddingTop: 4 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingTop: 4 }}>
                 <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.6px', display: 'flex', alignItems: 'center', gap: 4 }}>
                   <FileText size={11} style={{ color: 'var(--text-3)' }} />
                   Notes
                 </span>
-                <span
+                <MarkdownNote
+                  content={primaryItem.notes}
                   style={{
                     fontSize: 12.5,
                     color: 'var(--text)',
-                    lineHeight: 1.45,
+                    lineHeight: 1.5,
                     fontWeight: 500,
-                    wordBreak: 'break-word',
                   }}
-                >
-                  {primaryItem.notes}
-                </span>
+                />
               </div>
             )}
           </div>

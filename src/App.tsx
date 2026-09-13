@@ -1475,12 +1475,12 @@ function AppInner() {
         }}
         PaperProps={{
           sx: {
-            borderTopLeftRadius: 28,
-            borderTopRightRadius: 28,
+            borderTopLeftRadius: 30,
+            borderTopRightRadius: 30,
             bgcolor: mode === 'dark' ? '#121212' : '#ffffff',
             backgroundImage: 'none',
-            p: 2.5,
-            pb: 'calc(24px + env(safe-area-inset-bottom, 0px))',
+            p: { xs: 3, sm: 3.5 },
+            pb: 'calc(28px + env(safe-area-inset-bottom, 0px))',
             height: 'auto',
             maxHeight: '92vh',
             borderTop: mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e5e7eb',

@@ -151,6 +151,7 @@ function FormattedReleaseNotes({ notes }: { notes: string }) {
 
   const items: Array<
     | { type: 'text'; text: string }
+    | { type: 'numbered'; num: string; text: string }
     | { type: 'bullet'; text: string }
     | { type: 'image'; src: string; alt?: string }
   > = [];
@@ -168,7 +169,10 @@ function FormattedReleaseNotes({ notes }: { notes: string }) {
     while ((match = imgRegex.exec(line)) !== null) {
       const precedingText = line.substring(lastIdx, match.index).trim();
       if (precedingText) {
-        if (precedingText.startsWith('- ') || precedingText.startsWith('* ')) {
+        const numMatch = precedingText.match(/^(\d+[.)])\s*(.+)/);
+        if (numMatch) {
+          items.push({ type: 'numbered', num: numMatch[1], text: numMatch[2] });
+        } else if (precedingText.startsWith('- ') || precedingText.startsWith('* ')) {
           items.push({ type: 'bullet', text: precedingText.substring(2).trim() });
         } else {
           items.push({ type: 'text', text: precedingText });
@@ -186,16 +190,21 @@ function FormattedReleaseNotes({ notes }: { notes: string }) {
       const mdMatch = rest.match(/!\[([^\]]*)\]\(([^)]+)\)/);
       if (mdMatch) {
         items.push({ type: 'image', src: mdMatch[2], alt: mdMatch[1] || 'Release screenshot' });
-      } else if (rest.startsWith('- ') || rest.startsWith('* ')) {
-        items.push({ type: 'bullet', text: rest.substring(2).trim() });
       } else {
-        items.push({ type: 'text', text: rest });
+        const numMatch = rest.match(/^(\d+[.)])\s*(.+)/);
+        if (numMatch) {
+          items.push({ type: 'numbered', num: numMatch[1], text: numMatch[2] });
+        } else if (rest.startsWith('- ') || rest.startsWith('* ')) {
+          items.push({ type: 'bullet', text: rest.substring(2).trim() });
+        } else {
+          items.push({ type: 'text', text: rest });
+        }
       }
     }
   });
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px', marginBottom: '6px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '6px', marginBottom: '8px' }}>
       {items.map((item, idx) => {
         if (item.type === 'image') {
           return (
@@ -235,15 +244,33 @@ function FormattedReleaseNotes({ notes }: { notes: string }) {
           );
         }
 
+        if (item.type === 'numbered') {
+          return (
+            <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '13px', color: 'var(--text)', lineHeight: 1.5 }}>
+              <span style={{
+                fontSize: '12px',
+                fontWeight: 650,
+                color: 'var(--text-3)',
+                minWidth: '18px',
+                flexShrink: 0,
+                fontVariantNumeric: 'tabular-nums'
+              }}>
+                {item.num}
+              </span>
+              <span style={{ color: 'var(--text-2)' }}>{item.text}</span>
+            </div>
+          );
+        }
+
         if (item.type === 'bullet') {
           return (
-            <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '12.5px', color: 'var(--text-2)', lineHeight: 1.45 }}>
+            <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '13px', color: 'var(--text-2)', lineHeight: 1.5 }}>
               <span style={{
                 width: 5,
                 height: 5,
                 borderRadius: '50%',
                 background: 'var(--accent)',
-                marginTop: 6,
+                marginTop: 7,
                 flexShrink: 0
               }} />
               <span>{item.text}</span>
@@ -252,7 +279,7 @@ function FormattedReleaseNotes({ notes }: { notes: string }) {
         }
 
         return (
-          <p key={idx} style={{ fontSize: '12.5px', color: 'var(--text-2)', margin: 0, lineHeight: 1.45 }}>
+          <p key={idx} style={{ fontSize: '13px', color: 'var(--text-2)', margin: 0, lineHeight: 1.5 }}>
             {item.text}
           </p>
         );
@@ -329,7 +356,7 @@ export default function Settings({
   const { mode, toggleMode } = useColorMode();
   const isDark = mode === 'dark';
   const [appearanceSubView, setAppearanceSubView] = useState<'main' | 'more'>('main');
-  const [categorySubView, setCategorySubView] = useState<'list' | 'add'>('list');
+  const [categorySubView, setCategorySubView] = useState<'list' | 'add' | 'edit'>('list');
   const isDevMode = settings.devMode ?? false;
   const displayReleaseHistory = useMemo(() => {
     if (isDevMode) return releaseHistory;
@@ -345,6 +372,7 @@ export default function Settings({
   const [currencySearchQuery, setCurrencySearchQuery] = useState('');
   const currencySearchInputRef = useRef<HTMLInputElement>(null);
   const newCatInputRef = useRef<HTMLInputElement>(null);
+  const editCatInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (showCurrencySheet) {
@@ -362,6 +390,14 @@ export default function Settings({
       const timer = setTimeout(() => {
         if (newCatInputRef.current && (settings.autoOpenKeyboard ?? false)) {
           showSoftKeyboard(newCatInputRef.current, { placeCursorAtEnd: true, scroll: true });
+        }
+      }, 90);
+      return () => clearTimeout(timer);
+    }
+    if (categorySubView === 'edit' && showCategoriesSheet) {
+      const timer = setTimeout(() => {
+        if (editCatInputRef.current && (settings.autoOpenKeyboard ?? false)) {
+          showSoftKeyboard(editCatInputRef.current, { placeCursorAtEnd: true, scroll: true });
         }
       }, 90);
       return () => clearTimeout(timer);
@@ -611,7 +647,6 @@ export default function Settings({
   const [includeVersionInfo, setIncludeVersionInfo] = useState(true);
   const [feedbackStatus, setFeedbackStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
-  const [githubTokenInput, setGithubTokenInput] = useState(() => localStorage.getItem('okane_github_token') || '');
   const [createdIssueInfo, setCreatedIssueInfo] = useState<{ url: string; number: number } | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -636,7 +671,7 @@ export default function Settings({
 
     const appVersion = currentAppVersion;
     const platformName = Capacitor.isNativePlatform() ? Capacitor.getPlatform() : 'Web Browser';
-    const token = githubTokenInput.trim() || localStorage.getItem('okane_github_token')?.trim() || '';
+    const token = localStorage.getItem('okane_github_token')?.trim() || '';
 
     const bodyContent = `${trimmedDesc}\n\n---\n**Metadata:**\n- Type: ${feedbackType}\n${includeVersionInfo ? `- Version: ${appVersion}\n- Platform: ${platformName}\n- User Agent: ${navigator.userAgent}` : ''}`;
 
@@ -785,6 +820,7 @@ export default function Settings({
     setEditName(c.name);
     setEditColor(c.color);
     setEditIcon(c.icon || 'other');
+    setCategorySubView('edit');
   };
 
   const handleSaveEditCategory = () => {
@@ -801,6 +837,7 @@ export default function Settings({
     }
     updateCategory(oldName, { name: trimmed, color: editColor, icon: editIcon });
     setEditingCat(null);
+    setCategorySubView('list');
     showToast(`Updated category "${trimmed}"`);
   };
 
@@ -2056,14 +2093,17 @@ export default function Settings({
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <button
-                        className="btn btn-ghost btn-sm"
-                        style={{ fontSize: 11.5, gap: 4, padding: '4px 8px' }}
+                        type="button"
+                        className="drawer-reset-btn"
                         onClick={() => {
                           updateSettings({ categories: [...DEFAULT_CATEGORIES] });
                           showToast('Reset categories to default');
                         }}
+                        title="Reset to default categories"
+                        aria-label="Reset categories"
                       >
-                        <RotateCcw size={14} /> Reset
+                        <RotateCcw size={14} />
+                        <span className="drawer-reset-text">Reset</span>
                       </button>
                       <button
                         type="button"
@@ -2176,6 +2216,149 @@ export default function Settings({
                         <ChevronRight size={17} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
                       </button>
                     </div>
+                  </div>
+                </>
+              ) : categorySubView === 'edit' ? (
+                <>
+                  {/* Fixed Edit Category Subview Header */}
+                  <div className="sheet-modal-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: 'none', paddingBottom: 4 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <button
+                        type="button"
+                        className="drawer-back-btn"
+                        onClick={() => {
+                          setCategorySubView('list');
+                          setEditingCat(null);
+                        }}
+                        title="Back to categories"
+                      >
+                        <ArrowLeft size={17} />
+                      </button>
+                      <div>
+                        <h3 style={{ fontSize: 16.5, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em' }}>
+                          Edit Category
+                        </h3>
+                        <p className="drawer-header-sub">
+                          Modify category tag, icon & color
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="drawer-close-btn"
+                      onClick={() => {
+                        setShowCategoriesSheet(false);
+                        setCategorySubView('list');
+                        setEditingCat(null);
+                      }}
+                      title="Close"
+                    >
+                      <X size={17} />
+                    </button>
+                  </div>
+
+                  {/* Scrollable Form Body */}
+                  <div className="sheet-modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 16, border: 'none' }}>
+                    <div className="form-group" style={{ marginBottom: 0, border: 'none' }}>
+                      <label className="form-label" style={{ fontSize: 11.5 }}>Category Name *</label>
+                      <input
+                        ref={editCatInputRef}
+                        className="form-input"
+                        value={editName}
+                        onChange={e => setEditName(e.target.value)}
+                        placeholder="Category name..."
+                        onKeyDown={e => e.key === 'Enter' && handleSaveEditCategory()}
+                      />
+                    </div>
+
+                    <div className="form-group" style={{ marginBottom: 0, border: 'none' }}>
+                      <label className="form-label" style={{ fontSize: 11.5 }}>Color Tag</label>
+                      <ColorPickerSection color={editColor} onChangeColor={setEditColor} />
+                    </div>
+
+                    <div className="form-group" style={{ marginBottom: 0, border: 'none' }}>
+                      <label className="form-label" style={{ fontSize: 11.5 }}>Category Icon</label>
+                      <div className="category-icon-picker">
+                        {AVAILABLE_ICONS.map(({ id, label, Icon }) => {
+                          const isSelected = editIcon === id;
+                          const bgStyle = isSelected
+                            ? (editColor.startsWith('#') && editColor.length === 7 ? `${editColor}20` : 'var(--accent-soft)')
+                            : undefined;
+                          return (
+                            <button
+                              key={id}
+                              type="button"
+                              className={`icon-picker-btn ${isSelected ? 'selected' : ''}`}
+                              onClick={() => setEditIcon(id)}
+                              title={label}
+                              style={{
+                                color: isSelected ? editColor : 'var(--text-2)',
+                                borderColor: isSelected ? editColor : undefined,
+                                background: bgStyle,
+                              }}
+                            >
+                              <Icon size={16} />
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Fixed Bottom Action Footer */}
+                  <div className="sheet-modal-footer" style={{ display: 'flex', gap: 10, borderTop: 'none', paddingTop: 8 }}>
+                    <button
+                      type="button"
+                      onClick={() => setEditName('')}
+                      style={{
+                        flex: 1,
+                        height: 44,
+                        padding: '0 16px',
+                        borderRadius: 9999,
+                        background: 'var(--surface2)',
+                        border: '1px solid var(--border)',
+                        color: 'var(--text)',
+                        fontSize: 13.5,
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 6,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                      title="Clear category name"
+                    >
+                      <RotateCcw size={15} />
+                      <span>Clear</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSaveEditCategory}
+                      disabled={!editName.trim()}
+                      style={{
+                        flex: 1.6,
+                        height: 44,
+                        padding: '0 18px',
+                        borderRadius: 9999,
+                        background: 'var(--text)',
+                        color: 'var(--surface)',
+                        border: 'none',
+                        fontSize: 13.5,
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 6,
+                        cursor: !editName.trim() ? 'not-allowed' : 'pointer',
+                        opacity: !editName.trim() ? 0.5 : 1,
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <Check size={16} strokeWidth={2.5} />
+                      <span>Save Changes</span>
+                    </button>
                   </div>
                 </>
               ) : (
@@ -2576,103 +2759,6 @@ export default function Settings({
           document.body
         )}
 
-        {/* Edit Category Modal */}
-        {editingCat && (
-          <div className="modal-backdrop" onClick={e => { if (e.target === e.currentTarget) setEditingCat(null); }}>
-            <div className="modal" style={{ maxWidth: 460 }}>
-              <div className="modal-header">
-                <span className="modal-title">Edit Category</span>
-                <button className="btn-icon" onClick={() => setEditingCat(null)} aria-label="Close dialog"><X size={18} /></button>
-              </div>
-              <form onSubmit={e => { e.preventDefault(); handleSaveEditCategory(); }}>
-                <div className="modal-body">
-                  <div className="form-grid">
-                    <div className="form-group">
-                      <label className="form-label">Category Name *</label>
-                      <input
-                        className="form-input"
-                        value={editName}
-                        onChange={e => setEditName(e.target.value)}
-                        placeholder="Category name..."
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">Color Tag</label>
-                      <ColorPickerSection color={editColor} onChangeColor={setEditColor} />
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">Category Icon</label>
-                      <div className="category-icon-picker">
-                        {AVAILABLE_ICONS.map(({ id, label, Icon }) => {
-                          const isSelected = editIcon === id;
-                          const bgStyle = isSelected
-                            ? (editColor.startsWith('#') && editColor.length === 7 ? `${editColor}20` : 'var(--accent-soft)')
-                            : undefined;
-                          return (
-                            <button
-                              key={id}
-                              type="button"
-                              className={`icon-picker-btn ${isSelected ? 'selected' : ''}`}
-                              onClick={() => setEditIcon(id)}
-                              title={label}
-                              style={{
-                                color: isSelected ? editColor : 'var(--text-2)',
-                                borderColor: isSelected ? editColor : undefined,
-                                background: bgStyle,
-                              }}
-                            >
-                              <Icon size={16} />
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="modal-footer" style={{ borderTop: 'none', display: 'flex', gap: 10, paddingTop: 12 }}>
-                  <button
-                    type="button"
-                    onClick={() => setEditingCat(null)}
-                    style={{
-                      flex: 1,
-                      height: 40,
-                      padding: '0 16px',
-                      borderRadius: 9999,
-                      background: 'var(--surface2)',
-                      border: '1px solid var(--border)',
-                      color: 'var(--text)',
-                      fontSize: 13,
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    style={{
-                      flex: 1.5,
-                      height: 40,
-                      padding: '0 18px',
-                      borderRadius: 9999,
-                      background: 'var(--text)',
-                      color: 'var(--surface)',
-                      border: 'none',
-                      fontSize: 13,
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Save Changes
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
         {/* Section 2: Data & Storage */}
         {showDataSection && (
           <div className="settings-section-group">
@@ -2820,21 +2906,29 @@ export default function Settings({
         {/* Bottom Sheet Drawer Modal for Report Bug / Suggest Feature */}
         {showFeedbackSheet && createPortal(
           <div className="sheet-backdrop" onClick={() => setShowFeedbackSheet(false)}>
-            <div className="sheet-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="sheet-modal feedback-modal-sheet" onClick={(e) => e.stopPropagation()}>
               {/* Drag Handle */}
               <div className="sheet-drag-handle" />
 
               {/* Header */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div className="drawer-header-icon">
-                    <MessageSquarePlus size={20} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{
+                    width: 32,
+                    height: 32,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--accent)',
+                    flexShrink: 0
+                  }}>
+                    <MessageSquarePlus size={22} />
                   </div>
                   <div>
-                    <h3 style={{ fontSize: 16.5, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em' }}>
+                    <h3 style={{ fontSize: 17, fontWeight: 750, margin: 0, color: 'var(--text)', letterSpacing: '-0.02em' }}>
                       Report Bug / Feature Request
                     </h3>
-                    <p className="drawer-header-sub">
+                    <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text-3)', fontWeight: 500 }}>
                       Create an issue on prathambahekar/okane
                     </p>
                   </div>
@@ -2845,15 +2939,26 @@ export default function Settings({
                   className="drawer-close-btn"
                   onClick={() => setShowFeedbackSheet(false)}
                   title="Close"
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 9999,
+                    background: 'var(--surface2)',
+                    border: '1px solid var(--border)',
+                    display: 'grid',
+                    placeItems: 'center',
+                    color: 'var(--text-2)',
+                    cursor: 'pointer'
+                  }}
                 >
                   <X size={17} />
                 </button>
               </div>
 
-              <form onSubmit={handleSendFeedback} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <form onSubmit={handleSendFeedback} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {/* Type Selection */}
                 <div>
-                  <label className="form-label" style={{ marginBottom: 8, display: 'block', fontSize: 12.5, fontWeight: 600 }}>
+                  <label style={{ marginBottom: 6, display: 'block', fontSize: 12, fontWeight: 650, color: 'var(--text-2)' }}>
                     Feedback Type
                   </label>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -2861,11 +2966,11 @@ export default function Settings({
                       type="button"
                       onClick={() => setFeedbackType('bug')}
                       style={{
-                        padding: '11px 14px',
-                        borderRadius: 12,
-                        border: feedbackType === 'bug' ? '1.5px solid var(--accent)' : '1px solid var(--border)',
-                        background: feedbackType === 'bug' ? 'var(--accent)' : 'var(--surface2)',
-                        color: feedbackType === 'bug' ? 'var(--accent-contrast, #ffffff)' : 'var(--text)',
+                        padding: '10px 14px',
+                        borderRadius: 14,
+                        border: feedbackType === 'bug' ? '1px solid var(--text)' : '1px solid var(--border)',
+                        background: feedbackType === 'bug' ? 'var(--text)' : 'var(--surface2)',
+                        color: feedbackType === 'bug' ? 'var(--bg)' : 'var(--text-2)',
                         fontWeight: feedbackType === 'bug' ? 700 : 500,
                         fontSize: 13,
                         cursor: 'pointer',
@@ -2873,11 +2978,10 @@ export default function Settings({
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: 8,
-                        boxShadow: feedbackType === 'bug' ? '0 2px 8px rgba(0, 0, 0, 0.12)' : 'none',
                         transition: 'all 0.15s ease'
                       }}
                     >
-                      <Bug size={16} style={{ color: feedbackType === 'bug' ? 'var(--accent-contrast, #ffffff)' : 'var(--text-2)' }} />
+                      <Bug size={16} style={{ color: feedbackType === 'bug' ? 'var(--bg)' : 'var(--text-2)' }} />
                       <span>Bug / Issue</span>
                     </button>
 
@@ -2885,11 +2989,11 @@ export default function Settings({
                       type="button"
                       onClick={() => setFeedbackType('feature')}
                       style={{
-                        padding: '11px 14px',
-                        borderRadius: 12,
-                        border: feedbackType === 'feature' ? '1.5px solid var(--accent)' : '1px solid var(--border)',
-                        background: feedbackType === 'feature' ? 'var(--accent)' : 'var(--surface2)',
-                        color: feedbackType === 'feature' ? 'var(--accent-contrast, #ffffff)' : 'var(--text)',
+                        padding: '10px 14px',
+                        borderRadius: 14,
+                        border: feedbackType === 'feature' ? '1px solid var(--text)' : '1px solid var(--border)',
+                        background: feedbackType === 'feature' ? 'var(--text)' : 'var(--surface2)',
+                        color: feedbackType === 'feature' ? 'var(--bg)' : 'var(--text-2)',
                         fontWeight: feedbackType === 'feature' ? 700 : 500,
                         fontSize: 13,
                         cursor: 'pointer',
@@ -2897,24 +3001,23 @@ export default function Settings({
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: 8,
-                        boxShadow: feedbackType === 'feature' ? '0 2px 8px rgba(0, 0, 0, 0.12)' : 'none',
                         transition: 'all 0.15s ease'
                       }}
                     >
-                      <Lightbulb size={16} style={{ color: feedbackType === 'feature' ? 'var(--accent-contrast, #ffffff)' : 'var(--text-2)' }} />
+                      <Lightbulb size={16} style={{ color: feedbackType === 'feature' ? 'var(--bg)' : 'var(--text-2)' }} />
                       <span>Suggest Feature</span>
                     </button>
                   </div>
                 </div>
 
                 {/* Title */}
-                <div className="form-group">
-                  <label className="form-label" style={{ fontSize: 12.5, fontWeight: 600 }}>
+                <div>
+                  <label style={{ marginBottom: 5, display: 'block', fontSize: 12, fontWeight: 650, color: 'var(--text-2)' }}>
                     Title
                   </label>
                   <input
                     type="text"
-                    className="form-input"
+                    className="feedback-form-input"
                     value={feedbackTitle}
                     onChange={(e) => setFeedbackTitle(e.target.value)}
                     placeholder={feedbackType === 'bug' ? "e.g., Error when settling friend balance" : "e.g., Add custom tags for expense search"}
@@ -2923,103 +3026,50 @@ export default function Settings({
                 </div>
 
                 {/* Description */}
-                <div className="form-group">
-                  <label className="form-label" style={{ fontSize: 12.5, fontWeight: 600 }}>
+                <div>
+                  <label style={{ marginBottom: 5, display: 'block', fontSize: 12, fontWeight: 650, color: 'var(--text-2)' }}>
                     Description
                   </label>
                   <textarea
-                    className="form-input"
-                    rows={4}
+                    className="feedback-form-input feedback-form-textarea"
+                    rows={3}
                     value={feedbackDescription}
                     onChange={(e) => setFeedbackDescription(e.target.value)}
                     placeholder={feedbackType === 'bug' ? "Describe what happened, expected behavior, or steps to reproduce..." : "Describe the feature idea and how it would improve the app..."}
                     required
-                    style={{ resize: 'vertical', minHeight: 90 }}
                   />
                 </div>
 
-                {/* App Version Checkbox */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--surface2)', padding: '10px 12px', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
-                  <input
-                    type="checkbox"
-                    id="includeVersionInfo"
+                {/* App Version Switch Toggle Card */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                  background: 'var(--surface2)',
+                  padding: '10px 14px',
+                  borderRadius: 14,
+                  border: '1px solid var(--border)'
+                }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <span style={{ fontSize: 12.5, fontWeight: 650, color: 'var(--text)', letterSpacing: '-0.01em' }}>
+                      Include app & device specs
+                    </span>
+                    <span style={{ fontSize: 11.5, color: 'var(--text-3)', fontWeight: 500 }}>
+                      App version (<strong style={{ color: 'var(--text-2)', fontWeight: 600 }}>v{currentAppVersion}</strong>) & system details
+                    </span>
+                  </div>
+                  <Switch
+                    className="custom-toggle-switch"
                     checked={includeVersionInfo}
                     onChange={(e) => setIncludeVersionInfo(e.target.checked)}
-                    style={{ width: 16, height: 16, accentColor: 'var(--accent)', cursor: 'pointer' }}
+                    color="primary"
                   />
-                  <label htmlFor="includeVersionInfo" style={{ fontSize: 12, color: 'var(--text-2)', cursor: 'pointer', flex: 1, userSelect: 'none' }}>
-                    Include current app version (<strong style={{ color: 'var(--text)' }}>v{currentAppVersion}</strong>) & device details
-                  </label>
-                </div>
-
-                {/* Action Toolbar */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', paddingTop: 4 }}>
-                  <div style={{ fontSize: 11.5, color: 'var(--text-3)', display: 'flex', alignItems: 'center', gap: 5 }}>
-                    <GitPullRequest size={13} />
-                    <span>Target Repo: prathambahekar/okane</span>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
-                    <button
-                      type="submit"
-                      className="btn btn-primary btn-sm"
-                      disabled={isSubmittingFeedback || !feedbackTitle.trim() || !feedbackDescription.trim()}
-                      style={{ fontSize: 12.5, fontWeight: 700, padding: '8px 18px', borderRadius: 8, gap: 6 }}
-                    >
-                      {isSubmittingFeedback ? (
-                        <>
-                          <RefreshCw size={14} className="spin" />
-                          <span>Creating Issue...</span>
-                        </>
-                      ) : (
-                        <>
-                          <GitPullRequest size={15} />
-                          <span>Submit Issue</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {/* GitHub PAT field */}
-                <div style={{ marginTop: 2, paddingTop: 10, borderTop: '1px dashed var(--border)' }}>
-                  <details open={Boolean(errorMessage && errorMessage.includes('Token'))} style={{ fontSize: 12, color: 'var(--text-3)' }}>
-                    <summary style={{ cursor: 'pointer', fontWeight: 600, color: 'var(--text)', userSelect: 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <GitPullRequest size={14} style={{ color: 'var(--accent)' }} />
-                      <span>GitHub Personal Access Token Settings</span>
-                    </summary>
-                    
-                    <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10, background: 'var(--surface2)', padding: 12, borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
-                      <div style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.5 }}>
-                        <strong style={{ color: 'var(--text)' }}>What is this token?</strong>
-                        <br />
-                        GitHub requires authentication to create issues on repository <code style={{ background: 'var(--surface)', padding: '1px 5px', borderRadius: 4, color: 'var(--accent)' }}>prathambahekar/okane</code> without opening the web form manually.
-                      </div>
-
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 2 }}>
-                        <label style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text)' }}>
-                          Paste GitHub Token here:
-                        </label>
-                        <input
-                          type="password"
-                          className="form-input"
-                          value={githubTokenInput}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setGithubTokenInput(val);
-                            localStorage.setItem('okane_github_token', val.trim());
-                          }}
-                          placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                          style={{ fontSize: 12, padding: '8px 12px', fontFamily: 'monospace' }}
-                        />
-                      </div>
-                    </div>
-                  </details>
                 </div>
 
                 {/* Success Notification */}
                 {feedbackStatus === 'success' && createdIssueInfo && (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '12px 14px', background: 'rgba(34, 197, 94, 0.12)', border: '1px solid rgba(34, 197, 94, 0.25)', borderRadius: 10, color: '#22c55e', fontSize: 12.5, fontWeight: 600 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '12px 14px', background: 'rgba(34, 197, 94, 0.12)', border: '1px solid rgba(34, 197, 94, 0.25)', borderRadius: 14, color: '#22c55e', fontSize: 12.5, fontWeight: 600 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <CheckCircle2 size={18} />
                       <span>Issue #{createdIssueInfo.number} created!</span>
@@ -3038,7 +3088,7 @@ export default function Settings({
 
                 {/* Error Notification */}
                 {feedbackStatus === 'error' && errorMessage && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 14px', background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: 10, color: '#ef4444', fontSize: 12.5 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 14px', background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: 14, color: '#ef4444', fontSize: 12.5 }}>
                     <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
                       <X size={16} />
                       <span>Unable to create GitHub issue automatically</span>
@@ -3052,13 +3102,54 @@ export default function Settings({
                         target="_blank"
                         rel="noopener noreferrer"
                         className="btn btn-secondary btn-sm"
-                        style={{ marginTop: 4, alignSelf: 'flex-start', fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}
+                        style={{ marginTop: 4, alignSelf: 'flex-start', fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none', borderRadius: 9999 }}
                       >
                         <ExternalLink size={14} /> Open Form on GitHub Web
                       </a>
                     )}
                   </div>
                 )}
+
+                {/* Bottom 2 Rounded Pill Action Buttons */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.35fr', gap: 10, marginTop: 4, paddingBottom: 2 }}>
+                  <button
+                    type="button"
+                    className="feedback-pill-btn feedback-pill-btn-clear"
+                    onClick={() => {
+                      setFeedbackTitle('');
+                      setFeedbackDescription('');
+                      setFeedbackStatus('idle');
+                      setErrorMessage('');
+                    }}
+                    title="Clear form"
+                  >
+                    <RotateCcw size={15} />
+                    <span>Clear</span>
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="feedback-pill-btn feedback-pill-btn-submit"
+                    disabled={isSubmittingFeedback || !feedbackTitle.trim() || !feedbackDescription.trim()}
+                  >
+                    {isSubmittingFeedback ? (
+                      <>
+                        <RefreshCw size={15} className="spin" />
+                        <span>Submitting...</span>
+                      </>
+                    ) : feedbackType === 'bug' ? (
+                      <>
+                        <GitPullRequest size={16} />
+                        <span>Submit Issue</span>
+                      </>
+                    ) : (
+                      <>
+                        <Lightbulb size={16} />
+                        <span>Submit Feature</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </form>
             </div>
           </div>,
@@ -3623,41 +3714,99 @@ export default function Settings({
         {/* Bottom Sheet Drawer Modal for App Version */}
         {showVersionSheet && createPortal(
           <div className="sheet-backdrop" onClick={() => setShowVersionSheet(false)}>
-            <div className="sheet-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="sheet-modal app-version-sheet" onClick={(e) => e.stopPropagation()}>
               {/* Drag Handle */}
-              <div className="sheet-drag-handle" />
+              <div className="sheet-drag-handle" style={{ marginBottom: 18 }} />
 
               {/* Header */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div className="drawer-header-icon">
-                    <HelpCircle size={20} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{
+                    width: 32,
+                    height: 32,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--accent)',
+                    flexShrink: 0
+                  }}>
+                    <HelpCircle size={22} />
                   </div>
                   <div>
-                    <h3 style={{ fontSize: 16.5, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em' }}>
-                      App Version & Info
-                    </h3>
-                    <p className="drawer-header-sub">
-                      v{currentAppVersion}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <h3 style={{ fontSize: 17.5, fontWeight: 750, margin: 0, color: 'var(--text)', letterSpacing: '-0.02em' }}>
+                        Okane Info
+                      </h3>
+                      <span style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        padding: '2px 8px',
+                        borderRadius: 9999,
+                        background: 'var(--accent-soft)',
+                        color: 'var(--accent)',
+                        border: '1px solid var(--accent-border-soft)'
+                      }}>
+                        v{currentAppVersion}
+                      </span>
+                    </div>
+                    <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text-3)', fontWeight: 500 }}>
+                      System info & updates
                     </p>
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  className="drawer-close-btn"
-                  onClick={() => setShowVersionSheet(false)}
-                  title="Close"
-                >
-                  <X size={17} />
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <a
+                    href="https://github.com/prathambahekar/okane"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="View on GitHub"
+                    aria-label="View on GitHub"
+                    style={{
+                      width: 34,
+                      height: 34,
+                      borderRadius: 9999,
+                      background: 'var(--surface2)',
+                      border: '1px solid var(--border)',
+                      display: 'grid',
+                      placeItems: 'center',
+                      color: 'var(--text-2)',
+                      cursor: 'pointer',
+                      textDecoration: 'none',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <GitPullRequest size={17} />
+                  </a>
+
+                  <button
+                    type="button"
+                    className="drawer-close-btn"
+                    onClick={() => setShowVersionSheet(false)}
+                    title="Close"
+                    style={{
+                      width: 34,
+                      height: 34,
+                      borderRadius: 9999,
+                      background: 'var(--surface2)',
+                      border: '1px solid var(--border)',
+                      display: 'grid',
+                      placeItems: 'center',
+                      color: 'var(--text-2)',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <X size={17} />
+                  </button>
+                </div>
               </div>
 
               {/* Software Update Status Panel */}
               {availableUpdate ? (
                 <div className="drawer-setting-card" style={{
-                  marginBottom: 12,
-                  borderColor: 'rgba(59, 130, 246, 0.3)',
+                  marginBottom: 14,
+                  padding: '14px 16px',
+                  borderColor: 'rgba(59, 130, 246, 0.35)',
                   background: 'var(--surface2)',
                   flexDirection: 'column',
                   alignItems: 'stretch',
@@ -3666,11 +3815,14 @@ export default function Settings({
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <div className="drawer-card-icon" style={{
+                        width: 38,
+                        height: 38,
+                        borderRadius: 10,
                         background: 'rgba(59, 130, 246, 0.12)',
                         border: '1px solid rgba(59, 130, 246, 0.25)',
                         color: '#3b82f6'
                       }}>
-                        <ArrowUpCircle size={18} />
+                        <ArrowUpCircle size={20} />
                       </div>
                       <div className="drawer-card-info">
                         <div className="drawer-card-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -3679,7 +3831,7 @@ export default function Settings({
                             NEW
                           </span>
                         </div>
-                        <div className="drawer-card-sub">
+                        <div className="drawer-card-sub" style={{ fontSize: 12 }}>
                           Build #{availableUpdate.buildNumber} • {availableUpdate.releaseDate}
                         </div>
                       </div>
@@ -3689,39 +3841,44 @@ export default function Settings({
                         type="button"
                         className="btn btn-primary"
                         onClick={() => installUpdate()}
-                        style={{ gap: 6, padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, flexShrink: 0 }}
+                        style={{ gap: 6, padding: '8px 16px', borderRadius: 10, fontSize: 12.5, fontWeight: 650, flexShrink: 0 }}
+                        title="Download Update"
                       >
-                        <Download size={13} /> Download
+                        <Download size={14} />
+                        <span className="hide-mobile">Download</span>
                       </button>
                     )}
                   </div>
                   {isUpdating && (
                     <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 600, marginBottom: 4, color: 'var(--text-2)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, fontWeight: 600, marginBottom: 5, color: 'var(--text-2)' }}>
                         <span>{updateStatusMessage}</span>
                         <span>{updateProgress}%</span>
                       </div>
-                      <div style={{ height: 5, background: 'var(--surface3)', borderRadius: 99, overflow: 'hidden' }}>
+                      <div style={{ height: 6, background: 'var(--surface3)', borderRadius: 99, overflow: 'hidden' }}>
                         <div style={{ height: '100%', width: `${updateProgress}%`, background: 'var(--accent)', borderRadius: 99, transition: 'width 0.2s ease' }} />
                       </div>
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="drawer-setting-card" style={{ marginBottom: 12 }}>
+                <div className="drawer-setting-card" style={{ marginBottom: 14, padding: '14px 16px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: '1 1 auto' }}>
                     <div className="drawer-card-icon" style={{
+                      width: 38,
+                      height: 38,
+                      borderRadius: 10,
                       background: 'rgba(34, 197, 94, 0.12)',
                       border: '1px solid rgba(34, 197, 94, 0.25)',
                       color: '#22c55e'
                     }}>
-                      <CheckCircle2 size={18} />
+                      <CheckCircle2 size={20} />
                     </div>
                     <div className="drawer-card-info">
-                      <div className="drawer-card-title">
-                        Up to date
+                      <div className="drawer-card-title" style={{ fontSize: 14, fontWeight: 700 }}>
+                        App is up to date
                       </div>
-                      <div className="drawer-card-sub">
+                      <div className="drawer-card-sub" style={{ fontSize: 12, marginTop: 2 }}>
                         Checked {settings.lastUpdateCheck || String(jsonSettings.lastUpdated || 'Today')}
                       </div>
                     </div>
@@ -3731,117 +3888,95 @@ export default function Settings({
                     className="btn btn-secondary"
                     onClick={() => checkForUpdates(true)}
                     disabled={isCheckingUpdate}
+                    title="Check for software updates"
                     style={{
-                      gap: 5,
-                      fontSize: 11.5,
-                      padding: '6px 12px',
-                      borderRadius: 8,
-                      fontWeight: 600,
+                      gap: 6,
+                      fontSize: 12,
+                      padding: '8px 14px',
+                      borderRadius: 10,
+                      fontWeight: 650,
                       flexShrink: 0,
                       background: 'var(--surface3)',
                       border: '1px solid var(--border)',
                       whiteSpace: 'nowrap'
                     }}
                   >
-                    <RefreshCw size={13} className={isCheckingUpdate ? 'spin' : ''} />
-                    {isCheckingUpdate ? 'Checking...' : 'Check Updates'}
+                    <RefreshCw size={14} className={isCheckingUpdate ? 'spin' : ''} />
+                    <span className="hide-mobile">{isCheckingUpdate ? 'Checking...' : 'Check Updates'}</span>
                   </button>
                 </div>
               )}
 
-              {/* Action Toolbar */}
+              {/* Action Toolbar - Feedback at left, Version History at right */}
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
+                justifyContent: 'stretch',
                 gap: 8,
-                marginBottom: 12,
-                flexWrap: 'wrap'
+                marginBottom: 4,
               }}>
+                {/* 1. Feedback Shortcut Button (Left) */}
                 <button
                   type="button"
-                  onClick={() => { setShowVersionSheet(false); setHistoryModalOpen(true); }}
-                  style={{
-                    flex: '1 1 auto',
-                    minWidth: '120px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 6,
-                    padding: '9px 12px',
-                    borderRadius: 10,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    border: '1px solid var(--border)',
-                    background: 'var(--surface2)',
-                    color: 'var(--text)',
-                    cursor: 'pointer',
-                  }}
+                  className="app-version-action-btn"
+                  onClick={() => { setShowVersionSheet(false); setShowFeedbackSheet(true); }}
+                  title="Report Issue or Suggest Feature"
+                  aria-label="Feedback and Bug Report"
                 >
-                  <History size={14} style={{ color: 'var(--text-2)' }} />
+                  <MessageSquarePlus size={16} style={{ color: 'var(--text-2)', flexShrink: 0 }} />
+                  <span>Feedback</span>
+                </button>
+
+                {/* 2. Developer JSON Viewer Action Button (Dev Mode) */}
+                {isDevMode && (
+                  <button
+                    type="button"
+                    className="app-version-action-btn"
+                    onClick={() => setShowJsonView(!showJsonView)}
+                    title="Inspect Settings JSON Manifest"
+                    aria-label="Toggle Settings JSON"
+                    style={{
+                      background: showJsonView ? 'var(--surface3)' : 'var(--surface2)',
+                      borderColor: showJsonView ? 'var(--accent)' : 'var(--border)'
+                    }}
+                  >
+                    <FileCode size={16} style={{ color: showJsonView ? 'var(--accent)' : 'var(--text-2)', flexShrink: 0 }} />
+                    <span className="hide-mobile">{showJsonView ? 'Hide JSON' : 'settings.json'}</span>
+                  </button>
+                )}
+
+                {/* 3. Version History Action Button (Right) */}
+                <button
+                  type="button"
+                  className="app-version-action-btn"
+                  onClick={() => { setShowVersionSheet(false); setHistoryModalOpen(true); }}
+                  title="View Version Release History"
+                  aria-label="Version Release History"
+                >
+                  <History size={16} style={{ color: 'var(--accent)', flexShrink: 0 }} />
                   <span>Version History</span>
                   {displayReleaseHistory.length > 0 && (
-                    <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 99, background: 'var(--surface3)', color: 'var(--text-2)', fontWeight: 600 }}>
+                    <span style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      padding: '1px 6px',
+                      borderRadius: 99,
+                      background: 'var(--accent-soft)',
+                      color: 'var(--accent)',
+                      border: '1px solid var(--accent-border-soft)'
+                    }}>
                       {displayReleaseHistory.length}
                     </span>
                   )}
                 </button>
-
-                {isDevMode && (
-                  <button
-                    type="button"
-                    onClick={() => setShowJsonView(!showJsonView)}
-                    style={{
-                      flex: '1 1 auto',
-                      minWidth: '110px',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 6,
-                      padding: '9px 12px',
-                      borderRadius: 10,
-                      fontSize: 12,
-                      fontWeight: 600,
-                      border: '1px solid var(--border)',
-                      background: showJsonView ? 'var(--surface3)' : 'var(--surface2)',
-                      color: 'var(--text)',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <FileCode size={14} />
-                    <span>{showJsonView ? 'Hide JSON' : 'settings.json'}</span>
-                  </button>
-                )}
-
-                <a
-                  href="https://github.com/prathambahekar/okane/releases"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 4,
-                    padding: '9px 12px',
-                    borderRadius: 10,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: 'var(--text-2)',
-                    textDecoration: 'none',
-                    background: 'var(--surface2)',
-                    border: '1px solid var(--border)'
-                  }}
-                >
-                  <span>GitHub</span>
-                  <ExternalLink size={12} />
-                </a>
               </div>
 
+              {/* Developer JSON Inspector (if enabled) */}
               {isDevMode && showJsonView && (
-                <div style={{ marginTop: 10 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <span style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-3)' }}>public/settings.json</span>
-                    <a href="/settings.json" target="_blank" rel="noreferrer" style={{ fontSize: 10.5, color: 'var(--accent)', textDecoration: 'none' }}>
+                <div style={{ marginTop: 12, marginBottom: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <span style={{ fontSize: 11, fontWeight: 650, color: 'var(--text-3)' }}>public/settings.json</span>
+                    <a href="/settings.json" target="_blank" rel="noreferrer" style={{ fontSize: 11, color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>
                       Open Raw File ↗
                     </a>
                   </div>
@@ -3849,8 +3984,8 @@ export default function Settings({
                     fontSize: 11,
                     fontFamily: 'monospace',
                     background: 'var(--surface2)',
-                    padding: 10,
-                    borderRadius: 6,
+                    padding: 12,
+                    borderRadius: 12,
                     overflowX: 'auto',
                     color: 'var(--text)',
                     border: '1px solid var(--border)',
@@ -4116,7 +4251,7 @@ export default function Settings({
             style={{
               maxWidth: '480px',
               maxHeight: '88vh',
-              padding: '18px 20px 22px',
+              padding: '20px 22px 24px',
               display: 'flex',
               flexDirection: 'column',
               gap: '16px',
@@ -4132,38 +4267,38 @@ export default function Settings({
 
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '10px',
-                  background: 'var(--surface2)',
-                  color: 'var(--text-2)',
-                  display: 'grid',
-                  placeItems: 'center'
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--accent)',
+                  flexShrink: 0
                 }}>
-                  <GitCommit size={18} />
+                  <GitCommit size={22} />
                 </div>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--text)' }}>
+                    <h3 style={{ margin: 0, fontSize: '17.5px', fontWeight: 750, color: 'var(--text)', letterSpacing: '-0.02em' }}>
                       Release History
                     </h3>
                     {displayReleaseHistory.length > 0 && (
                       <span style={{
                         fontSize: '11px',
-                        fontWeight: 600,
+                        fontWeight: 700,
                         padding: '2px 8px',
-                        borderRadius: 99,
-                        background: 'var(--surface2)',
-                        color: 'var(--text-2)',
-                        border: '1px solid var(--border)'
+                        borderRadius: 9999,
+                        background: 'var(--accent-soft)',
+                        color: 'var(--accent)',
+                        border: '1px solid var(--accent-border-soft)'
                       }}>
                         {displayReleaseHistory.length} releases
                       </span>
                     )}
                   </div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-3)', marginTop: 1 }}>
+                  <div style={{ fontSize: '12.5px', color: 'var(--text-3)', marginTop: 2, fontWeight: 500 }}>
                     prathambahekar/okane
                   </div>
                 </div>
@@ -4175,7 +4310,7 @@ export default function Settings({
                 style={{
                   background: 'var(--surface2)',
                   border: '1px solid var(--border)',
-                  borderRadius: 10,
+                  borderRadius: 9999,
                   width: '32px',
                   height: '32px',
                   display: 'grid',
@@ -4193,7 +4328,7 @@ export default function Settings({
             <div style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '10px',
+              gap: '12px',
               overflowY: 'auto',
               maxHeight: '68vh',
               paddingRight: '4px'
@@ -4221,27 +4356,27 @@ export default function Settings({
                     <div
                       key={item.version + '_' + idx}
                       style={{
-                        padding: '14px 16px',
-                        borderRadius: '16px',
+                        padding: '16px 18px',
+                        borderRadius: '18px',
                         background: 'var(--surface2)',
                         border: isCurrent ? '1.5px solid var(--accent)' : '1px solid var(--border)',
-                        boxShadow: isCurrent ? '0 4px 16px rgba(99, 102, 241, 0.12)' : 'none',
+                        boxShadow: isCurrent ? '0 4px 16px var(--accent-soft)' : 'none',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: 6
+                        gap: 8
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>
+                          <span style={{ fontSize: 15, fontWeight: 750, color: 'var(--text)', letterSpacing: '-0.01em' }}>
                             {item.name || `v${item.version}`}
                           </span>
                           {isCurrent && (
                             <span style={{
-                              fontSize: 10,
-                              fontWeight: 600,
+                              fontSize: 10.5,
+                              fontWeight: 700,
                               padding: '2px 8px',
-                              borderRadius: 99,
+                              borderRadius: 9999,
                               background: 'rgba(34, 197, 94, 0.12)',
                               color: '#22c55e',
                               border: '1px solid rgba(34, 197, 94, 0.3)',
@@ -4255,10 +4390,10 @@ export default function Settings({
                           )}
                           {item.isPrerelease && (
                             <span style={{
-                              fontSize: 10,
-                              fontWeight: 600,
+                              fontSize: 10.5,
+                              fontWeight: 700,
                               padding: '2px 8px',
-                              borderRadius: 99,
+                              borderRadius: 9999,
                               background: 'rgba(245, 158, 11, 0.12)',
                               color: '#f59e0b',
                               border: '1px solid rgba(245, 158, 11, 0.25)',
@@ -4271,26 +4406,30 @@ export default function Settings({
                             </span>
                           )}
                         </div>
-                        <span style={{ fontSize: 11, color: 'var(--text-3)', whiteSpace: 'nowrap', fontWeight: 500 }}>
+                        <span style={{ fontSize: 12, color: 'var(--text-3)', whiteSpace: 'nowrap', fontWeight: 500 }}>
                           {item.releaseDate}
                         </span>
                       </div>
 
                       <FormattedReleaseNotes notes={item.releaseNotes} />
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingTop: 4, marginTop: 2 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingTop: 4 }}>
                         <a
                           href={item.htmlUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{
-                            fontSize: 11.5,
+                            fontSize: 12,
                             color: 'var(--accent)',
-                            fontWeight: 600,
+                            fontWeight: 650,
                             textDecoration: 'none',
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: 4
+                            gap: 5,
+                            padding: '4px 10px',
+                            borderRadius: 9999,
+                            background: 'var(--accent-soft)',
+                            border: '1px solid var(--accent-border-soft)'
                           }}
                         >
                           <span>View on GitHub</span>
@@ -4302,13 +4441,17 @@ export default function Settings({
                             target="_blank"
                             rel="noopener noreferrer"
                             style={{
-                              fontSize: 11.5,
-                              color: 'var(--text-2)',
-                              fontWeight: 500,
+                              fontSize: 12,
+                              color: 'var(--text)',
+                              fontWeight: 600,
                               textDecoration: 'none',
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: 4,
+                              gap: 5,
+                              padding: '4px 12px',
+                              borderRadius: 9999,
+                              background: 'var(--surface3)',
+                              border: '1px solid var(--border)',
                               marginLeft: 'auto'
                             }}
                           >

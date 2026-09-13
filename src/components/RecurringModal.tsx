@@ -23,6 +23,7 @@ import type { RecurringRule, RecurringKind, FrequencyType, ExpenseType } from '.
 import { todayISO, computeNextDueDate } from '../db';
 import { currencySymbol, getAvatarStyle, friendInitial } from '../utils';
 import { NoteEditorModal } from './common/NoteEditorModal';
+import { NotePreviewCard } from './common/NotePreviewCard';
 import { useBackButtonModal, BackPriority } from '../utils/backHandler';
 import { showSoftKeyboard } from '../utils/keyboard';
 
@@ -525,50 +526,11 @@ export default function RecurringModal({ rule, defaultKind = 'autopay', onClose 
                 />
               </div>
 
-              {notes && (
-                <div
-                  onClick={() => setIsNoteModalOpen(true)}
-                  style={{
-                    marginTop: 3,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    background: 'var(--surface2)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 8,
-                    padding: '3px 9px',
-                    fontSize: 11,
-                    color: 'var(--text-2)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0, overflow: 'hidden' }}>
-                    <Feather size={11} style={{ color: '#38bdf8', flexShrink: 0 }} />
-                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {notes}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setNotes('');
-                    }}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: 'var(--text-3)',
-                      cursor: 'pointer',
-                      padding: 2,
-                      display: 'grid',
-                      placeItems: 'center',
-                    }}
-                    title="Remove note"
-                  >
-                    <X size={11} />
-                  </button>
-                </div>
-              )}
+              <NotePreviewCard
+                notes={notes}
+                onEdit={() => setIsNoteModalOpen(true)}
+                onClear={() => setNotes('')}
+              />
             </div>
 
             {/* Row 2: Amount (Dedicated Separate Row) */}
