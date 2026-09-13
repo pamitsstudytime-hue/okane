@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useColorMode } from '../theme';
 import Switch from '@mui/material/Switch';
-import { Plus, X, RotateCcw, Tag, Upload, FlaskConical, Trash2, ChevronRight, ChevronDown, Edit2, Palette, ExternalLink, Sparkles, Zap, FileCode, Check, Database, Terminal, Download, RefreshCw, ArrowUpCircle, CheckCircle2, History, GitCommit, Plane, Send, HelpCircle, MessageSquarePlus, Bug, Lightbulb, GitPullRequest, Sliders, Moon, Sun, Compass, ShieldCheck, Fingerprint, Lock, KeyRound, Smartphone, EyeOff, Eye, ArrowLeft, Search, ScanFace, Keyboard as KeyboardIcon, Coins, Wallet, Layout } from 'lucide-react';
+import { Plus, X, RotateCcw, Tag, Upload, FlaskConical, Trash2, ChevronRight, ChevronDown, Edit2, Palette, ExternalLink, ArrowUpRight, Sparkles, Zap, FileCode, Check, Database, Terminal, Download, RefreshCw, ArrowUpCircle, CheckCircle2, History, GitCommit, Plane, Send, HelpCircle, MessageSquarePlus, Bug, Lightbulb, GitPullRequest, Sliders, Moon, Sun, Compass, ShieldCheck, Fingerprint, Lock, KeyRound, Smartphone, EyeOff, Eye, ArrowLeft, Search, ScanFace, Keyboard as KeyboardIcon, Coins, Wallet, Layout } from 'lucide-react';
 import { useStore } from '../store';
 import { CURRENCIES, DEFAULT_CATEGORIES, FRIEND_PALETTE, generateSQLDumpString, downloadFile, importSQLDumpString, seedSampleData, resetAndSeedSampleData } from '../db';
 import type { Category, AppDB, ViewName } from '../types';
@@ -16,6 +16,7 @@ import CategoryIcon, { AVAILABLE_ICONS } from '../components/CategoryIcon';
 import PinSetupDrawer from '../components/PinSetupDrawer';
 import { CURRENT_APP_VERSION, getEffectiveAppVersion } from '../utils/updateManager';
 import { showSoftKeyboard } from '../utils/keyboard';
+import { useBackButtonModal } from '../utils/backHandler';
 
 function ColorPickerSection({ color, onChangeColor }: { color: string; onChangeColor: (c: string) => void }) {
   const isCustom = !FRIEND_PALETTE.includes(color);
@@ -48,47 +49,74 @@ function ColorPickerSection({ color, onChangeColor }: { color: string; onChangeC
   };
 
   return (
-    <div className="category-color-picker">
+    <div
+      className="category-color-picker"
+      style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        justifyContent: 'flex-start',
+        gap: 7,
+        alignItems: 'center',
+        padding: '4px 2px',
+        width: '100%',
+      }}
+    >
       {FRIEND_PALETTE.map(c => (
         <button
           key={c}
           type="button"
           className={`color-swatch-btn ${color === c ? 'selected' : ''}`}
           style={{
+            width: 26,
+            height: 26,
+            minWidth: 26,
+            minHeight: 26,
             background: c,
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
+            flexShrink: 0,
+            borderRadius: '50%',
+            padding: 0,
+            boxSizing: 'border-box',
           }}
           onClick={() => onChangeColor(c)}
           aria-label={`Select color ${c}`}
         >
           {color === c && (
-            <Check size={14} style={{ color: '#ffffff', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.6))' }} />
+            <Check size={12} strokeWidth={2.5} style={{ color: '#ffffff', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.6))' }} />
           )}
         </button>
       ))}
-      <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
         <button
           type="button"
           className={`color-swatch-btn ${isCustom ? 'selected' : ''}`}
           onClick={handleCustomClick}
           style={{
+            width: 26,
+            height: 26,
+            minWidth: 26,
+            minHeight: 26,
+            borderRadius: '50%',
             background: isCustom ? color : 'var(--surface2, #2a2a32)',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
-            border: isCustom ? 'none' : '1.5px dashed var(--border, rgba(255,255,255,0.4))',
+            border: isCustom ? 'none' : '1.5px solid var(--border2, rgba(255,255,255,0.35))',
             touchAction: 'manipulation',
             WebkitTapHighlightColor: 'transparent',
+            flexShrink: 0,
+            padding: 0,
+            boxSizing: 'border-box',
           }}
           title="Choose Custom Color"
         >
           {isCustom ? (
-            <Check size={14} style={{ color: '#ffffff', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.6))' }} />
+            <Check size={12} strokeWidth={2.5} style={{ color: '#ffffff', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.6))' }} />
           ) : (
-            <Palette size={14} style={{ color: 'var(--text-2)' }} />
+            <Palette size={13} style={{ color: 'var(--text)' }} />
           )}
         </button>
         <input
@@ -298,7 +326,7 @@ export default function Settings({
   const [editColor, setEditColor] = useState('#F97362');
   const [editIcon, setEditIcon] = useState('other');
 
-  const { mode, toggleMode, accent } = useColorMode();
+  const { mode, toggleMode } = useColorMode();
   const isDark = mode === 'dark';
   const [appearanceSubView, setAppearanceSubView] = useState<'main' | 'more'>('main');
   const [categorySubView, setCategorySubView] = useState<'list' | 'add'>('list');
@@ -355,6 +383,35 @@ export default function Settings({
   const [showFeedbackSheet, setShowFeedbackSheet] = useState(false);
   const [showSecuritySheet, setShowSecuritySheet] = useState(false);
   const [isPinSetupActive, setIsPinSetupActive] = useState(false);
+
+  // Back button gesture and popstate handling for all sub-settings drawers
+  useBackButtonModal(showAppearanceSheet, () => {
+    if (appearanceSubView === 'more') {
+      setAppearanceSubView('main');
+    } else {
+      setShowAppearanceSheet(false);
+    }
+  }, { name: 'settings-appearance' });
+
+  useBackButtonModal(showPerformanceSheet, () => setShowPerformanceSheet(false), { name: 'settings-performance' });
+  useBackButtonModal(showPreferencesSheet, () => setShowPreferencesSheet(false), { name: 'settings-preferences' });
+  useBackButtonModal(showCategoriesSheet, () => {
+    if (categorySubView !== 'list') {
+      setCategorySubView('list');
+    } else {
+      setShowCategoriesSheet(false);
+    }
+  }, { name: 'settings-categories' });
+  useBackButtonModal(showCurrencySheet, () => setShowCurrencySheet(false), { name: 'settings-currency' });
+  useBackButtonModal(showDataSheet, () => setShowDataSheet(false), { name: 'settings-data' });
+  useBackButtonModal(showVersionSheet, () => setShowVersionSheet(false), { name: 'settings-version' });
+  useBackButtonModal(showFeedbackSheet, () => setShowFeedbackSheet(false), { name: 'settings-feedback' });
+  useBackButtonModal(showSecuritySheet, () => {
+    setShowSecuritySheet(false);
+    setIsPinSetupActive(false);
+  }, { name: 'settings-security' });
+  useBackButtonModal(showAdvancedSheet, () => setShowAdvancedSheet(false), { name: 'settings-advanced' });
+  useBackButtonModal(showDevSheet, () => setShowDevSheet(false), { name: 'settings-dev' });
 
   const isLockEnabled = Boolean(settings.enableSecurityLock && settings.securityPin);
   const isBiometricEnabled = Boolean(settings.enableBiometricLock && settings.securityPin && isLockEnabled);
@@ -1155,10 +1212,9 @@ export default function Settings({
   const matches = (keywords: string[]) => !effectiveSearch || keywords.some(k => k.toLowerCase().includes(effectiveSearch));
 
   const showAppearance = matches(['appearance', 'customization', 'theme', 'dark mode', 'light mode', 'accent', 'monochrome', 'navigation']);
-  const showAutoKeyboard = matches(['auto open keyboard', 'keyboard', 'soft keyboard', 'focus', 'input']);
-  const showPreferences = matches(['preferences', 'currency', 'inr', 'usd', 'default category', 'wallet', 'haptic', 'vibrate']);
+  const showPreferences = matches(['preferences', 'currency', 'inr', 'usd', 'default category', 'wallet', 'haptic', 'vibrate', 'keyboard', 'auto open keyboard', 'input', 'soft keyboard']);
   const showCategories = matches(['categories', 'tags', 'labels', 'colors']);
-  const showGeneralSection = showAppearance || showAutoKeyboard || showPreferences || showCategories;
+  const showGeneralSection = showAppearance || showPreferences || showCategories;
 
   const showData = matches(['data', 'data management', 'storage', 'backup', 'restore', 'export', 'import', 'reset', 'clear', 'json', 'csv', 'dummy', 'sample', 'seed', 'demo']);
   const showDataSection = showData;
@@ -1176,16 +1232,6 @@ export default function Settings({
       {/* Desktop Header for Settings (different for desktop & mobile) */}
       <div className="settings-desktop-header">
         <div className="settings-desktop-header-left">
-          {onNavigate && (
-            <button
-              type="button"
-              className="settings-desktop-back-btn"
-              onClick={() => onNavigate('dashboard')}
-              title="Back to Dashboard"
-            >
-              <ArrowLeft size={18} />
-            </button>
-          )}
           <h1 className="settings-desktop-title">Settings</h1>
         </div>
 
@@ -1209,6 +1255,8 @@ export default function Settings({
             </button>
           )}
         </div>
+
+        <div className="settings-desktop-header-spacer desktop-only" />
       </div>
 
       {/* Mobile search bar if toggled */}
@@ -1259,126 +1307,76 @@ export default function Settings({
             <div className="settings-section-group">
               <div className="settings-section-label">General & Customization</div>
 
-              {/* Appearance Summary Card */}
-              {showAppearance && (
-                <div className="card settings-summary-card" onClick={() => setShowAppearanceSheet(true)}>
-                  <div className="settings-card-inner">
-                    <div className="settings-card-left">
-                      <div className="settings-card-icon">
-                        <Palette size={19} />
+              <div className="settings-section-grid">
+                {/* Appearance Summary Card */}
+                {showAppearance && (
+                  <div className="card settings-summary-card" onClick={() => setShowAppearanceSheet(true)}>
+                    <div className="settings-card-inner">
+                      <div className="settings-card-left">
+                        <div className="settings-card-icon">
+                          <Palette size={19} />
+                        </div>
+                        <div className="settings-card-text">
+                          <h2 className="settings-card-title">Appearance & Customization</h2>
+                          <p className="settings-card-sub">
+                            Theme & layout
+                          </p>
+                        </div>
                       </div>
-                      <div className="settings-card-text">
-                        <h2 className="settings-card-title">Appearance & Customization</h2>
-                        <p className="settings-card-sub">
-                          Theme & navigation layout
-                        </p>
-                      </div>
-                    </div>
 
-                    <div className="settings-card-right">
-                      <ChevronRight className="settings-card-arrow" size={18} />
+                      <div className="settings-card-right">
+                        <ChevronRight className="settings-card-arrow" size={18} />
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Auto Open Keyboard Toggle Card */}
-              {showAutoKeyboard && (
-                <div
-                  className="card settings-summary-card"
-                  onClick={() => {
-                    const nextVal = !(settings.autoOpenKeyboard ?? false);
-                    localStorage.setItem('auto_open_keyboard', String(nextVal));
-                    updateSettings({ autoOpenKeyboard: nextVal });
-                    showToast(nextVal ? 'Auto open keyboard enabled' : 'Auto open keyboard disabled');
-                  }}
-                >
-                  <div className="settings-card-inner">
-                    <div className="settings-card-left">
-                      <div className="settings-card-icon">
-                        <KeyboardIcon size={19} />
+                {/* Preferences Summary Card */}
+                {showPreferences && (
+                  <div className="card settings-summary-card" onClick={() => setShowPreferencesSheet(true)}>
+                    <div className="settings-card-inner">
+                      <div className="settings-card-left">
+                        <div className="settings-card-icon">
+                          <Sliders size={19} />
+                        </div>
+                        <div className="settings-card-text">
+                          <h2 className="settings-card-title">Preferences</h2>
+                          <p className="settings-card-sub">
+                            Currency, category & wallet
+                          </p>
+                        </div>
                       </div>
-                      <div className="settings-card-text">
-                        <h2 className="settings-card-title">Auto Open Keyboard</h2>
-                        <p className="settings-card-sub">
-                          Auto-open soft keyboard when focusing inputs & search
-                        </p>
-                      </div>
-                    </div>
 
-                    <div className="settings-card-right" onClick={(e) => e.stopPropagation()}>
-                      <Switch
-                        size="small"
-                        checked={settings.autoOpenKeyboard ?? false}
-                        onChange={(e) => {
-                          const val = e.target.checked;
-                          localStorage.setItem('auto_open_keyboard', String(val));
-                          updateSettings({ autoOpenKeyboard: val });
-                          showToast(val ? 'Auto open keyboard enabled' : 'Auto open keyboard disabled');
-                        }}
-                        sx={{
-                          '& .MuiSwitch-switchBase.Mui-checked': {
-                            color: '#ffffff',
-                            '& + .MuiSwitch-track': {
-                              backgroundColor: 'var(--accent)',
-                              opacity: 1,
-                            },
-                          },
-                          '& .MuiSwitch-track': {
-                            backgroundColor: 'var(--border2)',
-                          },
-                        }}
-                      />
+                      <div className="settings-card-right">
+                        <ChevronRight className="settings-card-arrow" size={18} />
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Preferences Summary Card */}
-              {showPreferences && (
-                <div className="card settings-summary-card" onClick={() => setShowPreferencesSheet(true)}>
-                  <div className="settings-card-inner">
-                    <div className="settings-card-left">
-                      <div className="settings-card-icon">
-                        <Sliders size={19} />
+                {/* Categories Summary Card */}
+                {showCategories && (
+                  <div className="card settings-summary-card" onClick={() => setShowCategoriesSheet(true)}>
+                    <div className="settings-card-inner">
+                      <div className="settings-card-left">
+                        <div className="settings-card-icon">
+                          <Tag size={19} />
+                        </div>
+                        <div className="settings-card-text">
+                          <h2 className="settings-card-title">Categories</h2>
+                          <p className="settings-card-sub">
+                            {settings.categories.length} category tags
+                          </p>
+                        </div>
                       </div>
-                      <div className="settings-card-text">
-                        <h2 className="settings-card-title">Preferences</h2>
-                        <p className="settings-card-sub">
-                          Currency ({settings.currency}), default category, wallet & defaults
-                        </p>
-                      </div>
-                    </div>
 
-                    <div className="settings-card-right">
-                      <ChevronRight className="settings-card-arrow" size={18} />
+                      <div className="settings-card-right">
+                        <ChevronRight className="settings-card-arrow" size={18} />
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-
-              {/* Categories Summary Card */}
-              {showCategories && (
-                <div className="card settings-summary-card" onClick={() => setShowCategoriesSheet(true)}>
-                  <div className="settings-card-inner">
-                    <div className="settings-card-left">
-                      <div className="settings-card-icon">
-                        <Tag size={19} />
-                      </div>
-                      <div className="settings-card-text">
-                        <h2 className="settings-card-title">Categories</h2>
-                        <p className="settings-card-sub">
-                          Manage category tags & color labels ({settings.categories.length} configured)
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="settings-card-right">
-                      <ChevronRight className="settings-card-arrow" size={18} />
-                    </div>
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )}
 
@@ -1388,7 +1386,7 @@ export default function Settings({
             setShowAppearanceSheet(false);
             setAppearanceSubView('main');
           }}>
-            <div className="sheet-modal sheet-modal-lg" onClick={(e) => e.stopPropagation()}>
+            <div className="sheet-modal" onClick={(e) => e.stopPropagation()}>
               {/* Drag Handle */}
               <div className="sheet-drag-handle" />
 
@@ -1396,18 +1394,15 @@ export default function Settings({
                 <>
                   {/* Header */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div style={{
-                        width: 38, height: 38, borderRadius: 10, background: 'var(--accent-soft)',
-                        display: 'grid', placeItems: 'center', color: 'var(--accent)', flexShrink: 0
-                      }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div className="drawer-header-icon">
                         <Palette size={20} />
                       </div>
                       <div>
-                        <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em' }}>
+                        <h3 style={{ fontSize: 16.5, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em' }}>
                           Appearance & Theme
                         </h3>
-                        <p style={{ fontSize: 11.5, color: 'var(--text-3)', margin: '1px 0 0 0' }}>
+                        <p className="drawer-header-sub">
                           Choose dark mode & primary accent color
                         </p>
                       </div>
@@ -1420,41 +1415,25 @@ export default function Settings({
                         setShowAppearanceSheet(false);
                         setAppearanceSubView('main');
                       }}
-                      style={{
-                        background: 'var(--surface2)',
-                        border: '1px solid var(--border)',
-                        borderRadius: 8,
-                        width: 32,
-                        height: 32,
-                        display: 'grid',
-                        placeItems: 'center',
-                        color: 'var(--text-2)',
-                        cursor: 'pointer'
-                      }}
+                      title="Close"
                     >
-                      <X size={16} />
+                      <X size={17} />
                     </button>
                   </div>
 
                   {/* Theme Mode Toggle Row */}
-                  <div style={{
-                    padding: '14px 16px',
-                    borderRadius: 14,
-                    background: 'var(--surface2)',
-                    border: '1px solid var(--border)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: 12
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      {isDark ? <Moon size={18} style={{ color: 'var(--accent)' }} /> : <Sun size={18} style={{ color: 'var(--accent)' }} />}
-                      <div>
-                        <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>Dark Theme Mode</div>
-                        <div style={{ fontSize: 11.5, color: 'var(--text-3)' }}>Switch between dark and light background</div>
+                  <div className="drawer-setting-card" style={{ marginBottom: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
+                      <div className="drawer-card-icon">
+                        {isDark ? <Moon size={18} /> : <Sun size={18} />}
+                      </div>
+                      <div className="drawer-card-info">
+                        <div className="drawer-card-title">Dark Theme Mode</div>
+                        <div className="drawer-card-sub">Switch between dark and light background</div>
                       </div>
                     </div>
                     <Switch
+                      className="custom-toggle-switch"
                       checked={isDark}
                       onChange={() => {
                         const nextMode = isDark ? 'light' : 'dark';
@@ -1470,40 +1449,20 @@ export default function Settings({
                     <button
                       type="button"
                       onClick={() => setAppearanceSubView('more')}
+                      className="drawer-setting-card"
                       style={{
                         width: '100%',
-                        padding: '13px 16px',
-                        borderRadius: 14,
-                        background: 'var(--surface2)',
-                        border: '1px solid var(--border)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
                         cursor: 'pointer',
-                        transition: 'all 0.15s ease',
+                        textAlign: 'left',
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div style={{
-                          width: 28,
-                          height: 28,
-                          borderRadius: 8,
-                          background: accent === 'monochrome' ? (isDark ? '#ffffff' : '#111111') : 'var(--accent)',
-                          display: 'grid',
-                          placeItems: 'center',
-                          color: accent === 'monochrome' ? (isDark ? '#000000' : '#ffffff') : '#ffffff',
-                          boxShadow: '0 2px 5px rgba(0,0,0,0.18)',
-                          flexShrink: 0,
-                        }}>
-                          <Palette size={15} />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                        <div className="drawer-card-icon">
+                          <Palette size={18} />
                         </div>
-                        <div style={{ textAlign: 'left' }}>
-                          <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <span>More Appearance</span>
-                          </div>
-                          <div style={{ fontSize: 11.5, color: 'var(--text-3)' }}>
-                            Hide scrollbars & display options
-                          </div>
+                        <div className="drawer-card-info">
+                          <div className="drawer-card-title">More Appearance</div>
+                          <div className="drawer-card-sub">Hide scrollbars & display options</div>
                         </div>
                       </div>
                       <ChevronRight size={18} style={{ color: 'var(--text-3)' }} />
@@ -1517,27 +1476,17 @@ export default function Settings({
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <button
                         type="button"
+                        className="drawer-back-btn"
                         onClick={() => setAppearanceSubView('main')}
-                        style={{
-                          background: 'var(--surface2)',
-                          border: '1px solid var(--border)',
-                          borderRadius: 8,
-                          width: 32,
-                          height: 32,
-                          display: 'grid',
-                          placeItems: 'center',
-                          color: 'var(--text-2)',
-                          cursor: 'pointer',
-                        }}
                         title="Back to appearance"
                       >
-                        <ArrowLeft size={16} />
+                        <ArrowLeft size={17} />
                       </button>
                       <div>
-                        <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em' }}>
+                        <h3 style={{ fontSize: 16.5, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em' }}>
                           More Appearance
                         </h3>
-                        <p style={{ fontSize: 11.5, color: 'var(--text-3)', margin: '1px 0 0 0' }}>
+                        <p className="drawer-header-sub">
                           Interface & display options
                         </p>
                       </div>
@@ -1549,73 +1498,52 @@ export default function Settings({
                         setShowAppearanceSheet(false);
                         setAppearanceSubView('main');
                       }}
-                      style={{
-                        background: 'var(--surface2)',
-                        border: '1px solid var(--border)',
-                        borderRadius: 8,
-                        width: 32,
-                        height: 32,
-                        display: 'grid',
-                        placeItems: 'center',
-                        color: 'var(--text-2)',
-                        cursor: 'pointer',
-                      }}
+                      title="Close"
                     >
-                      <X size={16} />
+                      <X size={17} />
                     </button>
                   </div>
 
                   {/* Hide Scrollbars Toggle Row */}
-                  <div style={{
-                    padding: '14px 16px',
-                    borderRadius: 14,
-                    background: 'var(--surface2)',
-                    border: '1px solid var(--border)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      {(settings.hideScrollbar ?? true) ? (
-                        <EyeOff size={18} style={{ color: accent === 'monochrome' ? (isDark ? '#ffffff' : '#111111') : 'var(--accent)' }} />
-                      ) : (
-                        <Eye size={18} style={{ color: accent === 'monochrome' ? (isDark ? '#ffffff' : '#111111') : 'var(--accent)' }} />
-                      )}
-                      <div>
-                        <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>Hide Scrollbars</div>
-                        <div style={{ fontSize: 11.5, color: 'var(--text-3)' }}>Hide visible scrollbar tracks for a clean mobile app look</div>
+                  <div className="drawer-setting-card" style={{ marginBottom: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
+                      <div className="drawer-card-icon">
+                        {(settings.hideScrollbar ?? true) ? (
+                          <EyeOff size={18} />
+                        ) : (
+                          <Eye size={18} />
+                        )}
+                      </div>
+                      <div className="drawer-card-info">
+                        <div className="drawer-card-title">Hide Scrollbars</div>
+                        <div className="drawer-card-sub">Hide scrollbar tracks</div>
                       </div>
                     </div>
                     <Switch
+                      className="custom-toggle-switch"
                       checked={settings.hideScrollbar ?? true}
                       onChange={(e) => {
                         const hide = e.target.checked;
                         updateSettings({ hideScrollbar: hide });
-                        showToast(hide ? 'Scrollbars hidden (Clean mobile style)' : 'Scrollbars visible');
+                        showToast(hide ? 'Scrollbars hidden' : 'Scrollbars visible');
                       }}
                       color="primary"
                     />
                   </div>
 
-                  {/* Hide Nav Bar Text Toggle Row */}
-                  <div style={{
-                    padding: '14px 16px',
-                    borderRadius: 14,
-                    background: 'var(--surface2)',
-                    border: '1px solid var(--border)',
-                    marginTop: 12,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <Smartphone size={18} style={{ color: accent === 'monochrome' ? (isDark ? '#ffffff' : '#111111') : 'var(--accent)' }} />
-                      <div>
-                        <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>Hide Nav Bar Text</div>
-                        <div style={{ fontSize: 11.5, color: 'var(--text-3)' }}>Hide text labels under bottom navigation icons</div>
+                  {/* Hide Nav Bar Text Toggle Row (Mobile Only) */}
+                  <div className="drawer-setting-card mobile-only-setting" style={{ marginBottom: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
+                      <div className="drawer-card-icon">
+                        <Smartphone size={18} />
+                      </div>
+                      <div className="drawer-card-info">
+                        <div className="drawer-card-title">Hide Nav Bar Text</div>
+                        <div className="drawer-card-sub">Hide bottom nav labels</div>
                       </div>
                     </div>
                     <Switch
+                      className="custom-toggle-switch"
                       checked={settings.hideNavLabels ?? true}
                       onChange={(e) => {
                         const hide = e.target.checked;
@@ -1627,26 +1555,30 @@ export default function Settings({
                     />
                   </div>
 
-                  {/* Search Location Choice Row */}
-                  <div style={{
-                    padding: '14px 16px',
-                    borderRadius: 14,
-                    background: 'var(--surface2)',
-                    border: '1px solid var(--border)',
-                    marginTop: 12,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 12,
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <Search size={18} style={{ color: accent === 'monochrome' ? (isDark ? '#ffffff' : '#111111') : 'var(--accent)' }} />
-                      <div>
-                        <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>Search Placement (Mobile)</div>
-                        <div style={{ fontSize: 11.5, color: 'var(--text-3)' }}>Choose floating quick button or top bar header on mobile (desktop is always floating)</div>
+                  {/* Search Location Choice Row (Mobile Only) */}
+                  <div className="drawer-setting-card mobile-only-setting" style={{ marginBottom: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: '1 1 auto' }}>
+                      <div className="drawer-card-icon">
+                        <Search size={18} />
+                      </div>
+                      <div className="drawer-card-info">
+                        <div className="drawer-card-title">Search Placement</div>
+                        <div className="drawer-card-sub">Floating button or top bar</div>
                       </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        padding: 3,
+                        borderRadius: 10,
+                        background: 'var(--surface)',
+                        border: '1px solid var(--border)',
+                        flexShrink: 0,
+                      }}
+                    >
                       <button
                         type="button"
                         onClick={() => {
@@ -1655,26 +1587,19 @@ export default function Settings({
                           showToast('Search position set to Floating');
                         }}
                         style={{
-                          padding: '10px 12px',
-                          borderRadius: 10,
-                          border: (settings.searchLocation ?? 'topbar') === 'floating' ? '1px solid var(--border2)' : '1px solid var(--border)',
-                          background: (settings.searchLocation ?? 'topbar') === 'floating' ? 'var(--surface)' : 'var(--surface2)',
-                          color: 'var(--text)',
-                          fontSize: 12.5,
-                          fontWeight: (settings.searchLocation ?? 'topbar') === 'floating' ? 650 : 500,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: 6,
+                          padding: '5px 10px',
+                          borderRadius: 7,
+                          border: 'none',
+                          background: (settings.searchLocation ?? 'topbar') === 'floating' ? 'var(--accent)' : 'transparent',
+                          color: (settings.searchLocation ?? 'topbar') === 'floating' ? 'var(--accent-contrast, #ffffff)' : 'var(--text-2)',
+                          fontSize: 12,
+                          fontWeight: (settings.searchLocation ?? 'topbar') === 'floating' ? 700 : 500,
                           cursor: 'pointer',
-                          boxShadow: (settings.searchLocation ?? 'topbar') === 'floating' ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                           transition: 'all 0.15s ease',
                         }}
                       >
-                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: (settings.searchLocation ?? 'topbar') === 'floating' ? 'var(--text)' : 'var(--text-3)' }} />
-                        <span>Floating</span>
+                        Floating
                       </button>
-
                       <button
                         type="button"
                         onClick={() => {
@@ -1683,47 +1608,35 @@ export default function Settings({
                           showToast('Search position set to Top Bar');
                         }}
                         style={{
-                          padding: '10px 12px',
-                          borderRadius: 10,
-                          border: (settings.searchLocation ?? 'topbar') === 'topbar' ? '1px solid var(--border2)' : '1px solid var(--border)',
-                          background: (settings.searchLocation ?? 'topbar') === 'topbar' ? 'var(--surface)' : 'var(--surface2)',
-                          color: 'var(--text)',
-                          fontSize: 12.5,
-                          fontWeight: (settings.searchLocation ?? 'topbar') === 'topbar' ? 650 : 500,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: 6,
+                          padding: '5px 10px',
+                          borderRadius: 7,
+                          border: 'none',
+                          background: (settings.searchLocation ?? 'topbar') === 'topbar' ? 'var(--accent)' : 'transparent',
+                          color: (settings.searchLocation ?? 'topbar') === 'topbar' ? 'var(--accent-contrast, #ffffff)' : 'var(--text-2)',
+                          fontSize: 12,
+                          fontWeight: (settings.searchLocation ?? 'topbar') === 'topbar' ? 700 : 500,
                           cursor: 'pointer',
-                          boxShadow: (settings.searchLocation ?? 'topbar') === 'topbar' ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
                           transition: 'all 0.15s ease',
                         }}
                       >
-                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: (settings.searchLocation ?? 'topbar') === 'topbar' ? 'var(--text)' : 'var(--text-3)' }} />
-                        <span>Top Bar</span>
+                        Top Bar
                       </button>
                     </div>
                   </div>
 
-                  {/* Floating Sidebar Toggle Row (Desktop) */}
-                  <div style={{
-                    padding: '14px 16px',
-                    borderRadius: 14,
-                    background: 'var(--surface2)',
-                    border: '1px solid var(--border)',
-                    marginTop: 12,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <Layout size={18} style={{ color: accent === 'monochrome' ? (isDark ? '#ffffff' : '#111111') : 'var(--accent)' }} />
-                      <div>
-                        <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>Floating Sidebar (Desktop)</div>
-                        <div style={{ fontSize: 11.5, color: 'var(--text-3)' }}>Detached floating rounded layout or docked full-height sidebar</div>
+                  {/* Floating Sidebar Toggle Row (Desktop Only) */}
+                  <div className="drawer-setting-card desktop-only-setting" style={{ marginBottom: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
+                      <div className="drawer-card-icon">
+                        <Layout size={18} />
+                      </div>
+                      <div className="drawer-card-info">
+                        <div className="drawer-card-title">Floating Sidebar (Desktop)</div>
+                        <div className="drawer-card-sub">Detached floating layout</div>
                       </div>
                     </div>
                     <Switch
+                      className="custom-toggle-switch"
                       checked={settings.floatingSidebar ?? false}
                       onChange={(e) => {
                         const isFloating = e.target.checked;
@@ -1747,18 +1660,15 @@ export default function Settings({
               <div className="sheet-drag-handle" />
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{
-                    width: 38, height: 38, borderRadius: 10, background: 'var(--accent-soft)',
-                    display: 'grid', placeItems: 'center', color: 'var(--accent)', flexShrink: 0
-                  }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div className="drawer-header-icon">
                     <Zap size={20} />
                   </div>
                   <div>
-                    <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em' }}>
+                    <h3 style={{ fontSize: 16.5, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em' }}>
                       Performance & Animations
                     </h3>
-                    <p style={{ fontSize: 11.5, color: 'var(--text-3)', margin: '1px 0 0 0' }}>
+                    <p className="drawer-header-sub">
                       Optimize app speed & page transition effects
                     </p>
                   </div>
@@ -1768,140 +1678,88 @@ export default function Settings({
                   type="button"
                   className="drawer-close-btn"
                   onClick={() => setShowPerformanceSheet(false)}
-                  style={{
-                    background: 'var(--surface2)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 8,
-                    width: 32,
-                    height: 32,
-                    display: 'grid',
-                    placeItems: 'center',
-                    color: 'var(--text-2)',
-                    cursor: 'pointer'
-                  }}
+                  title="Close"
                 >
-                  <X size={16} />
+                  <X size={17} />
                 </button>
               </div>
 
               {/* Toggle 1: UI Animations */}
-              <div style={{
-                padding: '14px 16px',
-                borderRadius: 14,
-                background: 'var(--surface2)',
-                border: '1px solid var(--border)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: 12
-              }}>
+              <div className="drawer-setting-card" style={{ marginBottom: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
-                  <Sliders size={18} style={{ color: 'var(--accent)', flexShrink: 0 }} />
-                  <div>
-                    <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>UI Animations & Transitions</div>
-                    <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2 }}>
+                  <div className="drawer-card-icon">
+                    <Sliders size={18} />
+                  </div>
+                  <div className="drawer-card-info">
+                    <div className="drawer-card-title">UI Animations & Transitions</div>
+                    <div className="drawer-card-sub">
                       Turn off for instant page switches on mobile
                     </div>
                   </div>
                 </div>
                 <Switch
+                  className="custom-toggle-switch"
                   checked={settings.enableAnimations ?? true}
                   onChange={(e) => {
                     const enabled = e.target.checked;
                     updateSettings({ enableAnimations: enabled });
                     showToast(enabled ? 'Animations enabled' : 'Animations disabled (Instant navigation)');
                   }}
-                  sx={{
-                    '& .MuiSwitch-switchBase.Mui-checked': {
-                      color: 'var(--accent)',
-                    },
-                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                      backgroundColor: 'var(--accent) !important',
-                      opacity: '0.85 !important',
-                    },
-                  }}
+                  color="primary"
                 />
               </div>
 
               {/* Toggle 2: Ultra Performance Mode */}
-              <div style={{
-                padding: '14px 16px',
-                borderRadius: 14,
-                background: 'var(--surface2)',
-                border: '1px solid var(--border)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: 12
-              }}>
+              <div className="drawer-setting-card" style={{ marginBottom: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
-                  <Zap size={18} style={{ color: 'var(--accent)', flexShrink: 0 }} />
-                  <div>
-                    <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>Ultra Performance Mode</div>
-                    <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2 }}>
+                  <div className="drawer-card-icon">
+                    <Zap size={18} />
+                  </div>
+                  <div className="drawer-card-info">
+                    <div className="drawer-card-title">Ultra Performance Mode</div>
+                    <div className="drawer-card-sub">
                       Removes heavy blurs & shadows for maximum frame rate
                     </div>
                   </div>
                 </div>
                 <Switch
+                  className="custom-toggle-switch"
                   checked={settings.performanceMode ?? false}
                   onChange={(e) => {
                     const enabled = e.target.checked;
                     updateSettings({ performanceMode: enabled });
                     showToast(enabled ? 'Ultra Performance Mode enabled' : 'Standard Mode enabled');
                   }}
-                  sx={{
-                    '& .MuiSwitch-switchBase.Mui-checked': {
-                      color: 'var(--accent)',
-                    },
-                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                      backgroundColor: 'var(--accent) !important',
-                      opacity: '0.85 !important',
-                    },
-                  }}
+                  color="primary"
                 />
               </div>
 
               {/* Toggle 3: Hide Scrollbars */}
-              <div style={{
-                padding: '14px 16px',
-                borderRadius: 14,
-                background: 'var(--surface2)',
-                border: '1px solid var(--border)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: 16
-              }}>
+              <div className="drawer-setting-card" style={{ marginBottom: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
-                  {(settings.hideScrollbar ?? true) ? (
-                    <EyeOff size={18} style={{ color: 'var(--accent)', flexShrink: 0 }} />
-                  ) : (
-                    <Eye size={18} style={{ color: 'var(--accent)', flexShrink: 0 }} />
-                  )}
-                  <div>
-                    <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>Hide Scrollbars</div>
-                    <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2 }}>
+                  <div className="drawer-card-icon">
+                    {(settings.hideScrollbar ?? true) ? (
+                      <EyeOff size={18} />
+                    ) : (
+                      <Eye size={18} />
+                    )}
+                  </div>
+                  <div className="drawer-card-info">
+                    <div className="drawer-card-title">Hide Scrollbars</div>
+                    <div className="drawer-card-sub">
                       Hide visible scrollbars for a clean, mobile-native interface
                     </div>
                   </div>
                 </div>
                 <Switch
+                  className="custom-toggle-switch"
                   checked={settings.hideScrollbar ?? true}
                   onChange={(e) => {
                     const hide = e.target.checked;
                     updateSettings({ hideScrollbar: hide });
                     showToast(hide ? 'Scrollbars hidden (Clean mobile style)' : 'Scrollbars visible');
                   }}
-                  sx={{
-                    '& .MuiSwitch-switchBase.Mui-checked': {
-                      color: 'var(--accent)',
-                    },
-                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                      backgroundColor: 'var(--accent) !important',
-                      opacity: '0.85 !important',
-                    },
-                  }}
+                  color="primary"
                 />
               </div>
 
@@ -1931,25 +1789,15 @@ export default function Settings({
               {/* Header */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 12,
-                    background: 'var(--accent-soft)',
-                    border: '1px solid var(--accent)25',
-                    display: 'grid',
-                    placeItems: 'center',
-                    color: 'var(--accent)',
-                    flexShrink: 0
-                  }}>
+                  <div className="drawer-header-icon">
                     <Sliders size={20} />
                   </div>
                   <div>
                     <h3 style={{ fontSize: 16.5, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em' }}>
                       App Preferences
                     </h3>
-                    <p style={{ fontSize: 11.5, color: 'var(--text-3)', margin: '2px 0 0 0' }}>
-                      Configure currency, transaction defaults & input behavior
+                    <p className="drawer-header-sub">
+                      Currency, category & input defaults
                     </p>
                   </div>
                 </div>
@@ -1958,20 +1806,9 @@ export default function Settings({
                   type="button"
                   className="drawer-close-btn"
                   onClick={() => setShowPreferencesSheet(false)}
-                  style={{
-                    background: 'var(--surface2)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 10,
-                    width: 32,
-                    height: 32,
-                    display: 'grid',
-                    placeItems: 'center',
-                    color: 'var(--text-2)',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
+                  title="Close"
                 >
-                  <X size={16} />
+                  <X size={17} />
                 </button>
               </div>
 
@@ -1984,15 +1821,11 @@ export default function Settings({
                 letterSpacing: '0.06em',
                 marginBottom: 8,
                 marginTop: 2,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6
               }}>
-                <Coins size={12} style={{ color: 'var(--accent)' }} />
                 Transaction & Financial Defaults
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {(() => {
                   const currentCurrency = CURRENCIES.find(c => c.code === settings.currency) || CURRENCIES[0];
                   const currentCategory = settings.categories.find(c => c.name === settings.defaultCategory) || settings.categories[0];
@@ -2003,123 +1836,54 @@ export default function Settings({
                       {/* 1. Currency Preference Card */}
                       <div
                         onClick={() => setShowCurrencySheet(true)}
-                        style={{
-                          position: 'relative',
-                          padding: '12px 14px',
-                          borderRadius: 14,
-                          background: 'var(--surface2)',
-                          border: '1px solid var(--border)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: 12,
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease'
-                        }}
+                        className="drawer-setting-card"
+                        style={{ cursor: 'pointer' }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-                          <div style={{
-                            width: 38,
-                            height: 38,
-                            borderRadius: 11,
-                            background: 'var(--accent-soft)',
-                            border: '1px solid var(--accent)33',
-                            display: 'grid',
-                            placeItems: 'center',
-                            color: 'var(--accent)',
-                            fontWeight: 700,
-                            fontSize: 16,
-                            flexShrink: 0
-                          }}>
+                          <div className="drawer-card-icon" style={{ fontWeight: 700, fontSize: 16 }}>
                             {currentCurrency.symbol}
                           </div>
-                          <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>
+                          <div className="drawer-card-info">
+                            <div className="drawer-card-title">
                               Default Currency
                             </div>
-                            <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {currentCurrency.name} ({currentCurrency.code})
+                            <div className="drawer-card-sub" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              Primary display currency
                             </div>
                           </div>
                         </div>
 
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 6,
-                          padding: '6px 11px',
-                          borderRadius: 9,
-                          background: 'var(--surface)',
-                          border: '1px solid var(--border)',
-                          color: 'var(--text)',
-                          fontSize: 12.5,
-                          fontWeight: 600,
-                          flexShrink: 0
-                        }}>
-                          <span style={{ color: 'var(--accent)', fontWeight: 700 }}>{currentCurrency.symbol}</span>
-                          <span>{currentCurrency.code}</span>
-                          <ChevronDown size={14} style={{ color: 'var(--text-3)', marginLeft: 2 }} />
+                        <div className="drawer-select-pill">
+                          <span style={{ color: 'var(--text)', fontWeight: 600, fontSize: 13 }}>{currentCurrency.symbol}</span>
+                          <span style={{ color: 'var(--text)', letterSpacing: '0.01em', fontWeight: 600 }}>{currentCurrency.code}</span>
+                          <ChevronDown size={13} style={{ color: 'var(--text-3)', marginLeft: 1 }} />
                         </div>
                       </div>
 
                       {/* 2. Default Category Preference Card */}
                       <div
-                        style={{
-                          position: 'relative',
-                          padding: '12px 14px',
-                          borderRadius: 14,
-                          background: 'var(--surface2)',
-                          border: '1px solid var(--border)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: 12,
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease'
-                        }}
+                        className="drawer-setting-card"
+                        style={{ position: 'relative', cursor: 'pointer' }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-                          <div style={{
-                            width: 38,
-                            height: 38,
-                            borderRadius: 11,
-                            background: 'var(--accent-soft)',
-                            border: '1px solid var(--accent)33',
-                            display: 'grid',
-                            placeItems: 'center',
-                            color: 'var(--accent)',
-                            flexShrink: 0
-                          }}>
-                            <Tag size={18} style={{ color: 'var(--accent)' }} />
+                          <div className="drawer-card-icon">
+                            <Tag size={18} />
                           </div>
-                          <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>
+                          <div className="drawer-card-info">
+                            <div className="drawer-card-title">
                               Default Category
                             </div>
-                            <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 1 }}>
-                              Auto-assigned for new expenses
+                            <div className="drawer-card-sub">
+                              Auto-assigned for expenses
                             </div>
                           </div>
                         </div>
 
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 7,
-                          padding: '6px 11px',
-                          borderRadius: 9,
-                          background: 'var(--surface)',
-                          border: '1px solid var(--border)',
-                          color: 'var(--text)',
-                          fontSize: 12.5,
-                          fontWeight: 600,
-                          flexShrink: 0,
-                          maxWidth: 140
-                        }}>
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <div className="drawer-select-pill" style={{ maxWidth: 140 }}>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text)', fontWeight: 600 }}>
                             {currentCategory?.name || 'Select'}
                           </span>
-                          <ChevronDown size={14} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
+                          <ChevronDown size={13} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
                         </div>
 
                         {/* Transparent Native Select Trigger */}
@@ -2148,62 +1912,28 @@ export default function Settings({
 
                       {/* 3. Default Wallet Preference Card */}
                       <div
-                        style={{
-                          position: 'relative',
-                          padding: '12px 14px',
-                          borderRadius: 14,
-                          background: 'var(--surface2)',
-                          border: '1px solid var(--border)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: 12,
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease'
-                        }}
+                        className="drawer-setting-card"
+                        style={{ position: 'relative', cursor: 'pointer' }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-                          <div style={{
-                            width: 38,
-                            height: 38,
-                            borderRadius: 11,
-                            background: 'var(--accent-soft)',
-                            border: '1px solid var(--accent)33',
-                            display: 'grid',
-                            placeItems: 'center',
-                            color: 'var(--accent)',
-                            flexShrink: 0
-                          }}>
-                            <Wallet size={18} style={{ color: 'var(--accent)' }} />
+                          <div className="drawer-card-icon">
+                            <Wallet size={18} />
                           </div>
-                          <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>
+                          <div className="drawer-card-info">
+                            <div className="drawer-card-title">
                               Default Wallet
                             </div>
-                            <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 1 }}>
-                              Primary account for payments & transfers
+                            <div className="drawer-card-sub">
+                              Primary transaction account
                             </div>
                           </div>
                         </div>
 
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 7,
-                          padding: '6px 11px',
-                          borderRadius: 9,
-                          background: 'var(--surface)',
-                          border: '1px solid var(--border)',
-                          color: 'var(--text)',
-                          fontSize: 12.5,
-                          fontWeight: 600,
-                          flexShrink: 0,
-                          maxWidth: 140
-                        }}>
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <div className="drawer-select-pill" style={{ maxWidth: 140 }}>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text)', fontWeight: 600 }}>
                             {currentWallet?.name || 'Cash'}
                           </span>
-                          <ChevronDown size={14} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
+                          <ChevronDown size={13} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
                         </div>
 
                         {/* Transparent Native Select Trigger */}
@@ -2243,11 +1973,7 @@ export default function Settings({
                   letterSpacing: '0.06em',
                   marginBottom: 0,
                   marginTop: 6,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6
                 }}>
-                  <KeyboardIcon size={12} style={{ color: 'var(--accent)' }} />
                   Mobile Input Preference
                 </div>
 
@@ -2259,45 +1985,24 @@ export default function Settings({
                     updateSettings({ autoOpenKeyboard: nextVal });
                     showToast(nextVal ? 'Auto open keyboard enabled' : 'Auto open keyboard disabled');
                   }}
-                  style={{
-                    padding: '12px 14px',
-                    borderRadius: 14,
-                    background: 'var(--surface2)',
-                    border: '1px solid var(--border)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 12,
-                    cursor: 'pointer',
-                    userSelect: 'none',
-                    transition: 'all 0.15s ease'
-                  }}
+                  className="drawer-setting-card"
+                  style={{ cursor: 'pointer', userSelect: 'none' }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, flex: 1 }}>
-                    <div style={{
-                      width: 38,
-                      height: 38,
-                      borderRadius: 11,
-                      background: 'var(--accent-soft)',
-                      border: '1px solid var(--accent)33',
-                      display: 'grid',
-                      placeItems: 'center',
-                      color: 'var(--accent)',
-                      flexShrink: 0,
-                      marginTop: 1
-                    }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
+                    <div className="drawer-card-icon">
                       <KeyboardIcon size={18} />
                     </div>
-                    <div>
-                      <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>
+                    <div className="drawer-card-info">
+                      <div className="drawer-card-title">
                         Auto Open Keyboard
                       </div>
-                      <div style={{ fontSize: 11.5, color: 'var(--text-3)', lineHeight: 1.35, marginTop: 1 }}>
-                        Auto-open soft keyboard when focusing inputs & search
+                      <div className="drawer-card-sub">
+                        Auto-focus input fields
                       </div>
                     </div>
                   </div>
                   <Switch
+                    className="custom-toggle-switch"
                     checked={settings.autoOpenKeyboard ?? false}
                     onChange={(e) => {
                       const val = e.target.checked;
@@ -2306,15 +2011,7 @@ export default function Settings({
                       showToast(val ? 'Auto open keyboard enabled' : 'Auto open keyboard disabled');
                     }}
                     onClick={(e) => e.stopPropagation()}
-                    sx={{
-                      '& .MuiSwitch-switchBase.Mui-checked': {
-                        color: 'var(--accent)',
-                      },
-                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                        backgroundColor: 'var(--accent) !important',
-                        opacity: '0.85 !important',
-                      },
-                    }}
+                    color="primary"
                   />
                 </div>
               </div>
@@ -2330,7 +2027,7 @@ export default function Settings({
             setCategorySubView('list');
           }}>
             <div
-              className="sheet-modal sheet-modal-lg"
+              className="sheet-modal"
               onClick={(e) => e.stopPropagation()}
               style={{
                 maxHeight: '92vh',
@@ -2343,18 +2040,15 @@ export default function Settings({
                 <>
                   {/* Fixed Header */}
                   <div className="sheet-modal-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div style={{
-                        width: 38, height: 38, borderRadius: 10, background: 'var(--accent-soft)',
-                        display: 'grid', placeItems: 'center', color: 'var(--accent)', flexShrink: 0
-                      }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div className="drawer-header-icon">
                         <Tag size={20} />
                       </div>
                       <div>
-                        <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em' }}>
+                        <h3 style={{ fontSize: 16.5, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em' }}>
                           Manage Category Tags
                         </h3>
-                        <p style={{ fontSize: 11.5, color: 'var(--text-3)', margin: '1px 0 0 0' }}>
+                        <p className="drawer-header-sub">
                           {settings.categories.length} category tags configured
                         </p>
                       </div>
@@ -2378,19 +2072,9 @@ export default function Settings({
                           setShowCategoriesSheet(false);
                           setCategorySubView('list');
                         }}
-                        style={{
-                          background: 'var(--surface2)',
-                          border: '1px solid var(--border)',
-                          borderRadius: 8,
-                          width: 32,
-                          height: 32,
-                          display: 'grid',
-                          placeItems: 'center',
-                          color: 'var(--text-2)',
-                          cursor: 'pointer'
-                        }}
+                        title="Close"
                       >
-                        <X size={16} />
+                        <X size={17} />
                       </button>
                     </div>
                   </div>
@@ -2447,42 +2131,49 @@ export default function Settings({
                       <button
                         type="button"
                         onClick={() => setCategorySubView('add')}
+                        className="drawer-setting-card"
                         style={{
                           width: '100%',
-                          padding: '13px 16px',
-                          borderRadius: 14,
+                          minHeight: 50,
+                          padding: '8px 14px',
+                          cursor: 'pointer',
+                          textAlign: 'left',
                           background: 'var(--surface2)',
                           border: '1px solid var(--border)',
+                          borderRadius: 14,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
-                          cursor: 'pointer',
+                          gap: 10,
                           transition: 'all 0.15s ease',
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <div style={{
-                            width: 28,
-                            height: 28,
-                            borderRadius: 8,
-                            background: 'var(--accent-soft)',
-                            display: 'grid',
-                            placeItems: 'center',
-                            color: 'var(--accent)',
-                            flexShrink: 0,
-                          }}>
-                            <Plus size={16} />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                          <div
+                            style={{
+                              width: 24,
+                              height: 24,
+                              background: 'transparent',
+                              border: 'none',
+                              color: 'var(--text-2)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0,
+                            }}
+                          >
+                            <Plus size={19} strokeWidth={2.2} />
                           </div>
-                          <div style={{ textAlign: 'left' }}>
-                            <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: 14, fontWeight: 650, color: 'var(--text)', letterSpacing: '-0.01em', lineHeight: 1.3 }}>
                               Add New Category
                             </div>
-                            <div style={{ fontSize: 11.5, color: 'var(--text-3)' }}>
+                            <div style={{ fontSize: 12, fontWeight: 400, color: 'var(--text-3)', lineHeight: 1.35, marginTop: 2 }}>
                               Create custom category tag, icon & color
                             </div>
                           </div>
                         </div>
-                        <ChevronRight size={18} style={{ color: 'var(--text-3)' }} />
+                        <ChevronRight size={17} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
                       </button>
                     </div>
                   </div>
@@ -2494,27 +2185,17 @@ export default function Settings({
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <button
                         type="button"
+                        className="drawer-back-btn"
                         onClick={() => setCategorySubView('list')}
-                        style={{
-                          background: 'var(--surface2)',
-                          border: '1px solid var(--border)',
-                          borderRadius: 8,
-                          width: 32,
-                          height: 32,
-                          display: 'grid',
-                          placeItems: 'center',
-                          color: 'var(--text-2)',
-                          cursor: 'pointer',
-                        }}
                         title="Back to categories"
                       >
-                        <ArrowLeft size={16} />
+                        <ArrowLeft size={17} />
                       </button>
                       <div>
-                        <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em' }}>
+                        <h3 style={{ fontSize: 16.5, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em' }}>
                           Add New Category
                         </h3>
-                        <p style={{ fontSize: 11.5, color: 'var(--text-3)', margin: '1px 0 0 0' }}>
+                        <p className="drawer-header-sub">
                           Create custom category tag, icon & color
                         </p>
                       </div>
@@ -2527,19 +2208,9 @@ export default function Settings({
                         setShowCategoriesSheet(false);
                         setCategorySubView('list');
                       }}
-                      style={{
-                        background: 'var(--surface2)',
-                        border: '1px solid var(--border)',
-                        borderRadius: 8,
-                        width: 32,
-                        height: 32,
-                        display: 'grid',
-                        placeItems: 'center',
-                        color: 'var(--text-2)',
-                        cursor: 'pointer'
-                      }}
+                      title="Close"
                     >
-                      <X size={16} />
+                      <X size={17} />
                     </button>
                   </div>
 
@@ -2595,19 +2266,55 @@ export default function Settings({
                   <div className="sheet-modal-footer" style={{ display: 'flex', gap: 10, borderTop: 'none', paddingTop: 8 }}>
                     <button
                       type="button"
-                      className="btn btn-secondary"
-                      onClick={() => setCategorySubView('list')}
-                      style={{ flex: 1, padding: '10px 16px', borderRadius: 10 }}
+                      onClick={() => {
+                        setNewCatName('');
+                        setNewCatColor(FRIEND_PALETTE[0]);
+                        setNewCatIcon('other');
+                      }}
+                      style={{
+                        flex: 1,
+                        height: 44,
+                        padding: '0 16px',
+                        borderRadius: 9999,
+                        background: 'var(--surface2)',
+                        border: '1px solid var(--border)',
+                        color: 'var(--text)',
+                        fontSize: 13.5,
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 6,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
                     >
-                      Cancel
+                      <RotateCcw size={15} />
+                      <span>Clear</span>
                     </button>
                     <button
                       type="button"
-                      className="btn btn-primary"
                       onClick={handleAddCategory}
-                      style={{ flex: 2, padding: '10px 16px', gap: 6, justifyContent: 'center', borderRadius: 10 }}
+                      style={{
+                        flex: 1.6,
+                        height: 44,
+                        padding: '0 18px',
+                        borderRadius: 9999,
+                        background: 'var(--text)',
+                        color: 'var(--surface)',
+                        border: 'none',
+                        fontSize: 13.5,
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 6,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
                     >
-                      <Plus size={18} /> Add Category
+                      <Plus size={16} strokeWidth={2.5} />
+                      <span>Add Category</span>
                     </button>
                   </div>
                 </>
@@ -2621,7 +2328,7 @@ export default function Settings({
         {showCurrencySheet && createPortal(
           <div className="sheet-backdrop" onClick={() => setShowCurrencySheet(false)}>
             <div
-              className="sheet-modal sheet-modal-lg"
+              className="sheet-modal"
               onClick={(e) => e.stopPropagation()}
               style={{
                 maxHeight: '90vh',
@@ -2635,24 +2342,14 @@ export default function Settings({
               {/* Header */}
               <div className="sheet-modal-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{
-                    width: 38,
-                    height: 38,
-                    borderRadius: 11,
-                    background: 'var(--accent-soft)',
-                    border: '1px solid var(--accent)33',
-                    display: 'grid',
-                    placeItems: 'center',
-                    color: 'var(--accent)',
-                    flexShrink: 0
-                  }}>
+                  <div className="drawer-header-icon">
                     <Coins size={20} />
                   </div>
                   <div>
                     <h3 style={{ fontSize: 16.5, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em' }}>
                       Select Currency
                     </h3>
-                    <p style={{ fontSize: 11.5, color: 'var(--text-3)', margin: '2px 0 0 0' }}>
+                    <p className="drawer-header-sub">
                       Choose your primary app currency & symbol
                     </p>
                   </div>
@@ -2662,20 +2359,9 @@ export default function Settings({
                   type="button"
                   className="drawer-close-btn"
                   onClick={() => setShowCurrencySheet(false)}
-                  style={{
-                    background: 'var(--surface2)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 8,
-                    width: 32,
-                    height: 32,
-                    display: 'grid',
-                    placeItems: 'center',
-                    color: 'var(--text-2)',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
+                  title="Close"
                 >
-                  <X size={16} />
+                  <X size={17} />
                 </button>
               </div>
 
@@ -2772,15 +2458,15 @@ export default function Settings({
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: 5,
-                            padding: '5px 10px',
-                            borderRadius: 9,
+                            padding: '6px 12px',
+                            borderRadius: 10,
                             fontSize: 12,
-                            fontWeight: isSelected ? 650 : 500,
-                            background: isSelected ? 'var(--surface)' : 'var(--surface2)',
-                            border: `1px solid ${isSelected ? 'var(--border2)' : 'var(--border)'}`,
-                            color: isSelected ? 'var(--text)' : 'var(--text-2)',
+                            fontWeight: isSelected ? 700 : 500,
+                            background: isSelected ? 'var(--accent)' : 'var(--surface2)',
+                            border: `1px solid ${isSelected ? 'var(--accent)' : 'var(--border)'}`,
+                            color: isSelected ? 'var(--accent-contrast, #ffffff)' : 'var(--text-2)',
                             cursor: 'pointer',
-                            boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+                            boxShadow: isSelected ? '0 2px 6px rgba(0, 0, 0, 0.15)' : 'none',
                             transition: 'all 0.15s ease'
                           }}
                         >
@@ -2794,7 +2480,7 @@ export default function Settings({
               )}
 
               {/* Scrollable Currency List */}
-              <div className="sheet-modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingRight: 4 }}>
+              <div className="sheet-modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingRight: 4 }}>
                 {filteredCurrencies.length === 0 ? (
                   <div style={{
                     textAlign: 'center',
@@ -2817,46 +2503,37 @@ export default function Settings({
                           showToast(`Default currency set to ${c.name} (${c.code})`);
                           setShowCurrencySheet(false);
                         }}
+                        className="drawer-setting-card"
                         style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '10px 12px',
-                          borderRadius: 12,
-                          background: isSelected ? 'var(--surface)' : 'var(--surface2)',
-                          border: `1px solid ${isSelected ? 'var(--border2)' : 'var(--border)'}`,
-                          boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+                          border: isSelected ? '1.5px solid var(--accent)' : '1px solid var(--border)',
+                          background: isSelected ? 'var(--accent-soft)' : 'var(--surface2)',
+                          boxShadow: isSelected ? '0 2px 8px rgba(0, 0, 0, 0.08)' : 'none',
                           cursor: 'pointer',
-                          transition: 'all 0.15s ease',
-                          gap: 12
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-                          <div style={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: 10,
-                            background: isSelected ? 'var(--accent)' : 'var(--surface)',
-                            color: isSelected ? 'var(--accent-contrast, #fff)' : 'var(--accent)',
-                            border: '1px solid var(--border)',
-                            display: 'grid',
-                            placeItems: 'center',
-                            fontSize: 15,
-                            fontWeight: 750,
-                            flexShrink: 0
-                          }}>
+                          <div
+                            className="drawer-card-icon"
+                            style={{
+                              background: isSelected ? 'var(--accent)' : undefined,
+                              color: isSelected ? 'var(--accent-contrast, #fff)' : 'var(--accent)',
+                              border: isSelected ? 'none' : undefined,
+                              fontSize: 15,
+                              fontWeight: 750,
+                            }}
+                          >
                             {c.symbol}
                           </div>
-                          <div style={{ minWidth: 0 }}>
+                          <div className="drawer-card-info">
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <span style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text)' }}>
+                              <span className="drawer-card-title">
                                 {c.code}
                               </span>
                               <span style={{ fontSize: 13, color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                 — {c.name}
                               </span>
                             </div>
-                            <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 1 }}>
+                            <div className="drawer-card-sub" style={{ marginTop: 2 }}>
                               {c.country} • Symbol: <strong style={{ color: 'var(--text-2)' }}>{c.symbol}</strong>
                             </div>
                           </div>
@@ -2954,9 +2631,42 @@ export default function Settings({
                     </div>
                   </div>
                 </div>
-                <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => setEditingCat(null)}>Cancel</button>
-                  <button type="submit" className="btn btn-primary btn-sm">Save Changes</button>
+                <div className="modal-footer" style={{ borderTop: 'none', display: 'flex', gap: 10, paddingTop: 12 }}>
+                  <button
+                    type="button"
+                    onClick={() => setEditingCat(null)}
+                    style={{
+                      flex: 1,
+                      height: 40,
+                      padding: '0 16px',
+                      borderRadius: 9999,
+                      background: 'var(--surface2)',
+                      border: '1px solid var(--border)',
+                      color: 'var(--text)',
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    style={{
+                      flex: 1.5,
+                      height: 40,
+                      padding: '0 18px',
+                      borderRadius: 9999,
+                      background: 'var(--text)',
+                      color: 'var(--surface)',
+                      border: 'none',
+                      fontSize: 13,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Save Changes
+                  </button>
                 </div>
               </form>
             </div>
@@ -2968,65 +2678,66 @@ export default function Settings({
           <div className="settings-section-group">
             <div className="settings-section-label">Data & Storage</div>
 
-            {/* Data Summary Card */}
-            {showData && (
-              <div className="card settings-summary-card" onClick={() => setShowDataSheet(true)}>
-                <div className="settings-card-inner">
-                  <div className="settings-card-left">
-                    <div className="settings-card-icon">
-                      <Database size={19} />
+            <div className="settings-section-grid">
+              {/* Data Summary Card */}
+              {showData && (
+                <div className="card settings-summary-card" onClick={() => setShowDataSheet(true)}>
+                  <div className="settings-card-inner">
+                    <div className="settings-card-left">
+                      <div className="settings-card-icon">
+                        <Database size={19} />
+                      </div>
+                      <div className="settings-card-text">
+                        <h2 className="settings-card-title">Data Management</h2>
+                        <p className="settings-card-sub">
+                          Backup & restore
+                        </p>
+                      </div>
                     </div>
-                    <div className="settings-card-text">
-                      <h2 className="settings-card-title">Data Management</h2>
-                      <p className="settings-card-sub">
-                        {db.expenses?.length || 0} expenses stored · Export, backup & clear
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="settings-card-right">
-                    <ChevronRight className="settings-card-arrow" size={18} />
+                    <div className="settings-card-right">
+                      <ChevronRight className="settings-card-arrow" size={18} />
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Add Dummy Data Card */}
-            {showData && (settings.enableDummyData ?? false) && (
-              <div
-                className="card settings-summary-card"
-                onClick={() => setShowDummyModal(true)}
-                style={{ cursor: 'pointer', marginTop: 10 }}
-              >
-                <div className="settings-card-inner">
-                  <div className="settings-card-left">
-                    <div className="settings-card-icon" style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}>
-                      <Sparkles size={19} />
+              {/* Add Dummy Data Card */}
+              {showData && (settings.enableDummyData ?? false) && (
+                <div
+                  className="card settings-summary-card"
+                  onClick={() => setShowDummyModal(true)}
+                >
+                  <div className="settings-card-inner">
+                    <div className="settings-card-left">
+                      <div className="settings-card-icon">
+                        <Sparkles size={19} />
+                      </div>
+                      <div className="settings-card-text">
+                        <h2 className="settings-card-title">Add Dummy Data</h2>
+                        <p className="settings-card-sub">
+                          Populate sample expenses, friends, splits & vendor records
+                        </p>
+                      </div>
                     </div>
-                    <div className="settings-card-text">
-                      <h2 className="settings-card-title">Add Dummy Data</h2>
-                      <p className="settings-card-sub">
-                        Populate sample expenses, friends, splits & vendor records
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="settings-card-right">
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-xs"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowDummyModal(true);
-                      }}
-                      style={{ fontWeight: 650, borderRadius: 8, padding: '4px 10px', fontSize: 11.5 }}
-                    >
-                      Add Data
-                    </button>
+                    <div className="settings-card-right">
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-xs"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowDummyModal(true);
+                        }}
+                        style={{ fontWeight: 650, borderRadius: 8, padding: '4px 10px', fontSize: 11.5 }}
+                      >
+                        Add Data
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
 
@@ -3039,18 +2750,15 @@ export default function Settings({
 
               {/* Header */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{
-                    width: 38, height: 38, borderRadius: 10, background: 'var(--accent-soft)',
-                    display: 'grid', placeItems: 'center', color: 'var(--accent)', flexShrink: 0
-                  }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div className="drawer-header-icon">
                     <Database size={20} />
                   </div>
                   <div>
-                    <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em' }}>
+                    <h3 style={{ fontSize: 16.5, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em' }}>
                       Data
                     </h3>
-                    <p style={{ fontSize: 11.5, color: 'var(--text-3)', margin: '1px 0 0 0' }}>
+                    <p className="drawer-header-sub">
                       Export, import, or manage local storage
                     </p>
                   </div>
@@ -3060,51 +2768,49 @@ export default function Settings({
                   type="button"
                   className="drawer-close-btn"
                   onClick={() => setShowDataSheet(false)}
-                  style={{
-                    background: 'var(--surface2)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 8,
-                    width: 32,
-                    height: 32,
-                    display: 'grid',
-                    placeItems: 'center',
-                    color: 'var(--text-2)',
-                    cursor: 'pointer'
-                  }}
+                  title="Close"
                 >
-                  <X size={16} />
+                  <X size={17} />
                 </button>
               </div>
 
               {/* Action Buttons Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(105px, 1fr))', gap: 10, marginBottom: 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: (settings.enableDummyData ?? false) ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)', gap: 10, marginBottom: 10 }}>
                 <button type="button" className="data-action-card" onClick={() => { setShowDataSheet(false); handleExportClick(); }}>
-                  <Download size={24} />
-                  <span className="data-action-label" style={{ fontWeight: 600 }}>Export</span>
-                  <span style={{ fontSize: 10, color: 'var(--text-3)' }}>Save or share backup</span>
+                  <div className="data-action-icon-wrap">
+                    <Download size={25} strokeWidth={2.1} />
+                  </div>
+                  <span className="data-action-label">Export</span>
+                  <span className="data-action-sub">Save backup</span>
                 </button>
 
                 <button type="button" className="data-action-card" onClick={handleImportClick}>
-                  <Upload size={24} />
-                  <span className="data-action-label" style={{ fontWeight: 600 }}>Import</span>
-                  <span style={{ fontSize: 10, color: 'var(--text-3)' }}>Restore from backup</span>
+                  <div className="data-action-icon-wrap">
+                    <Upload size={25} strokeWidth={2.1} />
+                  </div>
+                  <span className="data-action-label">Import</span>
+                  <span className="data-action-sub">Restore file</span>
                 </button>
 
                 {(settings.enableDummyData ?? false) && (
                   <button type="button" className="data-action-card" onClick={() => { setShowDataSheet(false); setShowDummyModal(true); }}>
-                    <Sparkles size={24} style={{ color: 'var(--accent)' }} />
-                    <span className="data-action-label" style={{ fontWeight: 600 }}>Dummy Data</span>
-                    <span style={{ fontSize: 10, color: 'var(--text-3)' }}>Add sample records</span>
+                    <div className="data-action-icon-wrap">
+                      <Sparkles size={25} strokeWidth={2.1} />
+                    </div>
+                    <span className="data-action-label">Dummy Data</span>
+                    <span className="data-action-sub">Add records</span>
                   </button>
                 )}
               </div>
 
               <div className="data-reset-row" onClick={() => { setShowDataSheet(false); setShowReset(true); }} role="button" tabIndex={0}>
                 <div className="data-reset-left">
-                  <Trash2 size={20} />
-                  <span>Reset all data</span>
+                  <div className="data-reset-icon-wrap">
+                    <Trash2 size={15} />
+                  </div>
+                  <div className="data-reset-title">Reset all data</div>
                 </div>
-                <ChevronRight size={20} style={{ color: 'var(--text-3)' }} />
+                <ChevronRight size={15} className="data-reset-arrow" />
               </div>
             </div>
           </div>,
@@ -3120,18 +2826,15 @@ export default function Settings({
 
               {/* Header */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{
-                    width: 38, height: 38, borderRadius: 10, background: 'var(--accent-soft)',
-                    display: 'grid', placeItems: 'center', color: 'var(--accent)', flexShrink: 0
-                  }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div className="drawer-header-icon">
                     <MessageSquarePlus size={20} />
                   </div>
                   <div>
-                    <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em' }}>
+                    <h3 style={{ fontSize: 16.5, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em' }}>
                       Report Bug / Feature Request
                     </h3>
-                    <p style={{ fontSize: 11.5, color: 'var(--text-3)', margin: '1px 0 0 0' }}>
+                    <p className="drawer-header-sub">
                       Create an issue on prathambahekar/okane
                     </p>
                   </div>
@@ -3141,19 +2844,9 @@ export default function Settings({
                   type="button"
                   className="drawer-close-btn"
                   onClick={() => setShowFeedbackSheet(false)}
-                  style={{
-                    background: 'var(--surface2)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 8,
-                    width: 32,
-                    height: 32,
-                    display: 'grid',
-                    placeItems: 'center',
-                    color: 'var(--text-2)',
-                    cursor: 'pointer'
-                  }}
+                  title="Close"
                 >
-                  <X size={16} />
+                  <X size={17} />
                 </button>
               </div>
 
@@ -3168,23 +2861,23 @@ export default function Settings({
                       type="button"
                       onClick={() => setFeedbackType('bug')}
                       style={{
-                        padding: '10px 12px',
-                        borderRadius: 'var(--radius)',
-                        border: feedbackType === 'bug' ? '1px solid var(--border2)' : '1px solid var(--border)',
-                        background: feedbackType === 'bug' ? 'var(--surface)' : 'var(--surface2)',
-                        color: 'var(--text)',
-                        fontWeight: feedbackType === 'bug' ? 650 : 500,
+                        padding: '11px 14px',
+                        borderRadius: 12,
+                        border: feedbackType === 'bug' ? '1.5px solid var(--accent)' : '1px solid var(--border)',
+                        background: feedbackType === 'bug' ? 'var(--accent)' : 'var(--surface2)',
+                        color: feedbackType === 'bug' ? 'var(--accent-contrast, #ffffff)' : 'var(--text)',
+                        fontWeight: feedbackType === 'bug' ? 700 : 500,
                         fontSize: 13,
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: 8,
-                        boxShadow: feedbackType === 'bug' ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+                        boxShadow: feedbackType === 'bug' ? '0 2px 8px rgba(0, 0, 0, 0.12)' : 'none',
                         transition: 'all 0.15s ease'
                       }}
                     >
-                      <Bug size={16} style={{ color: feedbackType === 'bug' ? 'var(--text)' : 'var(--text-2)' }} />
+                      <Bug size={16} style={{ color: feedbackType === 'bug' ? 'var(--accent-contrast, #ffffff)' : 'var(--text-2)' }} />
                       <span>Bug / Issue</span>
                     </button>
 
@@ -3192,23 +2885,23 @@ export default function Settings({
                       type="button"
                       onClick={() => setFeedbackType('feature')}
                       style={{
-                        padding: '10px 12px',
-                        borderRadius: 'var(--radius)',
-                        border: feedbackType === 'feature' ? '1px solid var(--border2)' : '1px solid var(--border)',
-                        background: feedbackType === 'feature' ? 'var(--surface)' : 'var(--surface2)',
-                        color: 'var(--text)',
-                        fontWeight: feedbackType === 'feature' ? 650 : 500,
+                        padding: '11px 14px',
+                        borderRadius: 12,
+                        border: feedbackType === 'feature' ? '1.5px solid var(--accent)' : '1px solid var(--border)',
+                        background: feedbackType === 'feature' ? 'var(--accent)' : 'var(--surface2)',
+                        color: feedbackType === 'feature' ? 'var(--accent-contrast, #ffffff)' : 'var(--text)',
+                        fontWeight: feedbackType === 'feature' ? 700 : 500,
                         fontSize: 13,
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: 8,
-                        boxShadow: feedbackType === 'feature' ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+                        boxShadow: feedbackType === 'feature' ? '0 2px 8px rgba(0, 0, 0, 0.12)' : 'none',
                         transition: 'all 0.15s ease'
                       }}
                     >
-                      <Lightbulb size={16} style={{ color: feedbackType === 'feature' ? 'var(--text)' : 'var(--text-2)' }} />
+                      <Lightbulb size={16} style={{ color: feedbackType === 'feature' ? 'var(--accent-contrast, #ffffff)' : 'var(--text-2)' }} />
                       <span>Suggest Feature</span>
                     </button>
                   </div>
@@ -3382,20 +3075,17 @@ export default function Settings({
               <div className="sheet-drag-handle" />
 
               {/* Header */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{
-                    width: 38, height: 38, borderRadius: 10, background: 'var(--accent-soft)',
-                    display: 'grid', placeItems: 'center', color: 'var(--accent)', flexShrink: 0
-                  }}>
+              <div className="sheet-modal-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div className="drawer-header-icon">
                     <Sliders size={20} />
                   </div>
                   <div>
-                    <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em' }}>
+                    <h3 style={{ fontSize: 16.5, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em' }}>
                       Advanced Features
                     </h3>
-                    <p style={{ fontSize: 11.5, color: 'var(--text-3)', margin: '1px 0 0 0' }}>
-                      Toggle AI assistant, report bug card, autopay, trip bill splitting & dummy data
+                    <p className="drawer-header-sub">
+                      Additional tools & utilities
                     </p>
                   </div>
                 </div>
@@ -3404,122 +3094,81 @@ export default function Settings({
                   type="button"
                   className="drawer-close-btn"
                   onClick={() => setShowAdvancedSheet(false)}
-                  style={{
-                    background: 'var(--surface2)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 8,
-                    width: 32,
-                    height: 32,
-                    display: 'grid',
-                    placeItems: 'center',
-                    color: 'var(--text-2)',
-                    cursor: 'pointer'
-                  }}
+                  title="Close"
                 >
-                  <X size={16} />
+                  <X size={17} />
                 </button>
               </div>
 
-              {/* List of Advanced Features */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {/* 1. AI Assistant (Max) */}
-                <div style={{
-                  padding: '14px 16px',
-                  borderRadius: 14,
-                  background: 'var(--surface2)',
-                  border: '1px solid var(--border)',
+              {/* List of Advanced Features - Scrollable */}
+              <div
+                className="sheet-modal-body"
+                style={{
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: 8
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
-                      <div style={{
-                        width: 36, height: 36, borderRadius: 8,
-                        background: (settings.enableAIAssistant ?? true) ? 'var(--accent-soft)' : 'var(--border)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-                      }}>
-                        <Sparkles size={18} style={{ color: (settings.enableAIAssistant ?? true) ? 'var(--accent)' : 'var(--text-3)' }} />
-                      </div>
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)', lineHeight: 1.2 }}>AI Assistant (Max)</div>
-                        <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          Voice & floating AI trigger
-                        </div>
-                      </div>
+                  gap: 10,
+                  overflowY: 'auto',
+                  maxHeight: 'calc(80vh - 80px)',
+                  paddingRight: 2,
+                  paddingBottom: 16,
+                  overscrollBehavior: 'contain',
+                  WebkitOverflowScrolling: 'touch',
+                }}
+              >
+                {/* 1. AI Assistant (Max) */}
+                <div className="drawer-setting-card">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
+                    <div className="drawer-card-icon">
+                      <Sparkles size={18} />
                     </div>
-
-                    <Switch
-                      checked={settings.enableAIAssistant ?? true}
-                      onChange={(e) => {
-                        const enabled = e.target.checked;
-                        updateSettings({ enableAIAssistant: enabled });
-                        showToast(enabled ? 'AI Assistant enabled' : 'AI Assistant disabled');
-                      }}
-                      color="primary"
-                    />
+                    <div className="drawer-card-info">
+                      <div className="drawer-card-title">AI Assistant (Max)</div>
+                      <div className="drawer-card-sub">Voice & floating trigger</div>
+                    </div>
                   </div>
+
+                  <Switch
+                    className="custom-toggle-switch"
+                    checked={settings.enableAIAssistant ?? true}
+                    onChange={(e) => {
+                      const enabled = e.target.checked;
+                      updateSettings({ enableAIAssistant: enabled });
+                      showToast(enabled ? 'AI Assistant enabled' : 'AI Assistant disabled');
+                    }}
+                  />
                 </div>
 
                 {/* 2. Report Bug & Feature Card */}
-                <div style={{
-                  padding: '14px 16px',
-                  borderRadius: 14,
-                  background: 'var(--surface2)',
-                  border: '1px solid var(--border)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between'
-                }}>
+                <div className="drawer-setting-card">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
-                    <div style={{
-                      width: 36, height: 36, borderRadius: 8,
-                      background: (settings.enableReportBugCard ?? true) ? 'var(--accent-soft)' : 'var(--border)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-                    }}>
-                      <MessageSquarePlus size={18} style={{ color: (settings.enableReportBugCard ?? true) ? 'var(--accent)' : 'var(--text-3)' }} />
+                    <div className="drawer-card-icon">
+                      <MessageSquarePlus size={18} />
                     </div>
-                    <div>
-                      <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>Report Bug & Feature Card</div>
-                      <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2 }}>
-                        Show feedback card in Settings
-                      </div>
+                    <div className="drawer-card-info">
+                      <div className="drawer-card-title">Feedback Card</div>
+                      <div className="drawer-card-sub">Show card in Settings</div>
                     </div>
                   </div>
                   <Switch
+                    className="custom-toggle-switch"
                     checked={settings.enableReportBugCard ?? true}
                     onChange={(e) => {
                       const enabled = e.target.checked;
                       updateSettings({ enableReportBugCard: enabled });
                       showToast(enabled ? 'Report Bug Card enabled' : 'Report Bug Card disabled');
                     }}
-                    color="primary"
                   />
                 </div>
 
-                {/* 2. Autopay & Subscriptions */}
-                <div style={{
-                  padding: '14px 16px',
-                  borderRadius: 14,
-                  background: 'var(--surface2)',
-                  border: '1px solid var(--border)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between'
-                }}>
+                {/* 3. Autopay & Subscriptions */}
+                <div className="drawer-setting-card">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
-                    <div style={{
-                      width: 36, height: 36, borderRadius: 8,
-                      background: (settings.enableAutopay ?? false) ? 'var(--accent-soft)' : 'var(--border)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-                    }}>
-                      <RefreshCw size={18} style={{ color: (settings.enableAutopay ?? false) ? 'var(--accent)' : 'var(--text-3)' }} />
+                    <div className="drawer-card-icon">
+                      <RefreshCw size={18} />
                     </div>
-                    <div>
-                      <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>Autopay & Subscriptions</div>
-                      <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2 }}>
-                        Automated recurring bill logs & subscription reminders
-                      </div>
+                    <div className="drawer-card-info">
+                      <div className="drawer-card-title">Autopay & Subs</div>
+                      <div className="drawer-card-sub">Recurring bills & logs</div>
                     </div>
                   </div>
 
@@ -3527,48 +3176,34 @@ export default function Settings({
                     {(settings.enableAutopay ?? false) && onNavigate && (
                       <button
                         type="button"
-                        className="btn btn-secondary btn-sm"
+                        className="drawer-action-icon-btn"
                         onClick={() => { setShowAdvancedSheet(false); onNavigate('recurring'); }}
-                        style={{ padding: '3px 10px', fontSize: 11.5, height: 28, gap: 4 }}
+                        title="Open Autopay & Subscriptions"
                       >
-                        <RefreshCw size={13} /> Open
+                        <ArrowUpRight size={16} />
                       </button>
                     )}
                     <Switch
+                      className="custom-toggle-switch"
                       checked={settings.enableAutopay ?? false}
                       onChange={(e) => {
                         const enabled = e.target.checked;
                         updateSettings({ enableAutopay: enabled });
                         showToast(enabled ? 'Autopay enabled' : 'Autopay disabled');
                       }}
-                      color="primary"
                     />
                   </div>
                 </div>
 
-                {/* 3. Trips & Group Splits */}
-                <div style={{
-                  padding: '14px 16px',
-                  borderRadius: 14,
-                  background: 'var(--surface2)',
-                  border: '1px solid var(--border)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between'
-                }}>
+                {/* 4. Trips & Group Splits */}
+                <div className="drawer-setting-card">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
-                    <div style={{
-                      width: 36, height: 36, borderRadius: 8,
-                      background: (settings.enableSplitTrips ?? true) ? 'var(--accent-soft)' : 'var(--border)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-                    }}>
-                      <Plane size={18} style={{ color: (settings.enableSplitTrips ?? true) ? 'var(--accent)' : 'var(--text-3)' }} />
+                    <div className="drawer-card-icon">
+                      <Plane size={18} />
                     </div>
-                    <div>
-                      <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>Trips & Bill Splits</div>
-                      <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2 }}>
-                        Group ledgers, trip budgets & expense splitting with friends
-                      </div>
+                    <div className="drawer-card-info">
+                      <div className="drawer-card-title">Trips & Splits</div>
+                      <div className="drawer-card-sub">Group ledgers & splits</div>
                     </div>
                   </div>
 
@@ -3576,48 +3211,34 @@ export default function Settings({
                     {(settings.enableSplitTrips ?? true) && onNavigate && (
                       <button
                         type="button"
-                        className="btn btn-secondary btn-sm"
+                        className="drawer-action-icon-btn"
                         onClick={() => { setShowAdvancedSheet(false); onNavigate('split-trips'); }}
-                        style={{ padding: '3px 10px', fontSize: 11.5, height: 28, gap: 4 }}
+                        title="Open Trips & Splits"
                       >
-                        <Plane size={13} /> Open
+                        <ArrowUpRight size={16} />
                       </button>
                     )}
                     <Switch
+                      className="custom-toggle-switch"
                       checked={settings.enableSplitTrips ?? true}
                       onChange={(e) => {
                         const enabled = e.target.checked;
                         updateSettings({ enableSplitTrips: enabled });
                         showToast(enabled ? 'Trips & Splits enabled' : 'Trips & Splits disabled');
                       }}
-                      color="primary"
                     />
                   </div>
                 </div>
 
                 {/* 5. Dummy / Sample Data */}
-                <div style={{
-                  padding: '14px 16px',
-                  borderRadius: 14,
-                  background: 'var(--surface2)',
-                  border: '1px solid var(--border)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between'
-                }}>
+                <div className="drawer-setting-card">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
-                    <div style={{
-                      width: 36, height: 36, borderRadius: 8,
-                      background: (settings.enableDummyData ?? false) ? 'var(--accent-soft)' : 'var(--border)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-                    }}>
-                      <Sparkles size={18} style={{ color: (settings.enableDummyData ?? false) ? 'var(--accent)' : 'var(--text-3)' }} />
+                    <div className="drawer-card-icon">
+                      <Sparkles size={18} />
                     </div>
-                    <div>
-                      <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>Add Dummy Data</div>
-                      <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2 }}>
-                        Populate sample expenses, friends, splits & vendor records
-                      </div>
+                    <div className="drawer-card-info">
+                      <div className="drawer-card-title">Sample Demo Data</div>
+                      <div className="drawer-card-sub">Load sample records</div>
                     </div>
                   </div>
 
@@ -3625,21 +3246,21 @@ export default function Settings({
                     {(settings.enableDummyData ?? false) && (
                       <button
                         type="button"
-                        className="btn btn-secondary btn-sm"
+                        className="drawer-action-icon-btn"
                         onClick={() => { setShowAdvancedSheet(false); setShowDummyModal(true); }}
-                        style={{ padding: '3px 10px', fontSize: 11.5, height: 28, gap: 4 }}
+                        title="Open Sample Data"
                       >
-                        <Sparkles size={13} /> Open
+                        <ArrowUpRight size={16} />
                       </button>
                     )}
                     <Switch
+                      className="custom-toggle-switch"
                       checked={settings.enableDummyData ?? false}
                       onChange={(e) => {
                         const enabled = e.target.checked;
                         updateSettings({ enableDummyData: enabled });
                         showToast(enabled ? 'Dummy Data options enabled' : 'Dummy Data options disabled');
                       }}
-                      color="primary"
                     />
                   </div>
                 </div>
@@ -3654,174 +3275,173 @@ export default function Settings({
           <div className="settings-section-group">
             <div className="settings-section-label">System & Info</div>
 
-            {/* Security & Privacy Card */}
-            {showSecurity && (
-              <div className="card settings-summary-card" onClick={() => setShowSecuritySheet(true)}>
-                <div className="settings-card-inner">
-                  <div className="settings-card-left">
-                    <div className="settings-card-icon">
-                      <ShieldCheck size={19} />
+            <div className="settings-section-grid">
+              {/* Security & Privacy Card */}
+              {showSecurity && (
+                <div className="card settings-summary-card" onClick={() => setShowSecuritySheet(true)}>
+                  <div className="settings-card-inner">
+                    <div className="settings-card-left">
+                      <div className="settings-card-icon">
+                        <ShieldCheck size={19} />
+                      </div>
+                      <div className="settings-card-text">
+                        <h2 className="settings-card-title">Security & Privacy</h2>
+                        <p className="settings-card-sub">
+                          {isLockEnabled ? 'PIN & biometric active' : 'PIN & biometric lock'}
+                        </p>
+                      </div>
                     </div>
-                    <div className="settings-card-text">
-                      <h2 className="settings-card-title">Security & Privacy</h2>
-                      <p className="settings-card-sub">
-                        {settings.hideAmounts ? 'Amounts Hidden · ' : ''}
-                        {isLockEnabled
-                          ? (isBiometricEnabled ? 'PIN & Native Biometric Lock active' : 'PIN Lock active (Biometrics off)')
-                          : 'PIN & Native Biometric protection'}
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="settings-card-right">
-                    <ChevronRight className="settings-card-arrow" size={18} />
+                    <div className="settings-card-right">
+                      <ChevronRight className="settings-card-arrow" size={18} />
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Advanced Features Card */}
-            {showAdvanced && (
-              <div className="card settings-summary-card" onClick={() => setShowAdvancedSheet(true)}>
-                <div className="settings-card-inner">
-                  <div className="settings-card-left">
-                    <div className="settings-card-icon">
-                      <Sparkles size={19} />
+              {/* Advanced Features Card */}
+              {showAdvanced && (
+                <div className="card settings-summary-card" onClick={() => setShowAdvancedSheet(true)}>
+                  <div className="settings-card-inner">
+                    <div className="settings-card-left">
+                      <div className="settings-card-icon">
+                        <Sparkles size={19} />
+                      </div>
+                      <div className="settings-card-text">
+                        <h2 className="settings-card-title">Advanced Features</h2>
+                        <p className="settings-card-sub">
+                          AI assistant & splits
+                        </p>
+                      </div>
                     </div>
-                    <div className="settings-card-text">
-                      <h2 className="settings-card-title">Advanced Features</h2>
-                      <p className="settings-card-sub">
-                        AI assistant, Autopay & Trips split manager
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="settings-card-right">
-                    <ChevronRight className="settings-card-arrow" size={18} />
+                    <div className="settings-card-right">
+                      <ChevronRight className="settings-card-arrow" size={18} />
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Developer Mode Card */}
-            {showDev && isDevMode && (
-              <div className="card settings-summary-card" onClick={() => setShowDevSheet(true)}>
-                <div className="settings-card-inner">
-                  <div className="settings-card-left">
-                    <div className="settings-card-icon">
-                      <FlaskConical size={19} />
+              {/* Developer Mode Card */}
+              {showDev && isDevMode && (
+                <div className="card settings-summary-card" onClick={() => setShowDevSheet(true)}>
+                  <div className="settings-card-inner">
+                    <div className="settings-card-left">
+                      <div className="settings-card-icon">
+                        <FlaskConical size={19} />
+                      </div>
+                      <div className="settings-card-text">
+                        <h2 className="settings-card-title">Developer Mode</h2>
+                        <p className="settings-card-sub">
+                          Developer tools & features
+                        </p>
+                      </div>
                     </div>
-                    <div className="settings-card-text">
-                      <h2 className="settings-card-title">Developer Mode</h2>
-                      <p className="settings-card-sub">
-                        {isDevMode ? 'Experimental tools & developer features active' : 'Enable experimental tools & developer features'}
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="settings-card-right">
-                    <ChevronRight className="settings-card-arrow" size={18} />
+                    <div className="settings-card-right">
+                      <ChevronRight className="settings-card-arrow" size={18} />
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Performance & Animations Card (Developer Mode) */}
-            {showPerf && isDevMode && (settings.enablePerformanceCard ?? true) && (
-              <div className="card settings-summary-card" onClick={() => setShowPerformanceSheet(true)}>
-                <div className="settings-card-inner">
-                  <div className="settings-card-left">
-                    <div className="settings-card-icon">
-                      <Zap size={19} />
+              {/* Performance & Animations Card (Developer Mode) */}
+              {showPerf && isDevMode && (settings.enablePerformanceCard ?? true) && (
+                <div className="card settings-summary-card" onClick={() => setShowPerformanceSheet(true)}>
+                  <div className="settings-card-inner">
+                    <div className="settings-card-left">
+                      <div className="settings-card-icon">
+                        <Zap size={19} />
+                      </div>
+                      <div className="settings-card-text">
+                        <h2 className="settings-card-title">Performance & Animations</h2>
+                        <p className="settings-card-sub">
+                          Speed & animation effects
+                        </p>
+                      </div>
                     </div>
-                    <div className="settings-card-text">
-                      <h2 className="settings-card-title">Performance & Animations</h2>
-                      <p className="settings-card-sub">
-                        {(settings.enableAnimations ?? true) ? 'Animations On' : 'Animations Off (Fast)'} • {(settings.performanceMode ?? false) ? 'Ultra Performance On' : 'Standard Visuals'}
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="settings-card-right">
-                    <ChevronRight className="settings-card-arrow" size={18} />
+                    <div className="settings-card-right">
+                      <ChevronRight className="settings-card-arrow" size={18} />
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Okane User Guide & Tour Card (Developer Mode) */}
-            {isDevMode && (settings.enableUserGuide ?? false) && (
-              <div className="card settings-summary-card" onClick={() => onStartExpenseTutorial ? onStartExpenseTutorial() : onOpenGuide?.()}>
-                <div className="settings-card-inner">
-                  <div className="settings-card-left">
-                    <div className="settings-card-icon">
-                      <Compass size={19} />
+              {/* Okane User Guide & Tour Card (Developer Mode) */}
+              {isDevMode && (settings.enableUserGuide ?? false) && (
+                <div className="card settings-summary-card" onClick={() => onStartExpenseTutorial ? onStartExpenseTutorial() : onOpenGuide?.()}>
+                  <div className="settings-card-inner">
+                    <div className="settings-card-left">
+                      <div className="settings-card-icon">
+                        <Compass size={19} />
+                      </div>
+                      <div className="settings-card-text">
+                        <h2 className="settings-card-title">Okane User Guide & Tour</h2>
+                        <p className="settings-card-sub">
+                          Interactive walkthrough
+                        </p>
+                      </div>
                     </div>
-                    <div className="settings-card-text">
-                      <h2 className="settings-card-title">Okane User Guide & Tour</h2>
-                      <p className="settings-card-sub">
-                        Interactive walkthrough & feature guide
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="settings-card-right">
-                    <ChevronRight className="settings-card-arrow" size={18} />
+                    <div className="settings-card-right">
+                      <ChevronRight className="settings-card-arrow" size={18} />
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* App Version Summary Card */}
-            {showAppInfo && (
-              <div className="card settings-summary-card" onClick={() => setShowVersionSheet(true)}>
-                <div className="settings-card-inner">
-                  <div className="settings-card-left">
-                    <div className="settings-card-icon">
-                      <HelpCircle size={19} />
+              {/* App Version Summary Card */}
+              {showAppInfo && (
+                <div className="card settings-summary-card" onClick={() => setShowVersionSheet(true)}>
+                  <div className="settings-card-inner">
+                    <div className="settings-card-left">
+                      <div className="settings-card-icon">
+                        <HelpCircle size={19} />
+                      </div>
+                      <div className="settings-card-text">
+                        <h2 className="settings-card-title">App Info</h2>
+                        <p className="settings-card-sub">
+                          Version & updates
+                        </p>
+                      </div>
                     </div>
-                    <div className="settings-card-text">
-                      <h2 className="settings-card-title">App Info</h2>
-                      <p className="settings-card-sub">
-                        Check for updates, release notes & app info
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="settings-card-right">
-                    <span className="settings-version-pill">
-                      v{currentAppVersion}
-                    </span>
-                    <ChevronRight className="settings-card-arrow" size={18} />
+                    <div className="settings-card-right">
+                      <span className="settings-version-pill">
+                        v{currentAppVersion}
+                      </span>
+                      <ChevronRight className="settings-card-arrow" size={18} />
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Report Bug / Suggest a Feature Card */}
-            {showFeedback && (settings.enableReportBugCard ?? true) && (
-              <div className="card settings-summary-card" onClick={() => setShowFeedbackSheet(true)}>
-                <div className="settings-card-inner">
-                  <div className="settings-card-left">
-                    <div className="settings-card-icon">
-                      <MessageSquarePlus size={19} />
+              {/* Report Bug / Suggest a Feature Card */}
+              {showFeedback && (settings.enableReportBugCard ?? true) && (
+                <div className="card settings-summary-card" onClick={() => setShowFeedbackSheet(true)}>
+                  <div className="settings-card-inner">
+                    <div className="settings-card-left">
+                      <div className="settings-card-icon">
+                        <MessageSquarePlus size={19} />
+                      </div>
+                      <div className="settings-card-text">
+                        <h2 className="settings-card-title">
+                          Report Bug / Feature Request
+                        </h2>
+                        <p className="settings-card-sub">
+                          Feedback & suggestions
+                        </p>
+                      </div>
                     </div>
-                    <div className="settings-card-text">
-                      <h2 className="settings-card-title">
-                        Report Bug / Feature Request
-                      </h2>
-                      <p className="settings-card-sub">
-                        Submit feedback, bug report, or feature request
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="settings-card-right">
-                    <ChevronRight className="settings-card-arrow" size={18} />
+                    <div className="settings-card-right">
+                      <ChevronRight className="settings-card-arrow" size={18} />
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
         </div>
@@ -3835,19 +3455,16 @@ export default function Settings({
               <div className="sheet-drag-handle" />
 
               {/* Header */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: 10, background: 'var(--accent-soft)',
-                    display: 'grid', placeItems: 'center', color: 'var(--accent)', flexShrink: 0
-                  }}>
-                    <FlaskConical size={18} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div className="drawer-header-icon">
+                    <FlaskConical size={20} />
                   </div>
                   <div>
-                    <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em' }}>
+                    <h3 style={{ fontSize: 16.5, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em' }}>
                       Experimental Features
                     </h3>
-                    <p style={{ fontSize: 11.5, color: 'var(--text-3)', margin: '1px 0 0 0' }}>
+                    <p className="drawer-header-sub">
                       Toggle & test developer features
                     </p>
                   </div>
@@ -3857,78 +3474,48 @@ export default function Settings({
                   type="button"
                   className="drawer-close-btn"
                   onClick={() => setShowDevSheet(false)}
-                  style={{
-                    background: 'var(--surface2)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 8,
-                    width: 32,
-                    height: 32,
-                    display: 'grid',
-                    placeItems: 'center',
-                    color: 'var(--text-2)',
-                    cursor: 'pointer'
-                  }}
+                  title="Close"
                 >
-                  <X size={16} />
+                  <X size={17} />
                 </button>
               </div>
 
               {/* Master Developer Mode Toggle Row */}
-              <div style={{
-                padding: '12px 14px',
-                borderRadius: 12,
-                background: 'var(--surface2)',
-                border: '1px solid var(--border)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 12,
-                marginBottom: 12
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <FlaskConical size={18} style={{ color: isDevMode ? 'var(--accent)' : 'var(--text-3)' }} />
-                  <div>
-                    <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>Enable Developer Mode</div>
-                    <div style={{ fontSize: 11.5, color: 'var(--text-3)' }}>Master switch for experimental tools</div>
+              <div className="drawer-setting-card" style={{ marginBottom: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
+                  <div className="drawer-card-icon" style={{
+                    background: isDevMode ? 'var(--accent)' : undefined,
+                    color: isDevMode ? 'var(--accent-contrast, #fff)' : 'var(--accent)'
+                  }}>
+                    <FlaskConical size={18} />
+                  </div>
+                  <div className="drawer-card-info">
+                    <div className="drawer-card-title">Enable Developer Mode</div>
+                    <div className="drawer-card-sub">Master switch for experimental tools</div>
                   </div>
                 </div>
                 <Switch
+                  className="custom-toggle-switch"
                   checked={isDevMode}
                   onChange={e => {
                     const checked = e.target.checked;
                     updateSettings({ devMode: checked });
                     showToast(checked ? 'Developer Mode enabled!' : 'Developer Mode disabled.');
                   }}
-                  color="primary"
                 />
               </div>
 
               {/* Single Column Clean List */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, opacity: isDevMode ? 1 : 0.5, pointerEvents: isDevMode ? 'auto' : 'none', transition: 'all 0.2s ease' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, opacity: isDevMode ? 1 : 0.5, pointerEvents: isDevMode ? 'auto' : 'none', transition: 'all 0.2s ease' }}>
                 {/* 1. SQL Console */}
-                <div style={{
-                  padding: '12px 14px',
-                  borderRadius: 12,
-                  background: 'var(--surface2)',
-                  border: '1px solid var(--border)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 12
-                }}>
+                <div className="drawer-setting-card">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
-                    <div style={{
-                      width: 36, height: 36, borderRadius: 8,
-                      background: (isDevMode && (settings.enableDevSQLConsole ?? true)) ? 'var(--accent-soft)' : 'var(--border)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-                    }}>
-                      <Terminal size={17} style={{ color: (isDevMode && (settings.enableDevSQLConsole ?? true)) ? 'var(--accent)' : 'var(--text-3)' }} />
+                    <div className="drawer-card-icon">
+                      <Terminal size={17} />
                     </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)', lineHeight: 1.2 }}>SQL Dev Console</div>
-                      <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        Execute raw AlaSQL queries
-                      </div>
+                    <div className="drawer-card-info">
+                      <div className="drawer-card-title">SQL Dev Console</div>
+                      <div className="drawer-card-sub">Execute raw AlaSQL queries</div>
                     </div>
                   </div>
 
@@ -3936,14 +3523,15 @@ export default function Settings({
                     {isDevMode && (settings.enableDevSQLConsole ?? true) && onNavigate && (
                       <button
                         type="button"
-                        className="btn btn-secondary btn-sm"
+                        className="drawer-action-icon-btn"
                         onClick={() => { setShowDevSheet(false); onNavigate('dev-sql'); }}
-                        style={{ padding: '3px 10px', fontSize: 11.5, height: 28, gap: 4 }}
+                        title="Open SQL Dev Console"
                       >
-                        <Database size={13} /> Open
+                        <ArrowUpRight size={16} />
                       </button>
                     )}
                     <Switch
+                      className="custom-toggle-switch"
                       disabled={!isDevMode}
                       checked={isDevMode && (settings.enableDevSQLConsole ?? true)}
                       onChange={(e) => {
@@ -3951,36 +3539,19 @@ export default function Settings({
                         updateSettings({ enableDevSQLConsole: enabled });
                         showToast(enabled ? 'SQL Dev Console enabled' : 'SQL Dev Console disabled');
                       }}
-                      color="primary"
-                      size="small"
                     />
                   </div>
                 </div>
 
-                {/* 3. Performance & Animations Card Switch */}
-                <div style={{
-                  padding: '12px 14px',
-                  borderRadius: 12,
-                  background: 'var(--surface2)',
-                  border: '1px solid var(--border)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 12
-                }}>
+                {/* 2. Performance & Animations Card Switch */}
+                <div className="drawer-setting-card">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
-                    <div style={{
-                      width: 36, height: 36, borderRadius: 8,
-                      background: (isDevMode && (settings.enablePerformanceCard ?? true)) ? 'var(--accent-soft)' : 'var(--border)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-                    }}>
-                      <Zap size={17} style={{ color: (isDevMode && (settings.enablePerformanceCard ?? true)) ? 'var(--accent)' : 'var(--text-3)' }} />
+                    <div className="drawer-card-icon">
+                      <Zap size={17} />
                     </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)', lineHeight: 1.2 }}>Performance & Animations Card</div>
-                      <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        Show performance & animations card in Settings
-                      </div>
+                    <div className="drawer-card-info">
+                      <div className="drawer-card-title">Performance & Animations Card</div>
+                      <div className="drawer-card-sub">Show performance & animations card in Settings</div>
                     </div>
                   </div>
 
@@ -3988,14 +3559,15 @@ export default function Settings({
                     {isDevMode && (settings.enablePerformanceCard ?? true) && (
                       <button
                         type="button"
-                        className="btn btn-secondary btn-sm"
+                        className="drawer-action-icon-btn"
                         onClick={() => { setShowDevSheet(false); setShowPerformanceSheet(true); }}
-                        style={{ padding: '3px 10px', fontSize: 11.5, height: 28, gap: 4 }}
+                        title="Configure Performance"
                       >
-                        <Sliders size={13} /> Configure
+                        <Sliders size={15} />
                       </button>
                     )}
                     <Switch
+                      className="custom-toggle-switch"
                       disabled={!isDevMode}
                       checked={isDevMode && (settings.enablePerformanceCard ?? true)}
                       onChange={(e) => {
@@ -4003,36 +3575,19 @@ export default function Settings({
                         updateSettings({ enablePerformanceCard: enabled });
                         showToast(enabled ? 'Performance Card enabled' : 'Performance Card disabled');
                       }}
-                      color="primary"
-                      size="small"
                     />
                   </div>
                 </div>
 
-                {/* 5. User Guide */}
-                <div style={{
-                  padding: '12px 14px',
-                  borderRadius: 12,
-                  background: 'var(--surface2)',
-                  border: '1px solid var(--border)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 12
-                }}>
+                {/* 3. User Guide */}
+                <div className="drawer-setting-card">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
-                    <div style={{
-                      width: 36, height: 36, borderRadius: 8,
-                      background: (isDevMode && (settings.enableUserGuide ?? false)) ? 'var(--accent-soft)' : 'var(--border)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-                    }}>
-                      <HelpCircle size={17} style={{ color: (isDevMode && (settings.enableUserGuide ?? false)) ? 'var(--accent)' : 'var(--text-3)' }} />
+                    <div className="drawer-card-icon">
+                      <HelpCircle size={17} />
                     </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)', lineHeight: 1.2 }}>User Guide & Tour</div>
-                      <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        Interactive guide & walkthrough
-                      </div>
+                    <div className="drawer-card-info">
+                      <div className="drawer-card-title">User Guide & Tour</div>
+                      <div className="drawer-card-sub">Interactive guide & walkthrough</div>
                     </div>
                   </div>
 
@@ -4040,14 +3595,15 @@ export default function Settings({
                     {isDevMode && (settings.enableUserGuide ?? false) && onStartExpenseTutorial && (
                       <button
                         type="button"
-                        className="btn btn-secondary btn-sm"
+                        className="drawer-action-icon-btn"
                         onClick={() => { setShowDevSheet(false); onStartExpenseTutorial(); }}
-                        style={{ padding: '3px 10px', fontSize: 11.5, height: 28, gap: 4 }}
+                        title="Start User Guide Tour"
                       >
-                        Tour
+                        <HelpCircle size={15} />
                       </button>
                     )}
                     <Switch
+                      className="custom-toggle-switch"
                       disabled={!isDevMode}
                       checked={isDevMode && (settings.enableUserGuide ?? false)}
                       onChange={(e) => {
@@ -4055,8 +3611,6 @@ export default function Settings({
                         updateSettings({ enableUserGuide: enabled });
                         showToast(enabled ? 'User Guide enabled' : 'User Guide disabled');
                       }}
-                      color="primary"
-                      size="small"
                     />
                   </div>
                 </div>
@@ -4075,18 +3629,15 @@ export default function Settings({
 
               {/* Header */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{
-                    width: 38, height: 38, borderRadius: 10, background: 'var(--accent-soft)',
-                    display: 'grid', placeItems: 'center', color: 'var(--accent)', flexShrink: 0
-                  }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div className="drawer-header-icon">
                     <HelpCircle size={20} />
                   </div>
                   <div>
-                    <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em' }}>
+                    <h3 style={{ fontSize: 16.5, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em' }}>
                       App Version & Info
                     </h3>
-                    <p style={{ fontSize: 11.5, color: 'var(--text-3)', margin: '1px 0 0 0' }}>
+                    <p className="drawer-header-sub">
                       v{currentAppVersion}
                     </p>
                   </div>
@@ -4096,55 +3647,39 @@ export default function Settings({
                   type="button"
                   className="drawer-close-btn"
                   onClick={() => setShowVersionSheet(false)}
-                  style={{
-                    background: 'var(--surface2)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 8,
-                    width: 32,
-                    height: 32,
-                    display: 'grid',
-                    placeItems: 'center',
-                    color: 'var(--text-2)',
-                    cursor: 'pointer'
-                  }}
+                  title="Close"
                 >
-                  <X size={16} />
+                  <X size={17} />
                 </button>
               </div>
 
               {/* Software Update Status Panel */}
               {availableUpdate ? (
-                <div style={{
-                  padding: '14px 16px',
-                  borderRadius: '16px',
+                <div className="drawer-setting-card" style={{
+                  marginBottom: 12,
+                  borderColor: 'rgba(59, 130, 246, 0.3)',
                   background: 'var(--surface2)',
-                  border: '1.5px solid rgba(59, 130, 246, 0.3)',
-                  boxShadow: '0 4px 16px rgba(59, 130, 246, 0.1)',
-                  marginBottom: 16,
-                  display: 'flex',
                   flexDirection: 'column',
+                  alignItems: 'stretch',
                   gap: 12
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <div style={{
-                        width: 38,
-                        height: 38,
-                        borderRadius: 12,
+                      <div className="drawer-card-icon" style={{
                         background: 'rgba(59, 130, 246, 0.12)',
                         border: '1px solid rgba(59, 130, 246, 0.25)',
-                        display: 'grid',
-                        placeItems: 'center',
-                        color: '#3b82f6',
-                        flexShrink: 0
+                        color: '#3b82f6'
                       }}>
-                        <ArrowUpCircle size={20} />
+                        <ArrowUpCircle size={18} />
                       </div>
-                      <div>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>
-                          v{availableUpdate.version} Available
+                      <div className="drawer-card-info">
+                        <div className="drawer-card-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span>v{availableUpdate.version} Available</span>
+                          <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 99, background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', fontWeight: 700 }}>
+                            NEW
+                          </span>
                         </div>
-                        <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 1 }}>
+                        <div className="drawer-card-sub">
                           Build #{availableUpdate.buildNumber} • {availableUpdate.releaseDate}
                         </div>
                       </div>
@@ -4154,7 +3689,7 @@ export default function Settings({
                         type="button"
                         className="btn btn-primary"
                         onClick={() => installUpdate()}
-                        style={{ gap: 6, padding: '7px 14px', borderRadius: 10, fontSize: 12, fontWeight: 600, flexShrink: 0 }}
+                        style={{ gap: 6, padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, flexShrink: 0 }}
                       >
                         <Download size={13} /> Download
                       </button>
@@ -4173,36 +3708,20 @@ export default function Settings({
                   )}
                 </div>
               ) : (
-                <div style={{
-                  padding: '14px 16px',
-                  borderRadius: '16px',
-                  background: 'var(--surface2)',
-                  border: '1px solid var(--border)',
-                  marginBottom: 16,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 10
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: '1 1 auto' }}>
-                    <div style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 10,
+                <div className="drawer-setting-card" style={{ marginBottom: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: '1 1 auto' }}>
+                    <div className="drawer-card-icon" style={{
                       background: 'rgba(34, 197, 94, 0.12)',
                       border: '1px solid rgba(34, 197, 94, 0.25)',
-                      display: 'grid',
-                      placeItems: 'center',
-                      color: '#22c55e',
-                      flexShrink: 0
+                      color: '#22c55e'
                     }}>
                       <CheckCircle2 size={18} />
                     </div>
-                    <div style={{ minWidth: 0, flex: '1 1 auto' }}>
-                      <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text)', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div className="drawer-card-info">
+                      <div className="drawer-card-title">
                         Up to date
                       </div>
-                      <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div className="drawer-card-sub">
                         Checked {settings.lastUpdateCheck || String(jsonSettings.lastUpdated || 'Today')}
                       </div>
                     </div>
@@ -4216,7 +3735,7 @@ export default function Settings({
                       gap: 5,
                       fontSize: 11.5,
                       padding: '6px 12px',
-                      borderRadius: 10,
+                      borderRadius: 8,
                       fontWeight: 600,
                       flexShrink: 0,
                       background: 'var(--surface3)',
@@ -4249,9 +3768,9 @@ export default function Settings({
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: 6,
-                    padding: '8px 12px',
-                    borderRadius: '10px',
-                    fontSize: '12px',
+                    padding: '9px 12px',
+                    borderRadius: 10,
+                    fontSize: 12,
                     fontWeight: 600,
                     border: '1px solid var(--border)',
                     background: 'var(--surface2)',
@@ -4279,9 +3798,9 @@ export default function Settings({
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: 6,
-                      padding: '8px 12px',
-                      borderRadius: '10px',
-                      fontSize: '12px',
+                      padding: '9px 12px',
+                      borderRadius: 10,
+                      fontSize: 12,
                       fontWeight: 600,
                       border: '1px solid var(--border)',
                       background: showJsonView ? 'var(--surface3)' : 'var(--surface2)',
@@ -4303,9 +3822,9 @@ export default function Settings({
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: 4,
-                    padding: '8px 12px',
-                    borderRadius: '10px',
-                    fontSize: '12px',
+                    padding: '9px 12px',
+                    borderRadius: 10,
+                    fontSize: 12,
                     fontWeight: 600,
                     color: 'var(--text-2)',
                     textDecoration: 'none',
@@ -4491,169 +4010,92 @@ export default function Settings({
       {/* Export Options Modal */}
       {exportModalOpen && createPortal(
         <div
-          className="modal-backdrop"
-          style={{ zIndex: 99999 }}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setExportModalOpen(false);
-          }}
+          className="sheet-backdrop"
+          onClick={() => setExportModalOpen(false)}
         >
           <div
-            className="modal"
+            className="sheet-modal"
             onClick={(e) => e.stopPropagation()}
-            style={{
-              maxWidth: '380px',
-              padding: '20px 22px 22px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px',
-            }}
           >
-            <div className="modal-handle-bar">
-              <div className="modal-handle" />
-            </div>
+            {/* Drag Handle */}
+            <div className="sheet-drag-handle" />
 
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{
-                  width: '38px',
-                  height: '38px',
-                  borderRadius: '12px',
-                  background: 'var(--accent-soft)',
-                  color: 'var(--accent)',
-                  display: 'grid',
-                  placeItems: 'center',
-                  flexShrink: 0
-                }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div className="drawer-header-icon">
                   <Download size={20} />
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '16.5px', fontWeight: 700, color: 'var(--text)' }}>
+                  <h3 style={{ fontSize: 16.5, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em' }}>
                     Export Backup
                   </h3>
-                  <div style={{ fontSize: '12px', color: 'var(--text-3)' }}>
+                  <p className="drawer-header-sub">
                     Save or share your backup file (.db)
-                  </div>
+                  </p>
                 </div>
               </div>
+
               <button
                 type="button"
                 className="drawer-close-btn"
                 onClick={() => setExportModalOpen(false)}
-                style={{
-                  background: 'var(--surface2)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 8,
-                  width: '32px',
-                  height: '32px',
-                  display: 'grid',
-                  placeItems: 'center',
-                  color: 'var(--text-2)',
-                  cursor: 'pointer'
-                }}
+                title="Close"
               >
-                <X size={16} />
+                <X size={17} />
               </button>
             </div>
 
             {/* Export Method Options */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 8 }}>
               {/* Option 1: Save to Storage */}
-              <button
-                type="button"
+              <div
+                className="drawer-setting-card"
                 onClick={handleSaveToStorage}
-                style={{
-                  padding: '14px 16px',
-                  borderRadius: '14px',
-                  background: 'var(--surface2)',
-                  border: '1px solid var(--border)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '12px',
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease'
-                }}
+                role="button"
+                tabIndex={0}
+                style={{ cursor: 'pointer' }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{
-                    width: '38px',
-                    height: '38px',
-                    borderRadius: '10px',
-                    background: 'var(--accent-soft)',
-                    color: 'var(--accent)',
-                    display: 'grid',
-                    placeItems: 'center',
-                    flexShrink: 0
-                  }}>
-                    <Download size={20} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
+                  <div className="drawer-card-icon">
+                    <Download size={19} />
                   </div>
-                  <div>
-                    <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)' }}>
+                  <div className="drawer-card-info">
+                    <div className="drawer-card-title">
                       Export to Storage
                     </div>
-                    <div style={{ fontSize: '11.5px', color: 'var(--text-3)', marginTop: '2px' }}>
-                      Save file to Downloads/Okane folder
+                    <div className="drawer-card-sub">
+                      Save to local storage
                     </div>
                   </div>
                 </div>
-                <ChevronRight size={18} style={{ color: 'var(--text-3)' }} />
-              </button>
+                <ChevronRight size={17} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
+              </div>
 
               {/* Option 2: Share to Apps */}
-              <button
-                type="button"
+              <div
+                className="drawer-setting-card"
                 onClick={handleShareToApps}
-                style={{
-                  padding: '14px 16px',
-                  borderRadius: '14px',
-                  background: 'var(--surface2)',
-                  border: '1px solid var(--border)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '12px',
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease'
-                }}
+                role="button"
+                tabIndex={0}
+                style={{ cursor: 'pointer' }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{
-                    width: '38px',
-                    height: '38px',
-                    borderRadius: '10px',
-                    background: 'rgba(34, 197, 94, 0.12)',
-                    color: '#22c55e',
-                    display: 'grid',
-                    placeItems: 'center',
-                    flexShrink: 0
-                  }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
+                  <div className="drawer-card-icon">
                     <Send size={18} />
                   </div>
-                  <div>
-                    <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)' }}>
+                  <div className="drawer-card-info">
+                    <div className="drawer-card-title">
                       Share to Apps
                     </div>
-                    <div style={{ fontSize: '11.5px', color: 'var(--text-3)', marginTop: '2px' }}>
-                      Send via WhatsApp, Telegram, Drive, Email
+                    <div className="drawer-card-sub">
+                      Share with other apps
                     </div>
                   </div>
                 </div>
-                <ChevronRight size={18} style={{ color: 'var(--text-3)' }} />
-              </button>
+                <ChevronRight size={17} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
+              </div>
             </div>
-
-            {/* Cancel */}
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => setExportModalOpen(false)}
-              style={{ width: '100%', marginTop: '4px' }}
-            >
-              Cancel
-            </button>
           </div>
         </div>,
         document.body
@@ -4893,20 +4335,17 @@ export default function Settings({
             <div className="sheet-drag-handle" />
 
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{
-                  width: 38, height: 38, borderRadius: 10, background: 'var(--accent-soft)',
-                  display: 'grid', placeItems: 'center', color: 'var(--accent)', flexShrink: 0
-                }}>
+            <div className="sheet-modal-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div className="drawer-header-icon">
                   <ShieldCheck size={20} />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em' }}>
+                  <h3 style={{ fontSize: 16.5, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em' }}>
                     Security & Privacy
                   </h3>
-                  <p style={{ fontSize: 11.5, color: 'var(--text-3)', margin: '1px 0 0 0' }}>
-                    Native Android Biometric & PIN Protection
+                  <p className="drawer-header-sub">
+                    Biometric & PIN Lock
                   </p>
                 </div>
               </div>
@@ -4915,59 +4354,49 @@ export default function Settings({
                 type="button"
                 className="drawer-close-btn"
                 onClick={() => { setShowSecuritySheet(false); setIsPinSetupActive(false); }}
-                style={{
-                  background: 'var(--surface2)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 8,
-                  width: 32,
-                  height: 32,
-                  display: 'grid',
-                  placeItems: 'center',
-                  color: 'var(--text-2)',
-                  cursor: 'pointer'
-                }}
+                title="Close"
               >
-                <X size={16} />
+                <X size={17} />
               </button>
             </div>
 
-
-            {/* Main Controls List */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {/* 0. Hide Amounts Switch */}
-              <div style={{
-                padding: '14px 16px',
-                borderRadius: 14,
-                background: 'var(--surface2)',
-                border: '1px solid var(--border)',
+            {/* Main Controls List - Scrollable */}
+            <div
+              className="sheet-modal-body"
+              style={{
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 12
-              }}>
+                flexDirection: 'column',
+                gap: 10,
+                overflowY: 'auto',
+                maxHeight: 'calc(80vh - 80px)',
+                paddingRight: 2,
+                paddingBottom: 16,
+                overscrollBehavior: 'contain',
+                WebkitOverflowScrolling: 'touch',
+              }}
+            >
+              {/* 0. Hide Amounts Switch */}
+              <div className="drawer-setting-card">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: 8,
-                    background: settings.hideAmounts ? 'var(--accent-soft)' : 'var(--surface3)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-                  }}>
+                  <div className="drawer-card-icon">
                     {settings.hideAmounts ? (
-                      <EyeOff size={18} style={{ color: 'var(--accent)' }} />
+                      <EyeOff size={18} />
                     ) : (
-                      <Eye size={18} style={{ color: 'var(--text-3)' }} />
+                      <Eye size={18} />
                     )}
                   </div>
-                  <div>
-                    <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>
+                  <div className="drawer-card-info">
+                    <div className="drawer-card-title">
                       Hide Amounts
                     </div>
-                    <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2 }}>
-                      Mask financial amounts in the top dashboard overview card
+                    <div className="drawer-card-sub">
+                      Mask dashboard balances
                     </div>
                   </div>
                 </div>
 
                 <Switch
+                  className="custom-toggle-switch"
                   checked={Boolean(settings.hideAmounts)}
                   onChange={(e) => {
                     updateSettings({ hideAmounts: e.target.checked });
@@ -4977,35 +4406,23 @@ export default function Settings({
               </div>
 
               {/* 1. Master PIN Lock Switch */}
-              <div style={{
-                padding: '14px 16px',
-                borderRadius: 14,
-                background: 'var(--surface2)',
-                border: '1px solid var(--border)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 12
-              }}>
+              <div className="drawer-setting-card">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: 8,
-                    background: isLockEnabled ? 'var(--accent-soft)' : 'var(--border)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-                  }}>
-                    <KeyRound size={18} style={{ color: isLockEnabled ? 'var(--accent)' : 'var(--text-3)' }} />
+                  <div className="drawer-card-icon">
+                    <KeyRound size={18} />
                   </div>
-                  <div>
-                    <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>
-                      PIN Passcode Lock
+                  <div className="drawer-card-info">
+                    <div className="drawer-card-title">
+                      Passcode Lock
                     </div>
-                    <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2 }}>
-                      Require 4-digit PIN when opening Okane
+                    <div className="drawer-card-sub">
+                      Require 4-digit PIN
                     </div>
                   </div>
                 </div>
 
                 <Switch
+                  className="custom-toggle-switch"
                   checked={isLockEnabled}
                   onChange={(e) => handleToggleSecurityLock(e.target.checked)}
                   color="primary"
@@ -5013,36 +4430,23 @@ export default function Settings({
               </div>
 
               {/* 2. Biometric Unlock Switch (Only use PIN if toggled off) */}
-              <div style={{
-                padding: '14px 16px',
-                borderRadius: 14,
-                background: 'var(--surface2)',
-                border: '1px solid var(--border)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 12,
-                opacity: isLockEnabled ? 1 : 0.65
-              }}>
+              <div className="drawer-setting-card" style={{ opacity: isLockEnabled ? 1 : 0.65 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: 8,
-                    background: isBiometricEnabled ? 'var(--accent-soft)' : 'var(--border)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-                  }}>
-                    <Fingerprint size={18} style={{ color: isBiometricEnabled ? 'var(--accent)' : 'var(--text-3)' }} />
+                  <div className="drawer-card-icon">
+                    <Fingerprint size={18} />
                   </div>
-                  <div>
-                    <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>
+                  <div className="drawer-card-info">
+                    <div className="drawer-card-title">
                       Biometric Unlock
                     </div>
-                    <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2 }}>
-                      Prompt fingerprint or face scan before falling back to PIN
+                    <div className="drawer-card-sub">
+                      Fingerprint & Face ID
                     </div>
                   </div>
                 </div>
 
                 <Switch
+                  className="custom-toggle-switch"
                   checked={isBiometricEnabled}
                   onChange={(e) => handleToggleBiometricOnly(e.target.checked)}
                   color="primary"
@@ -5050,36 +4454,23 @@ export default function Settings({
               </div>
 
               {/* 3. Auto-enter on Face Recognition Switch */}
-              <div style={{
-                padding: '14px 16px',
-                borderRadius: 14,
-                background: 'var(--surface2)',
-                border: '1px solid var(--border)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 12,
-                opacity: isLockEnabled ? 1 : 0.65
-              }}>
+              <div className="drawer-setting-card" style={{ opacity: isLockEnabled ? 1 : 0.65 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: 8,
-                    background: (settings.autoUnlockOnFace ?? false) && isLockEnabled ? 'var(--accent-soft)' : 'var(--border)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-                  }}>
-                    <ScanFace size={18} style={{ color: (settings.autoUnlockOnFace ?? false) && isLockEnabled ? 'var(--accent)' : 'var(--text-3)' }} />
+                  <div className="drawer-card-icon">
+                    <ScanFace size={18} />
                   </div>
-                  <div>
-                    <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>
-                      Auto-enter on Face Unlock
+                  <div className="drawer-card-info">
+                    <div className="drawer-card-title">
+                      Auto Face Unlock
                     </div>
-                    <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2 }}>
-                      Skip confirmation button when face is recognized
+                    <div className="drawer-card-sub">
+                      Instant unlock
                     </div>
                   </div>
                 </div>
 
                 <Switch
+                  className="custom-toggle-switch"
                   checked={Boolean(settings.autoUnlockOnFace && isLockEnabled)}
                   disabled={!isLockEnabled}
                   onChange={(e) => {
@@ -5091,37 +4482,24 @@ export default function Settings({
                 />
               </div>
 
-              {/* 3. Require Lock on App Resume Switch */}
-              <div style={{
-                padding: '14px 16px',
-                borderRadius: 14,
-                background: 'var(--surface2)',
-                border: '1px solid var(--border)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 12,
-                opacity: isLockEnabled ? 1 : 0.65
-              }}>
+              {/* 4. Require Lock on App Resume Switch */}
+              <div className="drawer-setting-card" style={{ opacity: isLockEnabled ? 1 : 0.65 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: 8,
-                    background: (settings.requireBiometricOnResume ?? true) && isLockEnabled ? 'var(--accent-soft)' : 'var(--border)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-                  }}>
-                    <Lock size={18} style={{ color: (settings.requireBiometricOnResume ?? true) && isLockEnabled ? 'var(--accent)' : 'var(--text-3)' }} />
+                  <div className="drawer-card-icon">
+                    <Lock size={18} />
                   </div>
-                  <div>
-                    <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>
-                      Lock on Background Resume
+                  <div className="drawer-card-info">
+                    <div className="drawer-card-title">
+                      Resume Lock
                     </div>
-                    <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2 }}>
-                      Re-lock when switching back to Okane from another app
+                    <div className="drawer-card-sub">
+                      Re-lock on app switch
                     </div>
                   </div>
                 </div>
 
                 <Switch
+                  className="custom-toggle-switch"
                   checked={settings.requireBiometricOnResume ?? true}
                   disabled={!isLockEnabled}
                   onChange={(e) => {
@@ -5133,42 +4511,29 @@ export default function Settings({
                 />
               </div>
 
-              {/* Set / Change Backup Security PIN */}
-              <div style={{
-                padding: '14px 16px',
-                borderRadius: 14,
-                background: 'var(--surface2)',
-                border: '1px solid var(--border)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 12
-              }}>
+              {/* 5. Set / Change Backup Security PIN */}
+              <div className="drawer-setting-card">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: 8,
-                    background: settings.securityPin ? 'var(--accent-soft)' : 'var(--border)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-                  }}>
-                    <KeyRound size={18} style={{ color: settings.securityPin ? 'var(--accent)' : 'var(--text-3)' }} />
+                  <div className="drawer-card-icon">
+                    <KeyRound size={18} />
                   </div>
-                  <div>
-                    <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>
-                      Passcode Security PIN
+                  <div className="drawer-card-info">
+                    <div className="drawer-card-title">
+                      Passcode PIN
                     </div>
-                    <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2 }}>
-                      {settings.securityPin ? '4-Digit PIN Configured' : 'No custom PIN set'}
+                    <div className="drawer-card-sub">
+                      {settings.securityPin ? 'Configured' : 'Not set'}
                     </div>
                   </div>
                 </div>
 
                 <button
                   type="button"
-                  className="btn btn-secondary btn-sm"
+                  className="drawer-action-icon-btn"
                   onClick={() => setIsPinSetupActive(true)}
-                  style={{ fontSize: 12, padding: '6px 14px', height: 34, fontWeight: 600, borderRadius: 10 }}
+                  title={settings.securityPin ? 'Change PIN' : 'Set PIN'}
                 >
-                  {settings.securityPin ? 'Change PIN' : 'Set PIN'}
+                  <Edit2 size={15} />
                 </button>
               </div>
 
@@ -5176,29 +4541,14 @@ export default function Settings({
               {isLockEnabled && (
                 <button
                   type="button"
-                  className="btn btn-secondary"
+                  className="drawer-test-lock-btn"
                   onClick={() => {
                     setShowSecuritySheet(false);
                     onTestLock?.();
                   }}
-                  style={{
-                    width: '100%',
-                    marginTop: 4,
-                    padding: '12px',
-                    borderRadius: 12,
-                    fontWeight: 600,
-                    fontSize: 13,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 8,
-                    border: '1px solid var(--accent-border-soft)',
-                    color: 'var(--accent)',
-                    background: 'var(--accent-soft)'
-                  }}
                 >
-                  <ShieldCheck size={18} />
-                  <span>Test Security Lock Screen</span>
+                  <ShieldCheck size={16} />
+                  <span>Test Lock Screen</span>
                 </button>
               )}
             </div>

@@ -281,7 +281,7 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
         style={{
           position: 'relative',
           zIndex: 1402,
-          maxWidth: 480,
+          maxWidth: 420,
           width: '100%',
           maxHeight: 'min(88vh, 88dvh)',
           borderRadius: isMobileScreen ? '22px 22px 0 0' : 22,

@@ -44,7 +44,7 @@ export default function SettlementDetailModal({ settlement, onClose, onUndo }: S
       style={{ zIndex: 100050 }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="modal modal-dialog-panel" style={{ maxWidth: 480, width: '100%', borderRadius: 22 }}>
+      <div className="modal modal-dialog-panel" style={{ maxWidth: 420, width: '100%', borderRadius: 22 }}>
         {/* Top Handle Pill */}
         <div className="modal-handle-bar">
           <div className="modal-handle" />

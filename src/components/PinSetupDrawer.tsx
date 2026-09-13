@@ -197,60 +197,42 @@ export default function PinSetupDrawer({
             className="sheet-modal modal-dialog-panel"
             style={{ maxWidth: 400, margin: '0 auto' }}
           >
-            {/* Drag Handle Pill */}
-            <div className="modal-drag-handle" />
+            {/* Drag Handle */}
+            <div className="sheet-drag-handle" />
 
-        {/* Drawer Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 10,
-                background: 'transparent',
-                display: 'grid',
-                placeItems: 'center',
-                color: 'var(--text)',
-                flexShrink: 0,
-              }}
-            >
-              <KeyRound size={20} strokeWidth={2.2} />
-            </div>
-            <div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em', lineHeight: 1.2 }}>
-                {hasExistingPin ? 'Change Security Passcode' : 'Create Security Passcode'}
-              </h3>
-              <p style={{ fontSize: 11.5, color: 'var(--text-3)', margin: '2px 0 0' }}>
-                {hasExistingPin
-                  ? step === 'verify_old'
-                    ? 'Step 1 of 3: Verify Current Passcode'
-                    : step === 'enter'
-                    ? 'Step 2 of 3: Set New Passcode'
-                    : 'Step 3 of 3: Confirm New Passcode'
-                  : step === 'enter'
-                  ? 'Step 1 of 2: Set Passcode'
-                  : 'Step 2 of 2: Confirm Passcode'}
-              </p>
-            </div>
-          </div>
+            {/* Drawer Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div className="drawer-header-icon">
+                  <KeyRound size={20} strokeWidth={2.2} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--text)', letterSpacing: '-0.01em', lineHeight: 1.2 }}>
+                    {hasExistingPin ? 'Change Security Passcode' : 'Create Security Passcode'}
+                  </h3>
+                  <p className="drawer-header-sub">
+                    {hasExistingPin
+                      ? step === 'verify_old'
+                        ? 'Step 1 of 3: Verify Current Passcode'
+                        : step === 'enter'
+                        ? 'Step 2 of 3: Set New Passcode'
+                        : 'Step 3 of 3: Confirm New Passcode'
+                      : step === 'enter'
+                      ? 'Step 1 of 2: Set Passcode'
+                      : 'Step 2 of 2: Confirm Passcode'}
+                  </p>
+                </div>
+              </div>
 
-          <button
-            type="button"
-            className="btn-icon"
-            onClick={handleClose}
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 9999,
-              display: 'grid',
-              placeItems: 'center',
-              cursor: 'pointer',
-            }}
-          >
-            <X size={18} />
-          </button>
-        </div>
+              <button
+                type="button"
+                className="drawer-close-btn"
+                onClick={handleClose}
+                title="Close"
+              >
+                <X size={17} />
+              </button>
+            </div>
 
         {/* Step Indicator Progress Bar Pills */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>

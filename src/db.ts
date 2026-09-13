@@ -555,7 +555,7 @@ export const DEFAULT_WALLETS: Wallet[] = [
 
 export const FRIEND_PALETTE = [
   '#4F46E5', '#059669', '#D97706', '#2563EB', '#7C3AED',
-  '#E11D48', '#0D9488', '#EA580C', '#0284C7', '#475569',
+  '#E11D48', '#0D9488', '#0284C7',
 ];
 
 export interface CurrencyInfo {
