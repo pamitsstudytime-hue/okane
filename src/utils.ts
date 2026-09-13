@@ -1,5 +1,5 @@
 import { CURRENCIES } from './db';
-import type { Expense, ExpenseFlow, ExpenseType, Wallet, Friend, Category, Settlement } from './types';
+import type { Expense, ExpenseFlow, ExpenseType, Wallet, Friend, Category, Settlement, ContactType } from './types';
 import { expenseFlow, personalNetAmount } from './db';
 
 export function currencySymbol(currency: string): string {
@@ -540,6 +540,22 @@ export function getAvatarStyle(color?: string): React.CSSProperties {
   };
 }
 
+export function getContactColor(contact?: { type?: ContactType; color?: string } | null, fallback?: string): string {
+  if (!contact) return fallback || 'var(--accent)';
+  if (contact.type === 'vendor') {
+    return (contact.color && contact.color !== '#6366f1') ? contact.color : '#f59e0b';
+  }
+  if (contact.type === 'subscription') {
+    return (contact.color && contact.color !== '#6366f1') ? contact.color : '#8b5cf6';
+  }
+  return contact.color || fallback || 'var(--accent)';
+}
+
+export function getContactStyle(contact?: { type?: ContactType; color?: string } | null, fallback?: string): React.CSSProperties {
+  const color = getContactColor(contact, fallback);
+  return getAvatarStyle(color);
+}
+
 export function generateInsights(
   expenses: Expense[],
   friends: { id: string; name: string }[],
@@ -803,7 +819,9 @@ export function resolveCategoryMeta(
   isSettlementGroup?: boolean,
   categoriesMap?: Map<string, Category>
 ): { name: string; color: string; icon: string; bg: string; border: string } {
-  if (isSettlementGroup || categoryName === 'Settlement') {
+  const normCat = (categoryName || '').trim().toLowerCase();
+
+  if (isSettlementGroup || normCat === 'settlement') {
     return {
       name: 'Settlement',
       color: '#10B981',
@@ -813,7 +831,7 @@ export function resolveCategoryMeta(
     };
   }
 
-  if (categoryName === 'Transfer') {
+  if (normCat === 'transfer') {
     return {
       name: 'Transfer',
       color: '#6366F1',
@@ -823,17 +841,56 @@ export function resolveCategoryMeta(
     };
   }
 
+  if (normCat === 'income' || normCat === 'salary' || normCat === 'deposit') {
+    return {
+      name: categoryName || 'Income',
+      color: '#10B981',
+      icon: 'income',
+      bg: 'rgba(16, 185, 129, 0.12)',
+      border: 'rgba(16, 185, 129, 0.25)',
+    };
+  }
+
+  if (normCat === 'groceries' || normCat === 'grocery' || normCat === 'supermarket' || normCat === 'zepto' || normCat === 'zeptoo' || normCat === 'blinkit' || normCat === 'instamart') {
+    return {
+      name: categoryName || 'Groceries',
+      color: '#10B981',
+      icon: 'groceries',
+      bg: 'rgba(16, 185, 129, 0.12)',
+      border: 'rgba(16, 185, 129, 0.25)',
+    };
+  }
+
   let cat = categoryObj;
   if (!cat && categoriesMap && categoryName) {
-    const norm = categoryName.trim().toLowerCase();
-    cat = Array.from(categoriesMap.values()).find(c => c.name.trim().toLowerCase() === norm);
+    cat = Array.from(categoriesMap.values()).find(c => c.name.trim().toLowerCase() === normCat);
   }
 
   let color = cat?.color;
   let icon = cat?.icon;
 
+  // Keyword inferences if icon is missing or generic
+  if (!icon || icon === 'other' || icon === 'tag') {
+    if (normCat.includes('grocer') || normCat.includes('zepto') || normCat.includes('blinkit') || normCat.includes('instamart') || normCat.includes('mart')) {
+      icon = 'groceries';
+      if (!color) color = '#10B981';
+    } else if (normCat.includes('food') || normCat.includes('dining') || normCat.includes('swiggy') || normCat.includes('zomato')) {
+      icon = 'food';
+      if (!color) color = '#F97316';
+    } else if (normCat.includes('income') || normCat.includes('salary') || normCat.includes('credit')) {
+      icon = 'income';
+      if (!color) color = '#10B981';
+    } else if (normCat.includes('shopping') || normCat.includes('amazon') || normCat.includes('flipkart')) {
+      icon = 'shopping';
+      if (!color) color = '#EC4899';
+    } else if (normCat.includes('transfer')) {
+      icon = 'transfer';
+      if (!color) color = '#6366F1';
+    }
+  }
+
   // Upgrade legacy reddish-pink #F97362 food color to warm appetizing food orange #F97316
-  if (color === '#F97362' || (!color && categoryName?.trim().toLowerCase() === 'food')) {
+  if (color === '#F97362' || (!color && normCat === 'food')) {
     color = '#F97316';
     icon = icon || 'food';
   }

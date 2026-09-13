@@ -25,7 +25,7 @@ import { Capacitor } from '@capacitor/core';
 import {
   Mic,
   MicOff,
-  Send,
+  ArrowUp,
   X,
   User,
   PlusCircle,
@@ -50,11 +50,11 @@ import {
   QrCode,
 } from 'lucide-react';
 import { useStore } from '../store';
-import { currencySymbol } from '../utils';
+import { currencySymbol, resolveCategoryMeta, getAvatarStyle as getAppAvatarStyle } from '../utils';
 import { parseLocallyClient } from '../nlp';
 import { uid, todayISO } from '../db';
-import type { ExpenseType, ExpenseFlow } from '../types';
-import { CategoryBadge } from './CategoryIcon';
+import type { ExpenseType, ExpenseFlow, Category } from '../types';
+import CategoryIcon, { CategoryBadge } from './CategoryIcon';
 import type { ExpenseInitialData } from './ExpenseModal';
 import { getFrequentTasks, type FrequentTaskItem } from '../utils/frequentTasks';
 import { showSoftKeyboard } from '../utils/keyboard';
@@ -638,7 +638,7 @@ function BotMessageBubble({ text }: { text: string }) {
                     boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
                     transition: 'all 0.18s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
-                      borderColor: 'var(--accent)',
+                      borderColor: 'var(--border2)',
                       bgcolor: 'var(--surface3)',
                       transform: 'translateY(-1px)',
                     },
@@ -652,7 +652,7 @@ function BotMessageBubble({ text }: { text: string }) {
                         borderRadius: '8px',
                         bgcolor: bullet.badgeType === 'credit' ? 'rgba(34, 197, 94, 0.12)' : 'var(--surface2)',
                         border: '1px solid var(--border)',
-                        color: bullet.badgeType === 'credit' ? 'var(--credit)' : 'var(--accent)',
+                        color: bullet.badgeType === 'credit' ? 'var(--credit)' : 'var(--text)',
                         display: 'grid',
                         placeItems: 'center',
                         flexShrink: 0,
@@ -1284,12 +1284,19 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
 
   // Dynamically compute frequent actions and quick query shortcuts learned from ledger
   const { frequentActions, otherActions } = useMemo(() => {
+    const categoriesMap = new Map<string, Category>();
+    (db.settings?.categories || []).forEach(c => categoriesMap.set(c.name, c));
+
     const frequent: Array<{
       icon: React.ReactNode;
       label: string;
       subText?: string;
       prompt: string;
       taskItem?: FrequentTaskItem;
+      color: string;
+      bg: string;
+      border: string;
+      isVendor?: boolean;
     }> = [];
 
     const others: Array<{
@@ -1298,50 +1305,94 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
       prompt: string;
     }> = [];
 
-    const getIconForTask = (task: FrequentTaskItem) => {
-      if (task.vendorId || task.vendorName) return <Store size={14} />;
-      const lower = task.description.toLowerCase();
-      if (lower.includes('coffee') || lower.includes('tea') || lower.includes('chai') || lower.includes('cafe')) return <Coffee size={14} />;
-      if (lower.includes('food') || lower.includes('dinner') || lower.includes('lunch') || lower.includes('meal') || lower.includes('snack') || lower.includes('tiffin') || lower.includes('burger') || lower.includes('poha')) return <Utensils size={14} />;
-      if (lower.includes('groc') || lower.includes('mart') || lower.includes('store') || lower.includes('shop')) return <ShoppingBag size={14} />;
-      if (lower.includes('salary') || lower.includes('income') || lower.includes('pay')) return <TrendingUp size={14} />;
-      if (lower.includes('bill') || lower.includes('util') || lower.includes('rent') || lower.includes('wifi')) return <CreditCard size={14} />;
-      if (lower.includes('auto') || lower.includes('uber') || lower.includes('cab') || lower.includes('fuel') || lower.includes('petrol')) return <Zap size={14} />;
-      return <TrendingDown size={14} />;
+    const getIconForTask = (task: FrequentTaskItem, color: string) => {
+      if (task.vendorId || task.vendorName || task.isVendor) return <Store size={15} style={{ color }} />;
+      const lower = (task.description || '').toLowerCase();
+      if (lower.includes('coffee') || lower.includes('tea') || lower.includes('chai') || lower.includes('cafe')) return <Coffee size={15} style={{ color }} />;
+      if (lower.includes('food') || lower.includes('dinner') || lower.includes('lunch') || lower.includes('meal') || lower.includes('snack') || lower.includes('tiffin') || lower.includes('burger') || lower.includes('poha')) return <Utensils size={15} style={{ color }} />;
+      if (lower.includes('groc') || lower.includes('mart') || lower.includes('store') || lower.includes('shop')) return <ShoppingBag size={15} style={{ color }} />;
+      if (lower.includes('salary') || lower.includes('income') || lower.includes('pay')) return <TrendingUp size={15} style={{ color }} />;
+      if (lower.includes('bill') || lower.includes('util') || lower.includes('rent') || lower.includes('wifi')) return <CreditCard size={15} style={{ color }} />;
+      if (lower.includes('auto') || lower.includes('uber') || lower.includes('cab') || lower.includes('fuel') || lower.includes('petrol')) return <Zap size={15} style={{ color }} />;
+      return <CategoryIcon category={task.category} size={15} style={{ color }} />;
     };
 
     const frequentTasksList = getFrequentTasks(db);
     frequentTasksList.forEach(task => {
+      // Find matching vendor contact if any
+      const vendorContact = task.vendorId
+        ? db.friends.find(f => f.id === task.vendorId)
+        : (task.vendorName
+            ? db.friends.find(f => f.name.toLowerCase() === task.vendorName?.toLowerCase() && f.type === 'vendor')
+            : db.friends.find(f => f.type === 'vendor' && (
+                f.name.toLowerCase() === task.description.toLowerCase() ||
+                task.description.toLowerCase().startsWith(f.name.toLowerCase()) ||
+                f.name.toLowerCase().includes(task.description.toLowerCase())
+              )));
+
+      const isVendor = Boolean(vendorContact || task.vendorId || task.vendorName || task.isVendor);
+
+      let itemIcon: React.ReactNode;
+      let itemColor: string;
+      let itemBg: string;
+      let itemBorder: string;
+
+      if (isVendor) {
+        // Sync color directly from Contact Page!
+        // Contact page uses getAvatarStyle(vendor.color || '#f59e0b')
+        const vendorColor = (vendorContact?.color && vendorContact.color !== '#6366f1')
+          ? vendorContact.color
+          : (task.vendorColor || '#f59e0b');
+        const vStyle = getAppAvatarStyle(vendorColor);
+
+        itemColor = vendorColor;
+        itemBg = (vStyle.background as string) || `${vendorColor}24`;
+        const rawBorder = (vStyle.border as string) || '';
+        itemBorder = rawBorder.replace(/^1px solid\s*/, '') || `${vendorColor}55`;
+        itemIcon = <Store size={15} style={{ color: vendorColor }} />;
+      } else {
+        // Category expense styling from App Settings / Categories!
+        const catMeta = resolveCategoryMeta(task.category, undefined, false, categoriesMap);
+        itemColor = catMeta.color;
+        itemBg = catMeta.bg;
+        itemBorder = catMeta.border;
+        itemIcon = getIconForTask(task, catMeta.color);
+      }
+
       frequent.push({
-        icon: getIconForTask(task),
+        icon: itemIcon,
         label: task.label,
         subText: task.subText,
         prompt: task.prompt,
         taskItem: task,
+        color: itemColor,
+        bg: itemBg,
+        border: itemBorder,
+        isVendor,
       });
     });
 
     // 2. Other actions (Insights, Balances, Debts, History)
     others.push({
-      icon: <Banknote size={14} />,
+      icon: <Banknote size={15} />,
       label: 'Account balances',
       prompt: 'What are my account balances?',
     });
 
     others.push({
-      icon: <Users size={14} />,
+      icon: <Users size={15} />,
       label: 'Who owes me',
       prompt: 'Who owes me money right now?',
     });
 
     others.push({
-      icon: <Clock size={14} />,
+      icon: <Clock size={15} />,
       label: 'Monthly spend',
       prompt: 'How much did I spend this month?',
     });
 
     others.push({
-      icon: <TrendingDown size={14} />,
+      icon: <TrendingDown size={15} />,
       label: 'Recent expenses',
       prompt: 'Show my recent transactions',
     });
@@ -1354,30 +1405,31 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
   const headerContent = (
     <Box
       sx={{
-        px: { xs: 2, sm: 3 },
-        pt: isMobile ? 0.75 : 2.5,
-        pb: 1.25,
+        px: { xs: 2.5, sm: 3 },
+        pt: isMobile ? 0.75 : 2,
+        pb: 1,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         bgcolor: 'var(--surface)',
-        gap: 1,
+        gap: 1.5,
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minWidth: 0 }}>
+        {/* Top left icon blends seamlessly with card bg (no box, no border) */}
         <Box
           sx={{
-            width: 36,
-            height: 36,
-            borderRadius: '10px',
+            width: 32,
+            height: 32,
             bgcolor: 'transparent',
+            border: 'none',
             color: 'var(--text)',
             display: 'grid',
             placeItems: 'center',
             flexShrink: 0,
           }}
         >
-          <Sparkles size={19} strokeWidth={2.2} color="currentColor" />
+          <Sparkles size={22} strokeWidth={2.2} color="currentColor" />
         </Box>
         <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'nowrap' }}>
@@ -1385,7 +1437,7 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
               variant="h6"
               sx={{
                 fontWeight: 700,
-                fontSize: { xs: '15.5px', sm: '17px' },
+                fontSize: { xs: '15.5px', sm: '16.5px' },
                 color: 'var(--text)',
                 lineHeight: 1.2,
                 whiteSpace: 'nowrap',
@@ -1398,8 +1450,8 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
             variant="caption"
             sx={{
               color: 'var(--text-3)',
-              fontSize: { xs: '11px', sm: '12px' },
-              mt: 0.25,
+              fontSize: { xs: '11px', sm: '11.5px' },
+              mt: 0.2,
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -1410,45 +1462,66 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
         </Box>
       </Box>
 
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexShrink: 0 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
         {messages.length > 0 && (
           <Tooltip title="Restart chat & clear history">
             <IconButton
               size="small"
               onClick={handleRestartChat}
+              aria-label="Restart chat"
               sx={{
                 color: 'var(--text-2)',
                 p: 0,
-                width: 32,
-                height: 32,
+                width: 36,
+                height: 36,
                 borderRadius: '9999px',
+                bgcolor: 'var(--surface2)',
+                border: '1px solid var(--border)',
                 display: 'grid',
                 placeItems: 'center',
                 transition: 'all 0.15s ease',
-                '&:hover': { bgcolor: 'var(--surface2)', color: 'var(--text)' },
+                '&:hover': {
+                  bgcolor: 'var(--surface3)',
+                  color: 'var(--text)',
+                  borderColor: 'var(--border2)',
+                },
+                '&:active': {
+                  transform: 'scale(0.92)',
+                },
               }}
             >
-              <RotateCcw size={15} />
+              <RotateCcw size={16} />
             </IconButton>
           </Tooltip>
         )}
 
+        {/* Rounded close button */}
         <IconButton
           size="small"
           onClick={onClose}
+          aria-label="Close assistant"
           sx={{
             color: 'var(--text-2)',
             p: 0,
-            width: 32,
-            height: 32,
+            width: 36,
+            height: 36,
             borderRadius: '9999px',
+            bgcolor: 'var(--surface2)',
+            border: '1px solid var(--border)',
             display: 'grid',
             placeItems: 'center',
             transition: 'all 0.15s ease',
-            '&:hover': { bgcolor: 'var(--surface2)', color: 'var(--text)' },
+            '&:hover': {
+              bgcolor: 'var(--surface3)',
+              color: 'var(--text)',
+              borderColor: 'var(--border2)',
+            },
+            '&:active': {
+              transform: 'scale(0.92)',
+            },
           }}
         >
-          <X size={18} />
+          <X size={18} strokeWidth={2.2} />
         </IconButton>
       </Box>
     </Box>
@@ -1459,10 +1532,10 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
     <Box
       sx={{
         px: { xs: 2, sm: 3 },
-        py: 1,
+        py: { xs: 0.5, sm: 0.75 },
         display: 'flex',
         flexDirection: 'column',
-        gap: 2,
+        gap: { xs: 1.25, sm: 2 },
         flex: 1,
         overflowY: 'auto',
         bgcolor: 'var(--surface)',
@@ -1470,10 +1543,10 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
     >
       {/* Empty State: Minimal, Clean Actions */}
       {messages.length === 0 && !activeDraft && (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, my: 'auto', py: 1.5 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1.5, sm: 2 }, my: 'auto', py: { xs: 0.25, sm: 0.5 } }}>
           {/* Frequent Actions */}
           {frequentActions.length > 0 && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
               <Typography
                 variant="caption"
                 sx={{
@@ -1481,14 +1554,14 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
                   color: 'var(--text-3)',
                   textTransform: 'uppercase',
                   letterSpacing: '0.06em',
-                  fontSize: '11px',
+                  fontSize: '10.5px',
                   px: 0.25,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 0.6,
+                  gap: 0.5,
                 }}
               >
-                <Sparkles size={12} color="var(--accent)" />
+                <Sparkles size={11} color="var(--text-3)" />
                 Frequent Actions
               </Typography>
 
@@ -1496,7 +1569,7 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
                 sx={{
                   display: 'grid',
                   gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-                  gap: 0.85,
+                  gap: 0.75,
                   width: '100%',
                 }}
               >
@@ -1560,9 +1633,10 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
                       }
                     }}
                     sx={{
-                      px: 1.25,
-                      py: 1,
-                      borderRadius: '8px',
+                      px: 1.35,
+                      py: 0.7,
+                      minHeight: '38px',
+                      borderRadius: '11px',
                       bgcolor: 'var(--surface2)',
                       border: '1px solid var(--border)',
                       cursor: 'pointer',
@@ -1570,22 +1644,29 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      gap: 0.75,
-                      transition: 'all 0.15s ease',
+                      gap: 1,
+                      transition: 'background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease',
                       '&:hover': {
                         bgcolor: 'var(--surface3)',
-                        borderColor: 'var(--accent)',
+                        borderColor: 'var(--border2)',
                         transform: 'translateY(-1px)',
                       },
                       '&:active': {
-                        transform: 'translateY(0)',
+                        bgcolor: 'var(--surface3)',
+                        borderColor: 'var(--border2)',
+                        transform: 'scale(0.99)',
                       },
                     }}
                   >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.85, minWidth: 0, flex: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0, flex: 1 }}>
                       <Box
                         sx={{
-                          color: 'var(--accent)',
+                          width: 28,
+                          height: 28,
+                          borderRadius: '8px',
+                          bgcolor: item.bg,
+                          border: `1px solid ${item.border}`,
+                          color: item.color,
                           display: 'grid',
                           placeItems: 'center',
                           flexShrink: 0,
@@ -1597,7 +1678,7 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
                         <Typography
                           sx={{
                             fontWeight: 600,
-                            fontSize: '12.5px',
+                            fontSize: '13px',
                             color: 'var(--text)',
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
@@ -1607,7 +1688,7 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
                           {item.taskItem?.description || item.label}
                         </Typography>
 
-                        {/* Friend Badge (Name badge if 1 friend, initials badge if multiple friends) */}
+                        {/* Friend Badge (sync color from Contact page!) */}
                         {item.taskItem && ((item.taskItem.friendNames && item.taskItem.friendNames.length > 0) || item.taskItem.friendName) && (() => {
                           const names = item.taskItem.friendNames && item.taskItem.friendNames.length > 0
                             ? item.taskItem.friendNames
@@ -1615,27 +1696,28 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
                           if (names.length === 0) return null;
                           const isByOther = item.taskItem.whoPaid === 'other' || item.taskItem.type === 'by_friend';
                           
+                          const matchedFriend = (item.taskItem.friendIds && item.taskItem.friendIds.length > 0)
+                            ? db.friends.find(f => item.taskItem?.friendIds?.includes(f.id))
+                            : db.friends.find(f => f.name.toLowerCase() === names[0].toLowerCase());
+
+                          const friendColor = matchedFriend?.color || (isByOther ? '#10b981' : '#6366f1');
+                          const friendStyle = getAppAvatarStyle(friendColor);
+
                           return (
                             <Box
                               sx={{
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 gap: 0.35,
-                                px: 0.75,
+                                px: 0.85,
                                 py: 0.15,
                                 borderRadius: '999px',
                                 fontSize: '10px',
-                                fontWeight: 700,
+                                fontWeight: 650,
                                 flexShrink: 0,
-                                background: isByOther
-                                  ? 'rgba(16, 185, 129, 0.12)'
-                                  : 'rgba(99, 102, 241, 0.14)',
-                                color: isByOther
-                                  ? '#10b981'
-                                  : 'var(--accent)',
-                                border: isByOther
-                                  ? '1px solid rgba(16, 185, 129, 0.25)'
-                                  : '1px solid rgba(99, 102, 241, 0.25)',
+                                background: friendStyle.background,
+                                color: friendStyle.color,
+                                border: friendStyle.border,
                                 lineHeight: 1.2,
                               }}
                             >
@@ -1653,9 +1735,10 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
                     {item.subText && (
                       <Typography
                         sx={{
-                          fontSize: '11px',
-                          fontWeight: 600,
-                          color: 'var(--text-3)',
+                          fontSize: '13px',
+                          fontWeight: 650,
+                          color: 'var(--text-2)',
+                          fontVariantNumeric: 'tabular-nums',
                           flexShrink: 0,
                         }}
                       >
@@ -1669,7 +1752,7 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
           )}
 
           {/* Other Quick Actions & Queries */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
             <Typography
               variant="caption"
               sx={{
@@ -1677,7 +1760,7 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
                 color: 'var(--text-3)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.06em',
-                fontSize: '11px',
+                fontSize: '10.5px',
                 px: 0.25,
               }}
             >
@@ -1686,9 +1769,10 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
 
             <Box
               sx={{
-                display: 'flex',
-                flexWrap: 'wrap',
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr 1fr', sm: '1fr 1fr' },
                 gap: 0.75,
+                width: '100%',
               }}
             >
               {otherActions.map((item, idx) => (
@@ -1696,35 +1780,38 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
                   key={idx}
                   onClick={() => handleSend(item.prompt)}
                   sx={{
-                    display: 'inline-flex',
+                    display: 'flex',
                     alignItems: 'center',
-                    gap: 0.75,
+                    gap: 1,
                     px: 1.25,
-                    py: 0.7,
-                    borderRadius: '8px',
+                    py: 0.65,
+                    minHeight: '36px',
+                    borderRadius: '10px',
                     bgcolor: 'var(--surface2)',
                     border: '1px solid var(--border)',
-                    color: 'var(--text-2)',
+                    color: 'var(--text)',
                     fontSize: '12px',
-                    fontWeight: 500,
+                    fontWeight: 550,
                     cursor: 'pointer',
                     userSelect: 'none',
-                    transition: 'all 0.15s ease',
+                    transition: 'background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease',
                     '&:hover': {
                       bgcolor: 'var(--surface3)',
-                      borderColor: 'var(--accent)',
+                      borderColor: 'var(--border2)',
                       color: 'var(--text)',
                       transform: 'translateY(-1px)',
                     },
                     '&:active': {
-                      transform: 'translateY(0)',
+                      bgcolor: 'var(--surface3)',
+                      borderColor: 'var(--border2)',
+                      transform: 'scale(0.98)',
                     },
                   }}
                 >
                   <Box sx={{ color: 'var(--text-3)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
                     {item.icon}
                   </Box>
-                  <span>{item.label}</span>
+                  <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.label}</span>
                 </Box>
               ))}
             </Box>
@@ -2198,8 +2285,8 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
     <Box
       sx={{
         px: { xs: 2, sm: 3 },
-        pb: { xs: 2, sm: 3 },
-        pt: 1,
+        pb: { xs: 1.75, sm: 2.5 },
+        pt: 0.5,
         display: 'flex',
         flexDirection: 'column',
         bgcolor: 'var(--surface)',
@@ -2210,9 +2297,9 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
           sx={{
             display: 'flex',
             alignItems: 'center',
-            gap: 0.75,
+            gap: 1,
             overflowX: 'auto',
-            pb: 1,
+            pb: 1.25,
             mb: 0.5,
             width: '100%',
             WebkitOverflowScrolling: 'touch',
@@ -2232,6 +2319,7 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
             return (
               <Chip
                 key={idx}
+                icon={<Box sx={{ display: 'inline-flex', alignItems: 'center', ml: 0.5, color: item.color }}>{item.icon}</Box>}
                 label={chipLabel}
                 size="small"
                 onClick={() => {
@@ -2290,18 +2378,21 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
                   }
                 }}
                 sx={{
-                  fontSize: '11px',
+                  fontSize: '12px',
                   fontWeight: 600,
+                  height: '32px',
+                  px: 1,
+                  borderRadius: '9999px',
                   bgcolor: 'var(--surface2)',
-                  color: 'var(--text-2)',
-                  border: '1px solid var(--border)',
+                  color: 'var(--text)',
+                  border: `1px solid ${item.border}`,
                   cursor: 'pointer',
                   flexShrink: 0,
                   transition: 'all 0.15s ease',
                   '&:hover': {
-                    bgcolor: 'var(--surface3)',
-                    color: 'var(--text)',
-                    borderColor: 'var(--accent)',
+                    bgcolor: item.bg,
+                    color: item.color,
+                    borderColor: item.color,
                   },
                 }}
               />
@@ -2310,23 +2401,28 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
         </Box>
       )}
 
+      {/* Clean search bar - no accent color for border, hover, clicked or selected */}
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
-          gap: 1,
+          gap: 1.25,
           width: '100%',
           px: 1.75,
-          py: 0.75,
+          py: 0.65,
+          minHeight: '48px',
           bgcolor: 'var(--surface2)',
-          borderRadius: '12px',
+          borderRadius: '15px',
           border: '1px solid',
           borderColor: isListening ? 'var(--debit)' : 'var(--border)',
-          transition: 'all 0.15s ease',
+          transition: 'border-color 0.15s ease, background-color 0.15s ease',
+          '&:hover': {
+            borderColor: 'var(--border2)',
+          },
           '&:focus-within': {
-            borderColor: 'var(--accent)',
-            bgcolor: 'var(--surface)',
-            boxShadow: '0 2px 10px var(--accent-soft)',
+            borderColor: 'var(--border2)',
+            bgcolor: 'var(--surface2)',
+            boxShadow: 'none',
           },
         }}
       >
@@ -2360,10 +2456,14 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
           <IconButton
             onClick={toggleListening}
             size="small"
+            aria-label={isListening ? 'Stop mic' : 'Speak to Max'}
             sx={{
               color: isListening ? 'var(--debit)' : 'var(--text-2)',
-              p: 0.75,
-              borderRadius: '8px',
+              p: 0,
+              width: 34,
+              height: 34,
+              borderRadius: '9999px',
+              transition: 'all 0.15s ease',
               '&:hover': {
                 color: 'var(--text)',
                 bgcolor: 'var(--surface3)',
@@ -2378,21 +2478,27 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
           onClick={() => handleSend()}
           disabled={!inputText.trim() || loading}
           size="small"
+          aria-label="Send prompt"
           sx={{
-            color: inputText.trim() ? 'var(--accent)' : 'var(--text-3)',
-            p: 0.75,
-            borderRadius: '8px',
+            color: inputText.trim() ? 'var(--text)' : 'var(--text-3)',
+            p: 0,
+            width: 34,
+            height: 34,
+            borderRadius: '9999px',
+            bgcolor: inputText.trim() ? 'var(--surface3)' : 'transparent',
+            transition: 'all 0.15s ease',
             '&:hover': {
-              color: 'var(--accent)',
+              color: 'var(--text)',
               bgcolor: 'var(--surface3)',
             },
             '&.Mui-disabled': {
               color: 'var(--text-3)',
-              opacity: 0.4,
+              opacity: 0.35,
+              bgcolor: 'transparent',
             },
           }}
         >
-          <Send size={17} />
+          <ArrowUp size={18} />
         </IconButton>
       </Box>
     </Box>
@@ -2418,8 +2524,8 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
         }}
         PaperProps={{
           sx: {
-            borderTopLeftRadius: '20px',
-            borderTopRightRadius: '20px',
+            borderTopLeftRadius: '24px',
+            borderTopRightRadius: '24px',
             maxHeight: '90vh',
             width: '100%',
             display: 'flex',
@@ -2428,6 +2534,7 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
             bgcolor: 'var(--surface)',
             color: 'var(--text)',
             border: 'none',
+            boxShadow: '0 -10px 40px rgba(0, 0, 0, 0.4)',
             transform: dragOffsetY > 0 ? `translateY(${dragOffsetY}px) !important` : undefined,
             transition: dragOffsetY > 0 ? 'none !important' : undefined,
           },
@@ -2455,7 +2562,7 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
               width: dragOffsetY > 0 ? 44 : 36,
               height: 4,
               bgcolor: 'var(--border2)',
-              borderRadius: '2px',
+              borderRadius: '9999px',
             }}
           />
         </Box>
@@ -2485,7 +2592,7 @@ export default function AIAssistantModal({ open, onClose, onOpenAddExpense }: AI
       }}
       PaperProps={{
         sx: {
-          borderRadius: '16px',
+          borderRadius: '20px',
           overflow: 'hidden',
           maxWidth: '520px',
           width: '100%',

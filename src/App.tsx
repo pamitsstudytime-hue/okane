@@ -35,6 +35,7 @@ import {
   HelpCircle,
   Search,
   Filter,
+  ChevronRight,
 } from 'lucide-react';
 import { StoreProvider, useStore } from './store';
 import { useColorMode } from './theme';
@@ -1478,12 +1479,12 @@ function AppInner() {
             pb: 'calc(24px + env(safe-area-inset-bottom, 0px))',
             height: 'auto',
             maxHeight: '92vh',
-            borderTop: mode === 'dark' ? '1px solid rgba(38, 38, 38, 0.8)' : '1px solid #e5e7eb',
+            borderTop: mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e5e7eb',
             boxShadow: '0 -10px 40px rgba(0, 0, 0, 0.8)',
           }
         }}
       >
-        <Box sx={{ width: 38, height: 4, bgcolor: '#323540', borderRadius: '9999px', mx: 'auto', mb: 2 }} />
+        <Box sx={{ width: 38, height: 4, bgcolor: '#323540', borderRadius: '9999px', mx: 'auto', mb: 2.5 }} />
 
         {/* Header close button: hidden on mobile drawer, shown on desktop */}
         <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', justifyContent: 'flex-end', mb: 1 }}>
@@ -1492,7 +1493,7 @@ function AppInner() {
           </IconButton>
         </Box>
 
-        {/* Quick AI Assistant Card if enabled */}
+        {/* Quick AI Assistant Card if enabled - Perfect alignment and squircle icon tile */}
         {enableAIAssistant && (
           <Paper
             elevation={0}
@@ -1500,64 +1501,78 @@ function AppInner() {
             sx={{
               p: 1.5,
               mb: 2,
-              borderRadius: '10px',
-              bgcolor: 'var(--accent-soft)',
-              border: '1px solid var(--border)',
+              borderRadius: '16px',
+              bgcolor: 'var(--surface2)',
+              border: 'none',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               cursor: 'pointer',
-              transition: 'transform 0.2s ease, filter 0.2s ease',
+              transition: 'transform 0.2s ease, background-color 0.2s ease',
               '&:active': { transform: 'scale(0.98)' }
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Box sx={{
-                width: 36, height: 36, borderRadius: '8px',
-                bgcolor: 'primary.main', color: 'primary.contrastText',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 3px 10px var(--accent-soft)'
+                width: 42,
+                height: 42,
+                borderRadius: '12px',
+                bgcolor: mode === 'dark' ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
+                color: 'text.primary',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
               }}>
-                <Sparkles size={18} />
+                <Sparkles size={20} />
               </Box>
               <Box>
-                <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', fontSize: '0.88rem', lineHeight: 1.3 }}>
                   Ask Max AI Assistant
                 </Typography>
-                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '0.74rem', lineHeight: 1.2, mt: 0.2 }}>
                   Smart expense logging & insights
                 </Typography>
               </Box>
             </Box>
             <Box sx={{
-              px: 1.2, py: 0.4, borderRadius: '6px',
-              bgcolor: 'primary.main', color: 'primary.contrastText',
-              fontSize: '0.7rem', fontWeight: 700
+              width: 32,
+              height: 32,
+              borderRadius: '10px',
+              bgcolor: mode === 'dark' ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
+              color: 'text.secondary',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
             }}>
-              Open
+              <ChevronRight size={18} />
             </Box>
           </Paper>
         )}
 
         {/* Category Sections Grid */}
-        <Typography variant="caption" sx={{ textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 700, color: 'text.secondary', mb: 1, display: 'block' }}>
+        <Typography variant="caption" sx={{ textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 700, color: 'text.secondary', mb: 1, display: 'block', px: 0.5, fontSize: '0.72rem' }}>
           Features & Modules
         </Typography>
 
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1.2, mb: 2 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1.2, mb: 1.5 }}>
           {moreItems.map(item => {
             const isSelected = activeView === item.id;
+
             return (
               <Paper
                 key={item.id}
                 elevation={0}
                 onClick={() => navigate(item.id)}
                 sx={{
-                  p: 1.5,
-                  borderRadius: '10px',
-                  bgcolor: isSelected ? 'var(--accent-soft)' : 'var(--surface2)',
-                  border: '1px solid',
-                  borderColor: isSelected ? 'var(--accent)' : 'var(--border)',
+                  py: 2,
+                  px: 1,
+                  borderRadius: '16px',
+                  bgcolor: isSelected ? 'var(--surface3)' : 'var(--surface2)',
+                  border: isSelected
+                    ? (mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(0, 0, 0, 0.08)')
+                    : 'none',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
@@ -1570,18 +1585,34 @@ function AppInner() {
                   '&:active': { transform: 'scale(0.95)' }
                 }}
               >
-                <Box sx={{ color: isSelected ? 'primary.main' : 'text.primary' }}>
+                <Box sx={{ color: isSelected ? 'text.primary' : 'text.secondary', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {item.icon}
                 </Box>
-                <Typography variant="caption" sx={{ fontWeight: isSelected ? 700 : 500, color: isSelected ? 'primary.main' : 'text.primary', fontSize: '0.75rem', lineHeight: 1.1 }}>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontWeight: isSelected ? 750 : 500,
+                    color: isSelected ? 'text.primary' : 'text.secondary',
+                    fontSize: '0.78rem',
+                    lineHeight: 1.2,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    maxWidth: '100%',
+                  }}
+                >
                   {item.label}
                 </Typography>
 
                 {item.id === 'settlements' && pendingSettlements > 0 && (
                   <Box sx={{
                     position: 'absolute', top: 6, right: 6,
-                    fontSize: 10, fontWeight: 700, px: 0.6, py: 0.1,
-                    bgcolor: 'primary.main', color: 'primary.contrastText', borderRadius: '4px',
+                    fontSize: 10, fontWeight: 700, px: 0.8, py: 0.2,
+                    bgcolor: mode === 'dark' ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.12)',
+                    color: 'text.primary',
+                    border: 'none',
+                    borderRadius: '9999px',
+                    lineHeight: 1,
                   }}>
                     {pendingSettlements}
                   </Box>
@@ -1590,8 +1621,12 @@ function AppInner() {
                 {item.id === 'recurring' && dueAutopaysCount > 0 && (
                   <Box sx={{
                     position: 'absolute', top: 6, right: 6,
-                    fontSize: 10, fontWeight: 700, px: 0.6, py: 0.1,
-                    bgcolor: 'error.main', color: '#ffffff', borderRadius: '4px',
+                    fontSize: 10, fontWeight: 700, px: 0.8, py: 0.2,
+                    bgcolor: 'var(--debit-bg, rgba(248, 113, 113, 0.15))',
+                    color: 'var(--debit, #ef4444)',
+                    border: 'none',
+                    borderRadius: '9999px',
+                    lineHeight: 1,
                   }}>
                     {dueAutopaysCount}
                   </Box>
@@ -1606,10 +1641,11 @@ function AppInner() {
               elevation={0}
               onClick={() => { setMoreOpen(false); setShowGuideModal(true); }}
               sx={{
-                p: 1.5,
-                borderRadius: '10px',
+                py: 2,
+                px: 1,
+                borderRadius: '16px',
                 bgcolor: 'var(--surface2)',
-                border: '1px solid var(--border)',
+                border: 'none',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -1621,25 +1657,48 @@ function AppInner() {
                 '&:active': { transform: 'scale(0.95)' }
               }}
             >
-              <Box sx={{ color: 'text.primary' }}>
+              <Box sx={{ color: 'text.primary', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <HelpCircle size={20} />
               </Box>
-              <Typography variant="caption" sx={{ fontWeight: 500, color: 'text.primary', fontSize: '0.75rem', lineHeight: 1.1 }}>
+              <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', fontSize: '0.78rem', lineHeight: 1.2 }}>
                 User Guide
               </Typography>
             </Paper>
           )}
         </Box>
 
-        {/* Bottom Row Controls */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pt: 1, borderTop: '1px solid var(--border)' }}>
-          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            Theme: <strong>{mode === 'dark' ? 'Dark Mode' : 'Light Mode'}</strong>
+        {/* Bottom Row Controls - Theme card aligned with surface2 cards */}
+        <Paper
+          elevation={0}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            p: '12px 16px',
+            borderRadius: '16px',
+            bgcolor: 'var(--surface2)',
+            border: 'none',
+          }}
+        >
+          <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 600, fontSize: '0.88rem' }}>
+            Theme: <span style={{ fontWeight: 700 }}>{mode === 'dark' ? 'Dark Mode' : 'Light Mode'}</span>
           </Typography>
-          <IconButton size="small" onClick={handleToggleDark} sx={{ bgcolor: 'var(--surface2)' }}>
+          <IconButton
+            size="small"
+            onClick={handleToggleDark}
+            sx={{
+              width: 36,
+              height: 36,
+              borderRadius: '10px',
+              bgcolor: mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
+              border: 'none',
+              color: 'text.primary',
+              '&:hover': { bgcolor: mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)' }
+            }}
+          >
             {mode === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </IconButton>
-        </Box>
+        </Paper>
       </Drawer>
 
       {/* Floating Action Buttons (Search & AI Assistant) */}

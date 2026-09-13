@@ -1527,45 +1527,49 @@ export default function DailyWalletBalanceDrawer({
 
           {/* Active Filter Chips Summary (when filter drawer is closed) */}
           {!showFilterPanel && activeFilterCount > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               {selectedWalletId !== 'all' && (
                 <span className="app-filter-chip">
-                  <span>Account: {walletMap.get(selectedWalletId)?.name || 'Selected'}</span>
+                  <span className="app-filter-chip-label">Account:</span>
+                  <span className="app-filter-chip-value">{walletMap.get(selectedWalletId)?.name || 'Selected'}</span>
                   <button
                     type="button"
                     onClick={() => setSelectedWalletId('all')}
                     className="app-filter-chip-remove"
                     title="Remove account filter"
+                    aria-label="Remove account filter"
                   >
-                    <X size={12} />
+                    <X size={12} strokeWidth={2.5} />
                   </button>
                 </span>
               )}
 
               {filterMode === 'activity_only' && (
                 <span className="app-filter-chip">
-                  <span>Active days only</span>
+                  <span className="app-filter-chip-value">Active days only</span>
                   <button
                     type="button"
                     onClick={() => setFilterMode('all_days')}
                     className="app-filter-chip-remove"
                     title="Show all days"
+                    aria-label="Show all days"
                   >
-                    <X size={12} />
+                    <X size={12} strokeWidth={2.5} />
                   </button>
                 </span>
               )}
 
               {sortOrder === 'asc' && (
                 <span className="app-filter-chip">
-                  <span>Oldest first (1 → 31)</span>
+                  <span className="app-filter-chip-value">Oldest first (1 → 31)</span>
                   <button
                     type="button"
                     onClick={() => setSortOrder('desc')}
                     className="app-filter-chip-remove"
                     title="Reset to newest first"
+                    aria-label="Reset to newest first"
                   >
-                    <X size={12} />
+                    <X size={12} strokeWidth={2.5} />
                   </button>
                 </span>
               )}
@@ -1573,18 +1577,11 @@ export default function DailyWalletBalanceDrawer({
               <button
                 type="button"
                 onClick={resetFilters}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text-3)',
-                  fontSize: 11,
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  padding: '2px 4px',
-                  textDecoration: 'underline',
-                }}
+                className="app-filter-clear-btn"
+                title="Clear all filters"
               >
-                Clear all
+                <RotateCcw size={13} strokeWidth={2.2} />
+                <span>Clear all</span>
               </button>
             </div>
           )}

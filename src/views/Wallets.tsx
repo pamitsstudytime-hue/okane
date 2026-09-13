@@ -235,7 +235,7 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
     <div className="view-container">
       {/* Page Header */}
       <div className="page-header wallets-page-header">
-        <div>
+        <div className="desktop-only">
           <h1 className="page-title">Wallets</h1>
         </div>
         <DesktopSearchBar placeholder="Search wallets, transactions..." defaultTab="wallets" />
@@ -281,27 +281,27 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
               style={{
                 background: 'var(--surface)',
                 border: '1px solid var(--border)',
-                borderRadius: 16,
-                padding: '18px 20px',
+                borderRadius: 18,
+                padding: '20px 22px',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                gap: 16,
+                gap: 18,
                 boxSizing: 'border-box',
                 width: '100%',
-                minHeight: 200,
+                minHeight: 220,
                 transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
               }}
             >
               <div>
                 {/* Top Card Row: Icon, Title, Subtitle, and Action Icons */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 16 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
                     <div
                       style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: 12,
+                        width: 46,
+                        height: 46,
+                        borderRadius: 13,
                         background: 'var(--surface2)',
                         border: '1px solid var(--border)',
                         display: 'flex',
@@ -311,7 +311,7 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                         overflow: 'hidden',
                       }}
                     >
-                      {renderWalletIcon(w.icon || w.name, 44, w.color || 'var(--accent)')}
+                      {renderWalletIcon(w.icon || w.name, 46, w.color || 'var(--accent)')}
                     </div>
                     <div style={{ minWidth: 0 }}>
                       <div
@@ -319,27 +319,41 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                           fontWeight: 700,
                           fontSize: 17,
                           color: 'var(--text)',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
                           lineHeight: 1.25,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 7,
+                          flexWrap: 'wrap',
                         }}
                         title={w.name}
                       >
-                        {w.name}
+                        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {w.name}
+                        </span>
+                        {isDefault && (
+                          <span className="wallet-badge-pill wallet-badge-default" style={{ flexShrink: 0 }}>
+                            Default
+                          </span>
+                        )}
                       </div>
                       <div
                         style={{
-                          fontSize: 12,
+                          fontSize: 12.5,
                           color: 'var(--text-3)',
                           fontWeight: 500,
                           marginTop: 3,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 4,
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                         }}
                       >
-                        Opening: <span style={{ color: 'var(--text-2)', fontWeight: 600 }}>{fmtMoney(w.openingBalance, currency)}</span>
+                        <span>Opening:</span>
+                        <span style={{ color: 'var(--text)', fontWeight: 650, letterSpacing: '-0.1px' }}>
+                          {fmtMoney(w.openingBalance, currency)}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -362,8 +376,8 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                   style={{
                     background: 'var(--surface2)',
                     border: '1px solid var(--border)',
-                    borderRadius: 13,
-                    padding: '14px 16px',
+                    borderRadius: 14,
+                    padding: '16px 18px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
@@ -385,7 +399,7 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                     </div>
                     <div
                       style={{
-                        fontSize: 25,
+                        fontSize: 26,
                         fontWeight: 800,
                         color: bal < 0 ? 'var(--debit)' : 'var(--text)',
                         lineHeight: 1.15,
@@ -401,27 +415,24 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
 
                   {/* Badges / Pill Tags on the Right */}
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
-                    {isDefault && (
-                      <span className="wallet-badge-pill wallet-badge-default">
-                        Default
-                      </span>
-                    )}
                     {w.isHidden && (
                       <span
                         className="wallet-badge-pill wallet-badge-hidden"
                         title="Hidden from Dashboard"
                       >
-                        <EyeOff size={11} /> Hidden
+                        <EyeOff size={11} /> <span className="wallet-badge-text">Hidden</span>
                       </span>
                     )}
                     <span
                       className={`wallet-badge-pill ${wSpend > 0 ? 'wallet-badge-spend-active' : 'wallet-badge-spend-zero'}`}
-                      title={wSpend > 0 ? `Monthly spend: -${fmtMoney(wSpend, currency)}` : 'No expenses this month'}
+                      title={wSpend > 0 ? `Monthly spend: ${fmtMoney(wSpend, currency)}` : 'No expenses this month'}
                     >
                       <span>
-                        {wSpend >= 1000
-                          ? `Spend: ~${currencySymbol(currency)}${Math.round(wSpend / 1000)}k`
-                          : `Spend: -${currencySymbol(currency)}${Math.round(wSpend)}`}
+                        {wSpend > 0
+                          ? (wSpend >= 10000
+                              ? `${currencySymbol(currency)}${(wSpend / 1000).toFixed(1)}k spent`
+                              : `${fmtMoney(wSpend, currency)} spent`)
+                          : 'No spend'}
                       </span>
                     </span>
                   </div>
@@ -437,9 +448,9 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                     flex: 1,
                     justifyContent: 'center',
                     gap: 6,
-                    fontSize: 13,
+                    fontSize: 13.5,
                     fontWeight: 650,
-                    padding: '9px 12px',
+                    padding: '11px 16px',
                     borderRadius: 9999,
                     background: 'var(--surface2)',
                     border: '1px solid var(--border)',
@@ -462,10 +473,11 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                   style={{
                     flex: 1,
                     justifyContent: 'center',
+                    alignItems: 'center',
                     gap: 6,
-                    fontSize: 13,
+                    fontSize: 13.5,
                     fontWeight: 650,
-                    padding: '9px 12px',
+                    padding: '11px 16px',
                     borderRadius: 9999,
                     background: 'var(--surface2)',
                     border: '1px solid var(--border)',
@@ -479,7 +491,24 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                   }}
                 >
                   <ReceiptText size={14} />
-                  History ({wExpCount})
+                  <span>History</span>
+                  {wExpCount > 0 && (
+                    <span
+                      style={{
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        padding: '2px 7px',
+                        borderRadius: '9999px',
+                        background: 'var(--surface)',
+                        border: '1px solid var(--border)',
+                        color: 'var(--text-2)',
+                        lineHeight: 1,
+                        marginLeft: 2,
+                      }}
+                    >
+                      {wExpCount}
+                    </span>
+                  )}
                 </button>
               </div>
             </div>
@@ -503,7 +532,8 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
           }}
         >
           <div
-            className="modal wallet-drawer-modal"
+            className="modal wallet-drawer-modal modal-dialog-panel"
+            style={{ maxWidth: 480, width: '100%', borderRadius: 22 }}
             onClick={e => e.stopPropagation()}
           >
             {/* Mobile Bottom-Sheet Handle Indicator */}
@@ -552,19 +582,20 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                   style={{
                     width: 32,
                     height: 32,
-                    borderRadius: 8,
+                    borderRadius: '50%',
                     border: '1px solid var(--border)',
                     background: 'var(--surface2)',
-                    color: 'var(--text-2)',
+                    color: 'var(--text)',
                     display: 'grid',
                     placeItems: 'center',
                     cursor: 'pointer',
+                    transition: 'all 0.15s ease',
                   }}
                   onClick={() => setSelectedWalletForTx(null)}
                   title="Close"
                   aria-label="Close"
                 >
-                  <X size={18} />
+                  <X size={16} />
                 </button>
               </div>
 
@@ -579,46 +610,46 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
               >
                 <div
                   style={{
-                    padding: '10px 14px',
-                    borderRadius: 12,
+                    padding: '13px 16px',
+                    borderRadius: 16,
                     background: 'var(--surface2)',
                     border: '1px solid var(--border)',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: 3,
+                    gap: 4,
                   }}
                 >
-                  <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-3)', display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <div style={{ fontSize: '11.5px', fontWeight: 600, color: 'var(--text-3)', display: 'flex', alignItems: 'center', gap: 5 }}>
                     <TrendingDown size={13} style={{ color: 'var(--debit)' }} />
                     <span>This Month Spent</span>
                   </div>
-                  <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--debit)', letterSpacing: '-0.2px' }}>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 750, color: 'var(--debit)', letterSpacing: '-0.2px' }}>
                     -{fmtMoney(walletMonthSpend, currency)}
                   </div>
                 </div>
 
                 <div
                   style={{
-                    padding: '10px 14px',
-                    borderRadius: 12,
+                    padding: '13px 16px',
+                    borderRadius: 16,
                     background: 'var(--surface2)',
                     border: '1px solid var(--border)',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: 3,
+                    gap: 4,
                   }}
                 >
-                  <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-3)', display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <div style={{ fontSize: '11.5px', fontWeight: 600, color: 'var(--text-3)', display: 'flex', alignItems: 'center', gap: 5 }}>
                     <TrendingUp size={13} style={{ color: 'var(--credit)' }} />
                     <span>This Month Inflow</span>
                   </div>
-                  <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--credit)', letterSpacing: '-0.2px' }}>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 750, color: 'var(--credit)', letterSpacing: '-0.2px' }}>
                     +{fmtMoney(walletMonthIn, currency)}
                   </div>
                 </div>
               </div>
 
-              {/* Search Bar - Full Width without splitting lines or add transaction btn */}
+              {/* Search Bar - Full Width without splitting lines */}
               <div style={{ position: 'relative', width: '100%' }}>
                 <Search
                   size={15}
@@ -638,11 +669,11 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                   placeholder={`Search ${activeWallet.name} transactions...`}
                   style={{
                     width: '100%',
-                    height: 38,
-                    paddingLeft: 34,
+                    height: 42,
+                    paddingLeft: 36,
                     paddingRight: searchQuery ? 32 : 12,
                     fontSize: '13px',
-                    borderRadius: 10,
+                    borderRadius: 14,
                     border: '1px solid var(--border)',
                     background: 'var(--surface2)',
                     color: 'var(--text)',
@@ -673,38 +704,58 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                 )}
               </div>
 
-              {/* Subtitle Count Bar */}
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginTop: 10,
-                  fontSize: '11.5px',
-                  color: 'var(--text-3)',
-                  fontWeight: 500,
-                }}
-              >
-                <span>{filteredTx.length} transaction{filteredTx.length === 1 ? '' : 's'} recorded</span>
-                {searchQuery && <span>Filtered by "{searchQuery}"</span>}
-              </div>
+              {searchQuery && (
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontSize: '12px',
+                    fontWeight: 500,
+                    color: 'var(--text-2)',
+                    marginTop: 8,
+                  }}
+                >
+                  <span>Filtered by</span>
+                  <span
+                    style={{
+                      fontWeight: 650,
+                      color: 'var(--accent)',
+                      backgroundColor: 'var(--accent-soft)',
+                      padding: '2px 9px',
+                      borderRadius: 9999,
+                      border: '1px solid var(--border)',
+                    }}
+                  >
+                    "{searchQuery}"
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Transactions Content List */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '10px 16px 16px', background: 'var(--surface)' }}>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '10px 16px calc(24px + env(safe-area-inset-bottom, 0px))', background: 'var(--surface)' }}>
               {filteredTx.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '48px 16px', color: 'var(--text-2)' }}>
-                  <div style={{ fontSize: '13.5px', fontWeight: 500 }}>
+                  <div style={{ fontSize: '14.5px', fontWeight: 700, color: 'var(--text)' }}>
                     {searchQuery ? 'No matching transactions found.' : 'No transactions recorded yet.'}
                   </div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-3)', marginTop: 4 }}>
+                  <div style={{ fontSize: '12.5px', color: 'var(--text-2)', marginTop: 4 }}>
                     {searchQuery ? 'Try searching with a different term' : 'Transactions associated with this wallet will appear here'}
                   </div>
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {filteredTx.map((tx, idx) => {
-                    const catMeta = resolveCategoryMeta(tx.category, categoriesMap.get(tx.category), tx.isSettlement, categoriesMap);
+                    let effectiveCategory = tx.category;
+                    const descLower = (tx.description || '').toLowerCase();
+                    if (descLower.includes('zepto') || descLower.includes('zeptoo') || descLower.includes('blinkit') || descLower.includes('instamart')) {
+                      effectiveCategory = 'Groceries';
+                    } else if ((descLower.includes('from idbi') || descLower.startsWith('from ') || tx.flow === 'in') && !tx.isSettlement && tx.category !== 'Transfer') {
+                      effectiveCategory = 'Income';
+                    }
+
+                    const catMeta = resolveCategoryMeta(effectiveCategory, categoriesMap.get(effectiveCategory), tx.isSettlement, categoriesMap);
                     const isIn = tx.flow === 'in';
                     const rawExpense = !tx.isSettlement ? tx.rawExpense : undefined;
                     const rawSettlement = tx.isSettlement ? tx.rawSettlement : undefined;
@@ -726,6 +777,19 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                       }
                     };
 
+                    const getBadgeColors = (sKey: string) => {
+                      if (sKey === 'settled' || sKey === 'paid' || sKey === 'completed') {
+                        return { bg: 'rgba(16, 185, 129, 0.12)', color: '#10B981', border: 'rgba(16, 185, 129, 0.25)' };
+                      }
+                      if (sKey === 'unsettled' || sKey === 'unpaid' || sKey === 'overdue') {
+                        return { bg: 'rgba(239, 68, 68, 0.12)', color: '#F87171', border: 'rgba(239, 68, 68, 0.25)' };
+                      }
+                      if (sKey === 'partial') {
+                        return { bg: 'rgba(245, 158, 11, 0.12)', color: '#F59E0B', border: 'rgba(245, 158, 11, 0.25)' };
+                      }
+                      return { bg: 'var(--surface3, rgba(255,255,255,0.06))', color: 'var(--text-2)', border: 'var(--border)' };
+                    };
+
                     return (
                       <div
                         key={`${tx.id}-${idx}`}
@@ -739,8 +803,8 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                           }
                         }}
                         style={{
-                          padding: '11px 13px',
-                          borderRadius: 12,
+                          padding: '14px 16px',
+                          borderRadius: 16,
                           border: '1px solid var(--border)',
                           background: 'var(--surface2)',
                           display: 'flex',
@@ -753,13 +817,13 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                         className="wallet-tx-item"
                       >
                         {/* Left Side: Icon + Details */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 11, minWidth: 0, flex: '1 1 auto', overflow: 'hidden' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: '1 1 auto', overflow: 'hidden' }}>
                           {/* Category / Settlement Icon Tile */}
                           <div
                             style={{
-                              width: 36,
-                              height: 36,
-                              borderRadius: 10,
+                              width: 42,
+                              height: 42,
+                              borderRadius: 13,
                               backgroundColor: catMeta.bg,
                               border: `1px solid ${catMeta.border}`,
                               display: 'grid',
@@ -769,9 +833,9 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                             }}
                           >
                             {tx.isSettlement ? (
-                              <Handshake size={18} style={{ color: '#10B981' }} />
+                              <Handshake size={20} style={{ color: '#10B981' }} />
                             ) : (
-                              <CategoryIcon category={catMeta.name} icon={catMeta.icon} size={18} style={{ color: catMeta.color }} />
+                              <CategoryIcon category={catMeta.name} icon={catMeta.icon} size={20} style={{ color: catMeta.color }} />
                             )}
                           </div>
 
@@ -781,8 +845,8 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap' }}>
                               <span
                                 style={{
-                                  fontWeight: 600,
-                                  fontSize: '13.5px',
+                                  fontWeight: 650,
+                                  fontSize: '14px',
                                   color: 'var(--text)',
                                   overflow: 'hidden',
                                   textOverflow: 'ellipsis',
@@ -791,37 +855,17 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                               >
                                 {cleanSettlementDescription(tx.description)}
                               </span>
-                              {isSplit && (
-                                <span
-                                  style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: 3,
-                                    padding: '1px 6px',
-                                    borderRadius: 4,
-                                    fontSize: 10,
-                                    fontWeight: 600,
-                                    backgroundColor: 'var(--accent-soft)',
-                                    color: 'var(--accent)',
-                                    whiteSpace: 'nowrap',
-                                    flexShrink: 0,
-                                  }}
-                                >
-                                  <Users size={10} />
-                                  <span>Split</span>
-                                </span>
-                              )}
                             </div>
 
-                            {/* Subtitle Hierarchy */}
+                            {/* Subtitle Hierarchy with refined date font & contrast */}
                             <div
                               style={{
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: 5,
-                                fontSize: '11.5px',
-                                color: 'var(--text-3)',
-                                marginTop: 2,
+                                fontSize: '12px',
+                                color: 'var(--text-2)',
+                                marginTop: 3,
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
                                 whiteSpace: 'nowrap',
@@ -829,14 +873,16 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                             >
                               {!tx.isSettlement && (
                                 <>
-                                  <span style={{ flexShrink: 0 }}>{tx.category}</span>
-                                  <span style={{ flexShrink: 0 }}>•</span>
+                                  <span style={{ flexShrink: 0, fontWeight: 500, color: 'var(--text-2)' }}>{tx.category}</span>
+                                  <span style={{ flexShrink: 0, color: 'var(--text-3)' }}>•</span>
                                 </>
                               )}
-                              <span style={{ flexShrink: 0 }}>{fmtDate(tx.date)}</span>
+                              <span style={{ flexShrink: 0, fontWeight: 500, color: 'var(--text-2)', letterSpacing: '-0.1px' }}>
+                                {fmtDate(tx.date)}
+                              </span>
                               {vendor && (
                                 <>
-                                  <span style={{ flexShrink: 0 }}>•</span>
+                                  <span style={{ flexShrink: 0, color: 'var(--text-3)' }}>•</span>
                                   <span
                                     style={{
                                       display: 'inline-flex',
@@ -856,7 +902,7 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                               )}
                               {friend && !vendor && (
                                 <>
-                                  <span style={{ flexShrink: 0 }}>•</span>
+                                  <span style={{ flexShrink: 0, color: 'var(--text-3)' }}>•</span>
                                   <span
                                     style={{
                                       color: 'var(--text-2)',
@@ -878,28 +924,72 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                         <div style={{ textAlign: 'right', flexShrink: 0, paddingLeft: 10 }}>
                           <div
                             style={{
-                              fontSize: '14px',
-                              fontWeight: 700,
+                              fontSize: '14.5px',
+                              fontWeight: 750,
                               color: isIn ? 'var(--credit)' : 'var(--debit)',
                             }}
                           >
                             {isIn ? '+' : '-'}{fmtMoney(tx.amount, currency)}
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6, marginTop: 2 }}>
-                            {tx.statusKey && tx.statusKey !== 'none' && statusLabel(tx.statusKey) && (
-                              <span className={`badge badge-${tx.statusKey}`} style={{ fontSize: 9.5, padding: '1px 5px' }}>
-                                {statusLabel(tx.statusKey)}
-                              </span>
-                            )}
-                            {tx.isSettlement && (
-                              <button
-                                className="btn-icon"
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6, marginTop: 3 }}>
+                            {isSplit && (
+                              <span
                                 style={{
-                                  color: '#d97706',
-                                  padding: 2,
-                                  borderRadius: 4,
                                   display: 'inline-flex',
                                   alignItems: 'center',
+                                  gap: 3,
+                                  padding: '2px 7px',
+                                  borderRadius: 9999,
+                                  fontSize: '10.5px',
+                                  fontWeight: 650,
+                                  backgroundColor: 'rgba(99, 102, 241, 0.12)',
+                                  color: '#818CF8',
+                                  border: '1px solid rgba(99, 102, 241, 0.25)',
+                                  whiteSpace: 'nowrap',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                <Users size={10} />
+                                <span>Split</span>
+                              </span>
+                            )}
+                            {tx.statusKey && tx.statusKey !== 'none' && statusLabel(tx.statusKey) && (() => {
+                              const bCol = getBadgeColors(tx.statusKey);
+                              return (
+                                <span
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    fontSize: '10.5px',
+                                    fontWeight: 650,
+                                    padding: '2px 8px',
+                                    borderRadius: 9999,
+                                    backgroundColor: bCol.bg,
+                                    color: bCol.color,
+                                    border: `1px solid ${bCol.border}`,
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  {statusLabel(tx.statusKey)}
+                                </span>
+                              );
+                            })()}
+                            {tx.isSettlement && (
+                              <button
+                                type="button"
+                                style={{
+                                  width: 24,
+                                  height: 24,
+                                  borderRadius: '50%',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                                  color: '#F87171',
+                                  border: '1px solid rgba(239, 68, 68, 0.25)',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.15s ease',
+                                  padding: 0,
                                 }}
                                 title="Undo Settlement"
                                 onClick={e => {
@@ -907,7 +997,7 @@ export default function Wallets({ initialArg, onClearViewArg }: { initialArg?: s
                                   setUndoStlId(tx.id);
                                 }}
                               >
-                                <RotateCcw size={12} />
+                                <RotateCcw size={11} strokeWidth={2.2} />
                               </button>
                             )}
                           </div>

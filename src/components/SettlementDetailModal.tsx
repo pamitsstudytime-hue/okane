@@ -1,9 +1,10 @@
 import { createPortal } from 'react-dom';
-import { X, Handshake, ArrowDownLeft, ArrowUpRight, RotateCcw, Calendar, Wallet as WalletIcon, FileText, CheckCircle2, Store } from 'lucide-react';
+import { X, Handshake, ArrowDownLeft, ArrowUpRight, RotateCcw, Calendar, Wallet as WalletIcon, FileText, Store } from 'lucide-react';
 import { useStore } from '../store';
 import type { Settlement, Expense } from '../types';
 import { fmtMoney, fmtDate, friendInitial, getAvatarStyle, cleanExpenseDescription } from '../utils';
 import CategoryIcon from './CategoryIcon';
+import { renderWalletIcon } from './WalletIconRenderer';
 import { useBackButtonModal, BackPriority } from '../utils/backHandler';
 
 interface SettlementDetailModalProps {
@@ -43,11 +44,13 @@ export default function SettlementDetailModal({ settlement, onClose, onUndo }: S
       style={{ zIndex: 100050 }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="modal modal-lg" style={{ maxWidth: 620, borderRadius: 20 }}>
-        {/* Mobile Drag Handle */}
-        <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border2)', margin: '12px auto 4px', flexShrink: 0 }} />
+      <div className="modal modal-dialog-panel" style={{ maxWidth: 480, width: '100%', borderRadius: 22 }}>
+        {/* Top Handle Pill */}
+        <div className="modal-handle-bar">
+          <div className="modal-handle" />
+        </div>
 
-        {/* Header */}
+        {/* Header - No splitting line */}
         <div className="modal-header" style={{ padding: '12px 20px 8px', borderBottom: 'none' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {friend ? (
@@ -57,6 +60,7 @@ export default function SettlementDetailModal({ settlement, onClose, onUndo }: S
                   ...getAvatarStyle(friend.color || (friend.type === 'vendor' ? '#f59e0b' : 'var(--accent)')),
                   width: 36,
                   height: 36,
+                  borderRadius: friend.type === 'vendor' ? 11 : '50%',
                 }}
               >
                 {friend.type === 'vendor' ? <Store size={18} strokeWidth={2.2} /> : friendInitial(friend.name, friend.avatarNumber)}
@@ -80,8 +84,10 @@ export default function SettlementDetailModal({ settlement, onClose, onUndo }: S
               <div className="modal-title" style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.2 }}>
                 Settlement Details
               </div>
-              <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2 }}>
-                {friend ? friend.name : 'Unknown Friend'} • {fmtDate(settlement?.date || '')}
+              <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-2)', marginTop: 3, display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ fontWeight: 600, color: 'var(--text)' }}>{friend ? friend.name : 'Unknown Friend'}</span>
+                <span style={{ color: 'var(--text-3)', fontSize: 10 }}>•</span>
+                <span style={{ color: 'var(--text-2)', letterSpacing: '-0.1px' }}>{fmtDate(settlement?.date || '')}</span>
               </div>
             </div>
           </div>
@@ -104,13 +110,13 @@ export default function SettlementDetailModal({ settlement, onClose, onUndo }: S
 
         {/* Body */}
         <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Main Hero Card showing Who Paid Whom */}
+          {/* Money Paid / Received Card - Inspired by Parth Balance Card (Image 3) */}
           <div
             style={{
               padding: '16px 18px',
-              borderRadius: 14,
-              background: isReceived ? 'var(--credit-bg)' : 'var(--debit-bg)',
-              border: `1px solid ${isReceived ? 'var(--credit-border)' : 'var(--debit-border)'}`,
+              borderRadius: 16,
+              background: isReceived ? 'rgba(16, 185, 129, 0.06)' : 'rgba(239, 68, 68, 0.06)',
+              border: `1px solid ${isReceived ? 'rgba(16, 185, 129, 0.18)' : 'rgba(239, 68, 68, 0.18)'}`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -120,52 +126,56 @@ export default function SettlementDetailModal({ settlement, onClose, onUndo }: S
             <div>
               <div
                 style={{
-                  fontSize: 12,
+                  fontSize: 10.5,
                   fontWeight: 700,
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
-                  color: isReceived ? 'var(--credit)' : 'var(--debit)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  marginBottom: 4,
+                  color: 'var(--text-3)',
+                  marginBottom: 6,
                 }}
               >
-                {isReceived ? <ArrowDownLeft size={15} /> : <ArrowUpRight size={15} />}
-                {isReceived ? 'Money Received' : 'Money Paid'}
-                {settlement?.remainingAmount && settlement.remainingAmount > 0 ? (
-                  <span style={{ fontSize: 10, background: 'var(--accent-soft)', color: 'var(--accent)', padding: '2px 6px', borderRadius: 4, textTransform: 'none' }}>
-                    Partial Settlement
-                  </span>
-                ) : null}
+                TOTAL AMOUNT
               </div>
-              <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>
-                {isReceived
-                  ? `${friend?.name || 'Friend'} paid you ${fmtMoney(absAmount, currency)}`
-                  : `You paid ${friend?.name || 'Friend'} ${fmtMoney(absAmount, currency)}`}
-                {settlement?.originalTotal && settlement.originalTotal > absAmount ? (
-                  <span style={{ color: 'var(--text-3)', fontSize: 12 }}> (out of {fmtMoney(settlement.originalTotal, currency)})</span>
-                ) : null}
-              </div>
-              <div style={{ fontSize: 11.5, color: 'var(--text-2)', marginTop: 2 }}>
-                {isReceived ? 'Credited to' : 'Deducted from'} <strong>{walletName}</strong> wallet
-              </div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
               <div
                 style={{
-                  fontSize: 22,
+                  fontSize: 26,
                   fontWeight: 800,
-                  color: isReceived ? 'var(--credit)' : 'var(--debit)',
+                  color: isReceived ? '#10B981' : '#F87171',
                   whiteSpace: 'nowrap',
+                  letterSpacing: '-0.5px',
+                  lineHeight: 1,
                 }}
               >
                 {isReceived ? '+' : '-'}{fmtMoney(absAmount, currency)}
               </div>
+              <div style={{ fontSize: 12.5, color: 'var(--text-2)', marginTop: 6, fontWeight: 500 }}>
+                {isReceived ? 'Credited to' : 'Deducted from'} <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{walletName}</strong>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: '0.03em',
+                  color: isReceived ? '#10B981' : '#F87171',
+                  background: isReceived ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                  padding: '4px 11px',
+                  borderRadius: 9999,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  textTransform: 'uppercase',
+                }}
+              >
+                {isReceived ? <ArrowDownLeft size={13} strokeWidth={2.5} /> : <ArrowUpRight size={13} strokeWidth={2.5} />}
+                <span>{isReceived ? 'Money Received' : 'Money Paid'}</span>
+              </div>
               {settlement?.remainingAmount && settlement.remainingAmount > 0 ? (
-                <div style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 600, marginTop: 2 }}>
-                  {fmtMoney(settlement.remainingAmount, currency)} left
-                </div>
+                <span style={{ fontSize: 10, background: 'var(--accent-soft)', color: 'var(--accent)', padding: '2px 7px', borderRadius: 4, fontWeight: 650 }}>
+                  Partial
+                </span>
               ) : null}
             </div>
           </div>
@@ -176,8 +186,8 @@ export default function SettlementDetailModal({ settlement, onClose, onUndo }: S
               style={{
                 padding: '12px 14px',
                 background: 'var(--surface2)',
-                borderRadius: 10,
-                border: '1px dashed var(--accent)',
+                border: '1px solid var(--border)',
+                borderRadius: 14,
                 display: 'grid',
                 gridTemplateColumns: 'repeat(3, 1fr)',
                 gap: 8,
@@ -205,60 +215,44 @@ export default function SettlementDetailModal({ settlement, onClose, onUndo }: S
             </div>
           ) : null}
 
-          {/* Quick Info Grid */}
+          {/* 2-Card Quick Info Grid (Removed Expenses Included card) */}
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+              gridTemplateColumns: '1fr 1fr',
               gap: 10,
             }}
           >
             <div
               style={{
-                padding: '10px 12px',
+                padding: '12px 14px',
                 background: 'var(--surface2)',
-                borderRadius: 10,
                 border: '1px solid var(--border)',
+                borderRadius: 14,
               }}
             >
-              <div style={{ fontSize: 11, color: 'var(--text-3)', display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-                <Calendar size={12} /> Settlement Date
+              <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3, letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+                <Calendar size={12} style={{ color: 'var(--accent)' }} /> Settlement Date
               </div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+              <div style={{ fontSize: '13.5px', fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.1px' }}>
                 {fmtDate(settlement?.date || '')}
               </div>
             </div>
 
             <div
               style={{
-                padding: '10px 12px',
+                padding: '12px 14px',
                 background: 'var(--surface2)',
-                borderRadius: 10,
                 border: '1px solid var(--border)',
+                borderRadius: 14,
               }}
             >
-              <div style={{ fontSize: 11, color: 'var(--text-3)', display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-                <WalletIcon size={12} /> Payment Wallet
+              <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3, letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+                <WalletIcon size={12} style={{ color: 'var(--accent)' }} /> Payment Wallet
               </div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                {wallet && <span className="cat-dot" style={{ background: wallet.color }} />}
-                {walletName}
-              </div>
-            </div>
-
-            <div
-              style={{
-                padding: '10px 12px',
-                background: 'var(--surface2)',
-                borderRadius: 10,
-                border: '1px solid var(--border)',
-              }}
-            >
-              <div style={{ fontSize: 11, color: 'var(--text-3)', display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-                <CheckCircle2 size={12} /> Expenses Included
-              </div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
-                {settledExpenses.length} expense{settledExpenses.length !== 1 ? 's' : ''}
+              <div style={{ fontSize: '13.5px', fontWeight: 700, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 7 }}>
+                {renderWalletIcon(wallet?.icon || wallet?.id || walletName, 20)}
+                <span>{walletName}</span>
               </div>
             </div>
           </div>
@@ -267,10 +261,10 @@ export default function SettlementDetailModal({ settlement, onClose, onUndo }: S
           {settlement?.note && (
             <div
               style={{
-                padding: '10px 14px',
+                padding: '12px 14px',
                 background: 'var(--surface2)',
-                borderRadius: 10,
                 border: '1px solid var(--border)',
+                borderRadius: 14,
                 fontSize: 12.5,
                 color: 'var(--text-2)',
                 display: 'flex',
@@ -304,13 +298,14 @@ export default function SettlementDetailModal({ settlement, onClose, onUndo }: S
                 style={{
                   fontSize: 11,
                   fontWeight: 600,
-                  color: 'var(--accent)',
-                  background: 'var(--accent-soft)',
+                  color: 'var(--text-3)',
+                  background: 'var(--surface2)',
                   padding: '2px 8px',
-                  borderRadius: 10,
+                  borderRadius: 6,
+                  letterSpacing: '0.01em',
                 }}
               >
-                {settledExpenses.length} items
+                {settledExpenses.length} expenses
               </span>
             </div>
 
@@ -332,7 +327,7 @@ export default function SettlementDetailModal({ settlement, onClose, onUndo }: S
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: 10,
+                  gap: 8,
                   maxHeight: 250,
                   overflowY: 'auto',
                   paddingRight: 4,
@@ -346,10 +341,10 @@ export default function SettlementDetailModal({ settlement, onClose, onUndo }: S
                     <div
                       key={exp.id}
                       style={{
-                        padding: '10px 12px',
+                        padding: '11px 14px',
                         background: 'var(--surface2)',
-                        borderRadius: 10,
                         border: '1px solid var(--border)',
+                        borderRadius: 14,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
@@ -397,14 +392,13 @@ export default function SettlementDetailModal({ settlement, onClose, onUndo }: S
                                     style={{
                                       display: 'inline-flex',
                                       alignItems: 'center',
-                                      gap: 3.5,
-                                      fontSize: 10,
-                                      fontWeight: 650,
-                                      padding: '1.5px 6px',
-                                      borderRadius: 5,
+                                      gap: 4,
+                                      fontSize: 10.5,
+                                      fontWeight: 600,
+                                      padding: '2px 7px',
+                                      borderRadius: 9999,
                                       background: 'var(--surface3)',
-                                      color: 'var(--text)',
-                                      border: '1px solid var(--border)',
+                                      color: 'var(--text-2)',
                                       whiteSpace: 'nowrap',
                                       flexShrink: 0,
                                     }}
@@ -416,7 +410,7 @@ export default function SettlementDetailModal({ settlement, onClose, onUndo }: S
                                         borderRadius: '50%',
                                         aspectRatio: '1 / 1',
                                         ...getAvatarStyle(expFriend.color || (expFriend.type === 'vendor' ? '#f59e0b' : 'var(--accent)')),
-                                        fontSize: 7.5,
+                                        fontSize: 8,
                                         fontWeight: 750,
                                         display: 'inline-flex',
                                         alignItems: 'center',
@@ -428,7 +422,7 @@ export default function SettlementDetailModal({ settlement, onClose, onUndo }: S
                                       {expFriend.type === 'vendor' ? (
                                         <Store size={8} strokeWidth={2.2} />
                                       ) : (
-                                        friendInitial(expFriend.name, expFriend.avatarNumber)
+                                        (expFriend.name || '?').trim().charAt(0).toUpperCase()
                                       )}
                                     </span>
                                     <span>{expFriend.name}</span>
@@ -438,14 +432,14 @@ export default function SettlementDetailModal({ settlement, onClose, onUndo }: S
                               return null;
                             })()}
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-3)', marginTop: 2, flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 500, color: 'var(--text-2)', marginTop: 3, flexWrap: 'wrap' }}>
                             <span>{fmtDate(exp.originalDate || exp.date)}</span>
-                            <span>•</span>
+                            <span style={{ color: 'var(--text-3)', fontSize: 9 }}>•</span>
                             <span>{exp.category || 'General'}</span>
                             {exp.originalAmount && Math.abs(exp.originalAmount - Number(exp.amount || 0)) > 0.01 ? (
                               <>
-                                <span>•</span>
-                                <span style={{ color: 'var(--accent)', fontWeight: 600 }}>
+                                <span style={{ color: 'var(--text-3)', fontSize: 9 }}>•</span>
+                                <span style={{ color: 'var(--accent)', fontWeight: 600, fontSize: 11.5 }}>
                                   og {fmtMoney(exp.originalAmount, currency)}
                                 </span>
                               </>
@@ -494,15 +488,14 @@ export default function SettlementDetailModal({ settlement, onClose, onUndo }: S
           </div>
         </div>
 
-        {/* Footer */}
+        {/* Footer - No splitting lines, single pill button */}
         <div
           className="modal-footer"
           style={{
             padding: '12px 20px calc(14px + env(safe-area-inset-bottom, 0px))',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 10,
+            justifyContent: 'center',
             borderTop: 'none',
             background: 'transparent',
           }}
@@ -510,52 +503,63 @@ export default function SettlementDetailModal({ settlement, onClose, onUndo }: S
           {onUndo ? (
             <button
               type="button"
-              className="btn"
               onClick={() => {
                 onClose();
                 onUndo(settlement.id);
               }}
               style={{
-                height: 40,
+                width: '100%',
+                height: 44,
                 borderRadius: 9999,
-                padding: '0 16px',
-                fontSize: 13,
+                padding: '0 20px',
+                fontSize: '14px',
                 fontWeight: 650,
-                color: 'var(--debit)',
-                borderColor: 'var(--debit-border)',
-                background: 'var(--debit-bg)',
+                color: '#F87171',
+                backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                border: '1px solid rgba(239, 68, 68, 0.28)',
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 6,
+                justifyContent: 'center',
+                gap: 8,
+                transition: 'all 0.15s ease',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.22)';
+                e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.12)';
+                e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.28)';
               }}
             >
-              <RotateCcw size={14} /> <span>Undo Settlement</span>
+              <RotateCcw size={16} strokeWidth={2.2} />
+              <span>Undo Settlement</span>
             </button>
-          ) : <div />}
-
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={onClose}
-            style={{
-              height: 40,
-              padding: '0 24px',
-              borderRadius: 9999,
-              background: 'var(--text)',
-              border: '1px solid var(--text)',
-              color: 'var(--bg)',
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
-            }}
-          >
-            <span>Close</span>
-          </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                width: '100%',
+                height: 44,
+                borderRadius: 9999,
+                padding: '0 20px',
+                fontSize: '14px',
+                fontWeight: 650,
+                color: 'var(--text)',
+                backgroundColor: 'var(--surface2)',
+                border: '1px solid var(--border)',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+              }}
+            >
+              <span>Close</span>
+            </button>
+          )}
         </div>
       </div>
     </div>,

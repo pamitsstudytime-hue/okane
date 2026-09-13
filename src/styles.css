@@ -2538,20 +2538,23 @@ input, textarea, [contenteditable="true"], .selectable-text {
   position: relative !important;
   z-index: calc(var(--modal-backdrop-z, 100050) + 1) !important;
   width: 100% !important;
-  max-width: 440px !important;
+  max-width: 480px !important;
   margin: auto !important;
+  border-radius: 22px !important;
   box-sizing: border-box !important;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
+  overflow: hidden !important;
 }
 
 .modal-drag-handle {
-  width: 42px !important;
+  width: 38px !important;
   height: 4.5px !important;
   border-radius: 99px !important;
   background: var(--border2, #444) !important;
-  margin: 10px auto 6px !important;
+  margin: 10px auto 4px !important;
   flex-shrink: 0 !important;
-  display: none !important;
+  display: block !important;
+  opacity: 0.85 !important;
 }
 
 @media (max-width: 640px) {
@@ -2564,6 +2567,8 @@ input, textarea, [contenteditable="true"], .selectable-text {
     max-width: 100% !important;
     width: 100% !important;
     margin: 0 !important;
+    border-top-left-radius: 22px !important;
+    border-top-right-radius: 22px !important;
     border-bottom-left-radius: 0 !important;
     border-bottom-right-radius: 0 !important;
   }
@@ -2590,21 +2595,33 @@ input, textarea, [contenteditable="true"], .selectable-text {
   position: relative;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: 22px;
   width: 100%;
-  max-width: 520px;
-  max-height: 92vh;
+  max-width: 480px;
+  max-height: 88vh;
+  max-height: 88dvh;
   overflow-y: auto;
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   animation: slidein 0.18s ease;
   display: flex;
   flex-direction: column;
 }
-.modal-lg { max-width: 640px; }
+.modal-lg { max-width: 480px; }
 @keyframes slidein { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
 
 .modal-handle-bar {
-  display: none;
+  display: flex;
+  justify-content: center;
+  padding: 10px 0 4px;
+  flex-shrink: 0;
+}
+
+.modal-handle {
+  width: 38px;
+  height: 4.5px;
+  background: var(--border2);
+  border-radius: 99px;
+  opacity: 0.85;
 }
 
 @media (max-width: 640px) {
@@ -2619,26 +2636,13 @@ input, textarea, [contenteditable="true"], .selectable-text {
     border-top-left-radius: 22px;
     border-top-right-radius: 22px;
     max-height: 88vh;
+    max-height: 88dvh;
     animation: slideUpMobile 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     border: 1px solid var(--border);
     border-bottom: none;
     background: var(--surface);
     background-color: var(--surface);
     box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.45);
-  }
-
-  .modal-handle-bar {
-    display: flex;
-    justify-content: center;
-    padding: 10px 0 4px;
-    flex-shrink: 0;
-  }
-
-  .modal-handle {
-    width: 38px;
-    height: 4.5px;
-    background: var(--border2);
-    border-radius: 99px;
   }
 }
 
@@ -2674,24 +2678,25 @@ input, textarea, [contenteditable="true"], .selectable-text {
 
 /* Friend / Contact Drawer Modal */
 .modal.friend-drawer-modal {
-  max-width: 560px;
+  max-width: 480px;
   width: 100%;
   max-height: 88vh;
+  max-height: 88dvh;
   display: flex;
   flex-direction: column;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: 22px;
   overflow: hidden;
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
 
 @media (max-width: 640px) {
   .modal.friend-drawer-modal {
     max-width: 100%;
     width: 100%;
-    max-height: 90vh;
-    max-height: 90dvh;
+    max-height: 88vh;
+    max-height: 88dvh;
     border-radius: 22px 22px 0 0;
     border: 1px solid var(--border);
     border-bottom: none;
@@ -2721,21 +2726,21 @@ input, textarea, [contenteditable="true"], .selectable-text {
 }
 
 .sheet-modal {
-  background: #121212;
-  border-top-left-radius: 28px;
-  border-top-right-radius: 28px;
+  background: var(--surface);
+  border-top-left-radius: 22px;
+  border-top-right-radius: 22px;
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
   width: 100%;
-  max-width: 520px;
+  max-width: 480px;
   height: auto;
-  max-height: 92vh;
-  max-height: 92dvh;
+  max-height: 88vh;
+  max-height: 88dvh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8);
-  padding: 18px 20px calc(20px + env(safe-area-inset-bottom, 0px)) 20px;
-  border: 1px solid rgba(38, 38, 38, 0.8);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  padding: 16px 20px calc(20px + env(safe-area-inset-bottom, 0px)) 20px;
+  border: 1px solid var(--border);
   border-bottom: none;
   animation: slideUpMobile 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -2747,10 +2752,10 @@ input, textarea, [contenteditable="true"], .selectable-text {
 
 @media (min-width: 641px) {
   .sheet-modal {
-    border-radius: 28px;
-    border-bottom: 1px solid rgba(38, 38, 38, 0.8);
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
-    padding: 24px;
+    border-radius: 22px;
+    border: 1px solid var(--border);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    padding: 20px;
     animation: slidein 0.18s ease;
   }
   [data-color-scheme="light"] .sheet-modal {
@@ -3178,14 +3183,14 @@ input[type="number"] {
 }
 .modal.expense-drawer-modal .form-input,
 .modal.expense-drawer-modal .form-select {
-  min-height: 38px;
-  height: 38px;
-  padding: 6px 12px;
-  font-size: 13px;
+  min-height: 42px;
+  height: 42px;
+  padding: 8px 14px;
+  font-size: 13.5px;
   font-weight: 600;
-  border-radius: 12px;
+  border-radius: 16px;
   background: var(--surface2);
-  border: 1px solid transparent;
+  border: 1px solid var(--border) !important;
   color: var(--text);
   box-sizing: border-box;
   transition: all 0.15s ease;
@@ -3193,22 +3198,23 @@ input[type="number"] {
 .modal.expense-drawer-modal .form-input:focus,
 .modal.expense-drawer-modal .form-select:focus {
   background: var(--surface);
-  border-color: var(--border2);
-  box-shadow: 0 0 0 1px var(--border);
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12);
   outline: none;
 }
 .modal.expense-drawer-modal .hero-amount-card {
-  padding: 8px 14px 6px;
-  gap: 2px;
-  margin-bottom: 4px;
+  padding: 12px 16px 10px;
+  gap: 4px;
+  margin-bottom: 8px;
   border-radius: 16px;
   background: var(--surface2);
-  border: none;
+  border: 1px solid var(--border) !important;
   transition: all 0.15s ease;
 }
 .modal.expense-drawer-modal .hero-amount-card:focus-within {
   background: var(--surface);
-  box-shadow: 0 0 0 1px var(--border);
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12);
 }
 .modal.expense-drawer-modal .hero-amount-card.hero-debit .hero-amount-input,
 .modal.expense-drawer-modal .hero-amount-card.hero-debit .hero-currency-symbol {
@@ -3219,23 +3225,23 @@ input[type="number"] {
   color: var(--credit) !important;
 }
 .modal.expense-drawer-modal .hero-amount-label {
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 750;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.8px;
   text-transform: uppercase;
   color: var(--text-3);
 }
 .modal.expense-drawer-modal .hero-amount-input {
-  font-size: 26px;
+  font-size: 30px;
   font-weight: 750;
 }
 .modal.expense-drawer-modal .hero-currency-symbol {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 750;
 }
 .modal.expense-drawer-modal .segment-control {
   padding: 4px;
-  border-radius: 14px;
+  border-radius: 16px;
   background: var(--surface2);
   border: 1px solid var(--border) !important;
   gap: 4px;
@@ -3256,13 +3262,13 @@ input[type="number"] {
 }
 .modal.expense-drawer-modal .segment-btn {
   flex: 1 1 0;
-  min-height: 38px;
-  height: 38px;
-  padding: 6px 8px;
-  font-size: 12.5px;
-  font-weight: 550;
+  min-height: 40px;
+  height: 40px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 600;
   gap: 6px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid transparent !important;
   color: var(--text-3) !important;
   background: transparent !important;
@@ -3471,7 +3477,7 @@ input[type="number"] {
 }
 
 .modal.wallet-drawer-modal {
-  max-width: 560px;
+  max-width: 480px;
   width: 100%;
   max-height: 88vh;
   display: flex;
@@ -4366,12 +4372,14 @@ input[type="number"] {
   background: var(--surface);
   color: var(--text-3);
   border: 1px solid var(--border);
+  font-weight: 500;
+  opacity: 0.8;
 }
 
 [data-theme="dark"] .wallet-badge-spend-zero,
 [data-color-scheme="dark"] .wallet-badge-spend-zero {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   color: var(--text-3);
 }
 
@@ -4379,6 +4387,8 @@ input[type="number"] {
   background: var(--debit-bg);
   color: var(--debit);
   border: 1px solid var(--debit-border);
+  font-weight: 650;
+  padding: 3px 9px;
 }
 
 [data-theme="dark"] .wallet-badge-spend-active,
@@ -4386,6 +4396,11 @@ input[type="number"] {
   background: rgba(248, 113, 113, 0.14);
   border: 1px solid rgba(248, 113, 113, 0.28);
   color: var(--debit);
+}
+
+.wallet-badge-spend-active .spend-icon {
+  color: var(--debit, #f87171);
+  flex-shrink: 0;
 }
 
 .wallet-badge-hidden {
@@ -4399,6 +4414,15 @@ input[type="number"] {
   background: rgba(248, 113, 113, 0.14);
   border: 1px solid rgba(248, 113, 113, 0.28);
   color: var(--debit);
+}
+
+@media (max-width: 640px) {
+  .wallet-badge-hidden .wallet-badge-text {
+    display: none;
+  }
+  .wallet-badge-hidden {
+    padding: 3.5px 6px;
+  }
 }
 
 .wallet-more-btn {
@@ -9175,36 +9199,89 @@ body.no-animations *::after,
   color: var(--text-2);
 }
 
-/* Modern Filter Chip */
+/* Modern Filter Chip (Accent Themed) */
 .app-filter-chip {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 9px;
-  border-radius: 999px;
-  font-size: 11.5px;
+  gap: 6px;
+  padding: 4px 8px 4px 12px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  background: var(--accent);
+  color: var(--accent-contrast, #ffffff);
+  border: 1px solid var(--accent);
+  box-shadow: 0 2px 6px var(--accent-soft);
+  transition: all 0.16s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: -0.01em;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.app-filter-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--accent-soft);
+}
+
+.app-filter-chip:active {
+  transform: scale(0.98);
+}
+
+.app-filter-chip-label {
+  opacity: 0.82;
   font-weight: 500;
-  background-color: var(--surface2);
-  color: var(--text);
-  border: 1px solid var(--border);
-  transition: all 0.12s ease;
+  margin-right: 2px;
+}
+
+.app-filter-chip-value {
+  font-weight: 700;
 }
 
 .app-filter-chip-remove {
-  background: none;
+  background: transparent;
   border: none;
   cursor: pointer;
-  color: var(--text-3);
+  color: var(--accent-contrast, #ffffff);
+  opacity: 0.72;
   padding: 0;
-  line-height: 1;
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.12s ease;
+  transition: all 0.15s ease;
+  margin-left: 2px;
+  flex-shrink: 0;
 }
 
 .app-filter-chip-remove:hover {
+  opacity: 1;
+  background: rgba(128, 128, 128, 0.22);
+  transform: scale(1.1);
+}
+
+/* Modern Clear All Button */
+.app-filter-clear-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  color: var(--text-3);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 9px;
+  border-radius: 9999px;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.app-filter-clear-btn:hover {
   color: var(--text);
+  background: var(--surface2);
 }
 
 /* Contact Type Semantic Badges (Borderless, Tone-on-Tone) */
@@ -9249,19 +9326,38 @@ body.no-animations *::after,
 /* ==========================================================================
    Desktop Search Bar Pill (Centered on all pages)
    ========================================================================== */
-.desktop-search-pill {
+.desktop-search-pill,
+.desktop-search-filter-wrap {
   display: none !important;
 }
 
 /* Tablet & Mobile: hide long search bar */
 @media (max-width: 1024px) {
-  .desktop-search-pill {
+  .desktop-search-pill,
+  .desktop-search-filter-wrap {
     display: none !important;
   }
 }
 
 /* Desktop only: show long search bar */
 @media (min-width: 1025px) {
+  .desktop-search-filter-wrap {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    margin: 0 auto;
+    max-width: 490px;
+    width: 100%;
+    justify-content: center;
+    transform: translateX(-16px);
+  }
+
+  .desktop-search-filter-wrap .desktop-search-pill {
+    margin: 0;
+    transform: none;
+    flex: 1;
+  }
+
   .desktop-search-pill {
     display: flex !important;
     align-items: center;
@@ -9271,6 +9367,7 @@ body.no-animations *::after,
     max-width: 440px;
     min-width: 140px;
     margin: 0 auto;
+    transform: translateX(-24px);
     padding: 0 16px;
     border-radius: 9999px;
     background: var(--surface2);
@@ -9349,8 +9446,12 @@ body.no-animations *::after,
 
 /* ==========================================================================
    Wallets Header Responsive Behavior
-   - When space is less, turn Transfer Funds into just an icon
-   - If space is still less, decrease the length of the search bar
+   - Desktop: Title on left, search bar in middle, actions on right
+   - Narrow Desktop (1025px - 1180px): Collapse transfer funds to icon if needed
+   - Mobile & Tablet (<= 900px):
+     * Container spans 100% horizontal width, centered
+     * Transfer Funds and Add Wallet split width 50/50 (flex: 1 1 0px)
+     * All items centered with balanced tactile height
    ========================================================================== */
 .wallets-page-header {
   display: flex;
@@ -9367,8 +9468,7 @@ body.no-animations *::after,
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: nowrap !important;
-  flex-shrink: 0;
+  flex-wrap: nowrap;
 }
 
 .wallet-transfer-btn {
@@ -9386,7 +9486,6 @@ body.no-animations *::after,
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
-  flex-shrink: 0;
 }
 
 .wallet-transfer-btn:hover {
@@ -9414,9 +9513,54 @@ body.no-animations *::after,
   }
 }
 
-/* Preserve full label on tablet & mobile screens */
-@media (max-width: 1024px) {
-  .wallet-transfer-btn .wallet-transfer-btn-text {
+/* 2. Mobile & Tablet view (<= 900px) */
+@media (max-width: 900px) {
+  .page-header.wallets-page-header {
+    display: flex !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    margin: 0 0 14px 0 !important;
+    padding: 0 !important;
+    justify-content: center !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+  }
+
+  .wallets-header-actions {
+    width: 100% !important;
+    max-width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 10px !important;
+    flex-wrap: nowrap !important;
+    flex: 1 1 100% !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+  }
+
+  .wallets-header-actions .wallet-action-btn,
+  .wallets-header-actions .wallet-transfer-btn,
+  .wallets-header-actions .btn {
+    flex: 1 1 0px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    display: inline-flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    padding: 10px 14px !important;
+    font-size: 13.5px !important;
+    font-weight: 650 !important;
+    height: 42px !important;
+    border-radius: 9999px !important;
+    box-sizing: border-box !important;
+    flex-shrink: 1 !important;
+  }
+
+  .wallets-header-actions .wallet-transfer-btn .wallet-transfer-btn-text {
     display: inline !important;
   }
 }

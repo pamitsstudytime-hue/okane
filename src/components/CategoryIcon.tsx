@@ -103,6 +103,10 @@ const iconMap: Record<string, React.ElementType> = {
   groceries: ShoppingCart,
   grocery: ShoppingCart,
   supermarket: ShoppingCart,
+  zepto: ShoppingCart,
+  zeptoo: ShoppingCart,
+  blinkit: ShoppingCart,
+  instamart: ShoppingCart,
   transport: Car,
   transportation: Car,
   car: Car,
@@ -218,8 +222,22 @@ const iconMap: Record<string, React.ElementType> = {
 export function CategoryIcon({ category = '', icon = '', size = 16, className = '', style, ...props }: CategoryIconProps) {
   const iconKey = (icon || '').trim().toLowerCase();
   const categoryKey = (category || '').trim().toLowerCase();
-  const IconComponent = iconMap[iconKey] || iconMap[categoryKey] || Tag;
   
+  let IconComponent;
+  if (iconKey && iconKey !== 'other' && iconKey !== 'tag' && iconMap[iconKey]) {
+    IconComponent = iconMap[iconKey];
+  } else if (categoryKey && iconMap[categoryKey]) {
+    IconComponent = iconMap[categoryKey];
+  } else if (iconKey && iconMap[iconKey]) {
+    IconComponent = iconMap[iconKey];
+  } else {
+    if (categoryKey.includes('zepto') || categoryKey.includes('blinkit') || categoryKey.includes('instamart') || categoryKey.includes('grocer')) {
+      IconComponent = ShoppingCart;
+    } else {
+      IconComponent = Tag;
+    }
+  }
+
   return <IconComponent size={size} className={className} style={{ flexShrink: 0, ...style }} {...props} />;
 }
 

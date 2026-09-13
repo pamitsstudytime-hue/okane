@@ -678,18 +678,18 @@ export default function SettleExpensePickerModal({
                       ) : null}
                     </div>
 
-                    <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2.5, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-2)', marginTop: 3, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                       <span>{fmtDate(e.originalDate || e.date)}</span>
                       {e.category ? (
                         <>
-                          <span>•</span>
+                          <span style={{ color: 'var(--text-3)', fontSize: 9 }}>•</span>
                           <span>{e.category}</span>
                         </>
                       ) : null}
                       {hasDiffOrig ? (
                         <>
-                          <span>•</span>
-                          <span>Orig {fmtMoney(origAmt!, currency)}</span>
+                          <span style={{ color: 'var(--text-3)', fontSize: 9 }}>•</span>
+                          <span style={{ color: 'var(--accent)', fontWeight: 600, fontSize: 11.5 }}>Orig {fmtMoney(origAmt!, currency)}</span>
                         </>
                       ) : null}
                     </div>

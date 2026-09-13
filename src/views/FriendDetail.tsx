@@ -278,20 +278,7 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
                   <h2 style={{ fontSize: 20, fontWeight: 800, margin: 0, lineHeight: 1.2, color: 'var(--text)', letterSpacing: '-0.3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {friend.name}
                   </h2>
-                  <span
-                    style={{
-                      textTransform: 'uppercase',
-                      fontSize: 10,
-                      letterSpacing: '0.5px',
-                      fontWeight: 750,
-                      flexShrink: 0,
-                      background: contactType === 'friend' ? 'rgba(99, 102, 241, 0.22)' : contactType === 'vendor' ? 'rgba(236, 72, 153, 0.22)' : 'rgba(16, 185, 129, 0.22)',
-                      color: contactType === 'friend' ? '#a5b4fc' : contactType === 'vendor' ? '#f472b6' : '#6ee7b7',
-                      borderRadius: 6,
-                      padding: '2px 8px',
-                      border: contactType === 'friend' ? '1px solid rgba(165, 180, 252, 0.25)' : contactType === 'vendor' ? '1px solid rgba(244, 114, 182, 0.25)' : '1px solid rgba(110, 231, 183, 0.25)',
-                    }}
-                  >
+                  <span className={`app-contact-badge ${contactType}`}>
                     {contactType}
                   </span>
                 </div>
@@ -910,20 +897,7 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
                       >
                         {friend.name}
                       </h3>
-                      <span
-                        style={{
-                          textTransform: 'uppercase',
-                          fontSize: 10,
-                          letterSpacing: '0.5px',
-                          fontWeight: 750,
-                          flexShrink: 0,
-                          background: contactType === 'friend' ? 'rgba(99, 102, 241, 0.22)' : contactType === 'vendor' ? 'rgba(236, 72, 153, 0.22)' : 'rgba(16, 185, 129, 0.22)',
-                          color: contactType === 'friend' ? '#a5b4fc' : contactType === 'vendor' ? '#f472b6' : '#6ee7b7',
-                          borderRadius: 6,
-                          padding: '2px 8px',
-                          border: contactType === 'friend' ? '1px solid rgba(165, 180, 252, 0.25)' : contactType === 'vendor' ? '1px solid rgba(244, 114, 182, 0.25)' : '1px solid rgba(110, 231, 183, 0.25)',
-                        }}
-                      >
+                      <span className={`app-contact-badge ${contactType}`}>
                         {contactType}
                       </span>
                     </div>

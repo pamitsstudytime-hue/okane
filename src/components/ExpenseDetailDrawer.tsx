@@ -281,13 +281,16 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
         style={{
           position: 'relative',
           zIndex: 1402,
-          maxHeight: 'min(92vh, 92dvh)',
+          maxWidth: 480,
+          width: '100%',
+          maxHeight: 'min(88vh, 88dvh)',
+          borderRadius: isMobileScreen ? '22px 22px 0 0' : 22,
           display: 'flex',
           flexDirection: 'column',
-          background: 'var(--drawer-bg, #131418)',
+          background: 'var(--drawer-bg, var(--surface))',
           border: '1px solid var(--border)',
           overflow: 'hidden',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.7)',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
           color: 'var(--text)',
         }}
       >
@@ -559,7 +562,7 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
                       style={{
                         width: 32,
                         height: 32,
-                        borderRadius: '50%',
+                        borderRadius: 10,
                         aspectRatio: '1 / 1',
                         display: 'inline-flex',
                         alignItems: 'center',
@@ -952,7 +955,7 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
                                 style={{
                                   width: 26,
                                   height: 26,
-                                  borderRadius: '50%',
+                                  borderRadius: 8,
                                   aspectRatio: '1 / 1',
                                   display: 'inline-flex',
                                   alignItems: 'center',

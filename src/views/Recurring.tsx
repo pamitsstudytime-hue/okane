@@ -6,6 +6,7 @@ import {
   Plus,
   SlidersHorizontal,
   X,
+  RotateCcw,
   AlertTriangle,
   Sparkles,
 } from 'lucide-react';
@@ -330,61 +331,69 @@ export default function Recurring({ onNavigate, initialArg }: Props) {
           </button>
         </div>
 
-        {/* Active Filter Chips (if any filter is applied) */}
+        {/* Active Filter Chips (Accent Themed) */}
         {activeFilterCount > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', padding: '0 2px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', padding: '2px 2px' }}>
             {search && (
               <span className="app-filter-chip">
-                Search: "{search}"
+                <span className="app-filter-chip-label">Search:</span>
+                <span className="app-filter-chip-value">"{search}"</span>
                 <button
                   type="button"
                   onClick={() => setSearch('')}
                   className="app-filter-chip-remove"
                   title="Clear search"
+                  aria-label="Clear search"
                 >
-                  <X size={12} />
+                  <X size={12} strokeWidth={2.5} />
                 </button>
               </span>
             )}
 
             {statusFilter !== 'all' && (
               <span className="app-filter-chip">
-                Status: {statusLabel}
+                <span className="app-filter-chip-label">Status:</span>
+                <span className="app-filter-chip-value">{statusLabel}</span>
                 <button
                   type="button"
                   onClick={() => setStatusFilter('all')}
                   className="app-filter-chip-remove"
                   title="Clear status filter"
+                  aria-label="Clear status filter"
                 >
-                  <X size={12} />
+                  <X size={12} strokeWidth={2.5} />
                 </button>
               </span>
             )}
 
             {freqFilter !== 'all' && (
               <span className="app-filter-chip" style={{ textTransform: 'capitalize' }}>
-                Freq: {freqFilter}
+                <span className="app-filter-chip-label">Freq:</span>
+                <span className="app-filter-chip-value">{freqFilter}</span>
                 <button
                   type="button"
                   onClick={() => setFreqFilter('all')}
                   className="app-filter-chip-remove"
                   title="Clear frequency filter"
+                  aria-label="Clear frequency filter"
                 >
-                  <X size={12} />
+                  <X size={12} strokeWidth={2.5} />
                 </button>
               </span>
             )}
 
             {sortBy !== 'due_asc' && (
               <span className="app-filter-chip">
-                Sort: {sortLabel}
+                <span className="app-filter-chip-label">Sort:</span>
+                <span className="app-filter-chip-value">{sortLabel}</span>
                 <button
                   type="button"
                   onClick={() => setSortBy('due_asc')}
                   className="app-filter-chip-remove"
                   title="Reset sort"
+                  aria-label="Reset sort"
                 >
-                  <X size={12} />
+                  <X size={12} strokeWidth={2.5} />
                 </button>
               </span>
             )}
@@ -392,20 +401,11 @@ export default function Recurring({ onNavigate, initialArg }: Props) {
             <button
               type="button"
               onClick={handleClearAll}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--text-3)',
-                fontSize: '11.5px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                padding: '3px 6px',
-                transition: 'color 0.15s ease',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
-              onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}
+              className="app-filter-clear-btn"
+              title="Clear all filters"
             >
-              Clear all
+              <RotateCcw size={13} strokeWidth={2.2} />
+              <span>Clear all</span>
             </button>
           </div>
         )}

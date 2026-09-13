@@ -870,7 +870,7 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
                         style={{
                           padding: '10px 14px',
                           background: 'var(--surface2)',
-                          borderRadius: 14,
+                          borderRadius: 16,
                           border: '1px solid var(--border)',
                           cursor: 'pointer',
                           display: 'flex',
@@ -1506,13 +1506,13 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
               onClick={handleClearForm}
               style={{
                 flex: 1,
-                height: 40,
+                height: 44,
                 borderRadius: 9999,
                 background: 'var(--surface2)',
                 border: '1px solid var(--border)',
                 color: 'var(--text)',
                 fontWeight: 700,
-                fontSize: 13,
+                fontSize: 13.5,
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1531,10 +1531,10 @@ export default function ExpenseModal({ expense, initialData, isTutorialMode, onC
               className="btn btn-drawer-save-mono"
               style={{
                 flex: 1.25,
-                height: 40,
+                height: 44,
                 borderRadius: 9999,
-                fontWeight: 700,
-                fontSize: 13,
+                fontWeight: 750,
+                fontSize: 13.5,
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',

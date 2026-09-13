@@ -19,6 +19,8 @@ export interface FrequentTaskItem {
   friendNames?: string[];
   vendorId?: string | null;
   vendorName?: string | null;
+  vendorColor?: string | null;
+  isVendor?: boolean;
   walletId?: string;
   prompt: string;
 }
@@ -214,6 +216,25 @@ export function getFrequentTasks(db: AppDB): FrequentTaskItem[] {
       }
     }
 
+    // Infer vendor from description if vendorId was not saved explicitly
+    if (!vendorId && Array.isArray(friends) && friends.length > 0) {
+      const descLower = (e.description || '').toLowerCase();
+      const matchedVendor = friends.find(f => {
+        if (!f.name || f.type !== 'vendor') return false;
+        const nameLower = f.name.trim().toLowerCase();
+        if (nameLower.length < 2) return false;
+        const reg = new RegExp(`(?:at|to|from|vendor|shop|store|\\b)${nameLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:\\b|$)`, 'i');
+        return reg.test(descLower) || descLower.includes(nameLower) || nameLower.includes(descLower);
+      });
+      if (matchedVendor) {
+        vendorId = matchedVendor.id;
+        if (friendId === matchedVendor.id) {
+          friendId = null;
+          friendIds = [];
+        }
+      }
+    }
+
     let type: ExpenseType = e.type || 'personal';
     if (whoPaid === 'other') {
       type = 'by_friend';
@@ -348,13 +369,28 @@ export function getFrequentTasks(db: AppDB): FrequentTaskItem[] {
       .filter((f): f is typeof friends[0] => Boolean(f && f.type !== 'vendor'));
     const friendNames = friendObjects.map(f => f.name);
     const friendObj = friendObjects[0] || (stat.friendId ? friends.find(f => f.id === stat.friendId && f.type !== 'vendor') : null);
-    const vendorObj = stat.vendorId
+    let vendorObj = stat.vendorId
       ? friends.find(f => f.id === stat.vendorId)
       : (stat.friendId ? friends.find(f => f.id === stat.friendId && f.type === 'vendor') : null);
+
+    if (!vendorObj && Array.isArray(friends) && friends.length > 0) {
+      const cleanLower = stat.cleanDesc.toLowerCase();
+      vendorObj = friends.find(f => {
+        if (!f.name || f.type !== 'vendor') return false;
+        const nameLower = f.name.trim().toLowerCase();
+        if (nameLower.length < 2) return false;
+        return cleanLower === nameLower ||
+               cleanLower.startsWith(nameLower) ||
+               cleanLower.includes(nameLower) ||
+               nameLower.includes(cleanLower);
+      }) || null;
+    }
+
     const isVendor = Boolean(vendorObj);
     const friendName = friendObj ? friendObj.name : null;
     const vendorName = vendorObj ? vendorObj.name : null;
     const resolvedVendorId = vendorObj?.id || stat.vendorId || null;
+    const vendorColor = vendorObj ? ((vendorObj.color && vendorObj.color !== '#6366f1') ? vendorObj.color : '#f59e0b') : null;
     const resolvedFriendIds = friendObjects.map(f => f.id);
     const resolvedFriendId = friendObj?.id || (resolvedFriendIds[0] || null);
 
@@ -398,6 +434,8 @@ export function getFrequentTasks(db: AppDB): FrequentTaskItem[] {
       friendNames,
       vendorId: resolvedVendorId,
       vendorName,
+      vendorColor,
+      isVendor,
       walletId: stat.walletId,
       prompt,
     });

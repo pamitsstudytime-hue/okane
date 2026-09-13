@@ -301,8 +301,56 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
         <div>
           <h1 className="page-title">Settlements</h1>
         </div>
-        <DesktopSearchBar placeholder="Search settlements, debts..." defaultTab="settlements" />
-        <div className="desktop-only" style={{ width: 100 }} />
+        <div className="desktop-search-filter-wrap desktop-only">
+          <DesktopSearchBar placeholder="Search settlements, debts..." defaultTab="settlements" />
+          <button
+            type="button"
+            id="desktop-filter-settlement-btn"
+            className={`btn btn-secondary ${activeFilterCount > 0 ? 'active' : ''}`}
+            onClick={() => setShowFilterDrawer(true)}
+            title={activeFilterCount > 0 ? `${activeFilterCount} active filter${activeFilterCount === 1 ? '' : 's'}` : 'Filter settlements'}
+            aria-label="Filter settlements"
+            style={{
+              width: 40,
+              height: 40,
+              padding: 0,
+              borderRadius: '9999px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative',
+              flexShrink: 0,
+              background: activeFilterCount > 0 ? 'var(--surface2)' : undefined,
+              borderColor: activeFilterCount > 0 ? 'var(--border2)' : undefined,
+              color: 'var(--text)',
+            }}
+          >
+            <Filter size={17} strokeWidth={2} />
+            {activeFilterCount > 0 && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: -2,
+                  right: -2,
+                  minWidth: 16,
+                  height: 16,
+                  borderRadius: 999,
+                  background: 'var(--text)',
+                  color: 'var(--surface)',
+                  fontSize: 10,
+                  fontWeight: 750,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '0 4px',
+                  lineHeight: 1,
+                }}
+              >
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Pending settlements section */}
@@ -720,14 +768,16 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
 
                   {friendFilter !== 'all' && (
                     <span className="app-filter-chip">
-                      <span>Friend: {friends.find(f => f.id === friendFilter)?.name || 'Friend'}</span>
+                      <span className="app-filter-chip-label">Friend:</span>
+                      <span className="app-filter-chip-value">{friends.find(f => f.id === friendFilter)?.name || 'Friend'}</span>
                       <button
                         type="button"
                         onClick={() => setFriendFilter('all')}
                         className="app-filter-chip-remove"
                         title="Clear friend filter"
+                        aria-label="Clear friend filter"
                       >
-                        <X size={12} />
+                        <X size={12} strokeWidth={2.5} />
                       </button>
                     </span>
                   )}
@@ -767,21 +817,9 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
                   )}
 
                   {timeframe !== 'this_month' && (
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 4,
-                        padding: '3px 8px',
-                        borderRadius: 99,
-                        backgroundColor: 'var(--surface2)',
-                        border: '1px solid var(--border)',
-                        color: 'var(--text-2)',
-                        fontSize: 11.5,
-                        fontWeight: 600,
-                      }}
-                    >
-                      <span>
+                    <span className="app-filter-chip">
+                      <span className="app-filter-chip-label">Period:</span>
+                      <span className="app-filter-chip-value">
                         {timeframe === 'today'
                           ? 'Today'
                           : timeframe === 'yesterday'
@@ -799,17 +837,11 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
                       <button
                         type="button"
                         onClick={() => setTimeframe('this_month')}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: 'var(--text-3)',
-                          cursor: 'pointer',
-                          display: 'grid',
-                          placeItems: 'center',
-                          padding: 0,
-                        }}
+                        className="app-filter-chip-remove"
+                        title="Reset timeframe"
+                        aria-label="Reset timeframe"
                       >
-                        <X size={11} />
+                        <X size={12} strokeWidth={2.5} />
                       </button>
                     </span>
                   )}
@@ -817,18 +849,11 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
                   <button
                     type="button"
                     onClick={handleResetFilters}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: 'var(--text-3)',
-                      fontSize: 11,
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      padding: '2px 6px',
-                      textDecoration: 'underline',
-                    }}
+                    className="app-filter-clear-btn"
+                    title="Clear all filters"
                   >
-                    Clear all
+                    <RotateCcw size={13} strokeWidth={2.2} />
+                    <span>Clear all</span>
                   </button>
                 </div>
               )}

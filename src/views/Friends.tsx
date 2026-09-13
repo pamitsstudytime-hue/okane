@@ -239,6 +239,9 @@ export default function Friends({ onNavigate }: Props) {
         const txB = contactLastTransaction(db, b.id)?.date || '';
         return txB.localeCompare(txA);
       }
+      if (sortBy === 'newest') {
+        return b.id.localeCompare(a.id);
+      }
       return 0;
     });
   }, [friends, search, typeFilter, statusFilter, sortBy, db]);
@@ -251,6 +254,7 @@ export default function Friends({ onNavigate }: Props) {
       case 'name': return 'Name (A-Z)';
       case 'recent': return 'Recent Activity';
       case 'expenses_count': return 'Most Expenses';
+      case 'newest': return 'Newest Added';
       default: return sortBy;
     }
   }, [sortBy]);
@@ -272,18 +276,69 @@ export default function Friends({ onNavigate }: Props) {
         <div>
           <h1 className="page-title">Contacts</h1>
         </div>
-        <DesktopSearchBar placeholder="Search contacts, friends..." defaultTab="contacts" />
-        <button
-          type="button"
-          id="desktop-add-contact-btn"
-          className="btn btn-primary desktop-only"
-          onClick={() => {
-            setAddDefaultType(typeFilter);
-            setShowAdd(true);
-          }}
-        >
-          <Plus size={16} /> Add Contact
-        </button>
+        <div className="desktop-search-filter-wrap desktop-only">
+          <DesktopSearchBar placeholder="Search contacts, friends..." defaultTab="contacts" />
+          <button
+            type="button"
+            id="desktop-filter-contact-btn"
+            className={`btn btn-secondary ${activeFilterCount > 0 ? 'active' : ''}`}
+            onClick={() => setShowFilters(true)}
+            title={activeFilterCount > 0 ? `${activeFilterCount} active filter${activeFilterCount === 1 ? '' : 's'}` : 'Filters'}
+            aria-label="Filter contacts"
+            style={{
+              width: 40,
+              height: 40,
+              padding: 0,
+              borderRadius: '9999px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative',
+              flexShrink: 0,
+              background: activeFilterCount > 0 ? 'var(--surface2)' : undefined,
+              borderColor: activeFilterCount > 0 ? 'var(--border2)' : undefined,
+              color: 'var(--text)',
+            }}
+          >
+            <Filter size={17} strokeWidth={2} />
+            {activeFilterCount > 0 && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: -2,
+                  right: -2,
+                  minWidth: 16,
+                  height: 16,
+                  borderRadius: 999,
+                  background: 'var(--text)',
+                  color: 'var(--surface)',
+                  fontSize: 10,
+                  fontWeight: 750,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '0 4px',
+                  lineHeight: 1,
+                }}
+              >
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+        </div>
+        <div className="page-header-actions desktop-only" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button
+            type="button"
+            id="desktop-add-contact-btn"
+            className="btn btn-primary desktop-only"
+            onClick={() => {
+              setAddDefaultType(typeFilter);
+              setShowAdd(true);
+            }}
+          >
+            <Plus size={16} /> Add Contact
+          </button>
+        </div>
       </div>
 
       {/* Clean Tab Segmented Switch & Filter Bar */}
@@ -324,61 +379,69 @@ export default function Friends({ onNavigate }: Props) {
           </button>
         </div>
 
-        {/* Active Filter Chips (if any filter is applied) */}
+        {/* Active Filter Chips (Accent Themed) */}
         {activeFilterCount > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', padding: '0 2px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', padding: '2px 2px' }}>
             {search && (
               <span className="app-filter-chip">
-                Search: "{search}"
+                <span className="app-filter-chip-label">Search:</span>
+                <span className="app-filter-chip-value">"{search}"</span>
                 <button
                   type="button"
                   onClick={() => setSearch('')}
                   className="app-filter-chip-remove"
                   title="Clear search"
+                  aria-label="Clear search"
                 >
-                  <X size={12} />
+                  <X size={12} strokeWidth={2.5} />
                 </button>
               </span>
             )}
 
             {statusFilter !== 'all' && (
               <span className="app-filter-chip">
-                Status: {statusLabel}
+                <span className="app-filter-chip-label">Status:</span>
+                <span className="app-filter-chip-value">{statusLabel}</span>
                 <button
                   type="button"
                   onClick={() => setStatusFilter('all')}
                   className="app-filter-chip-remove"
                   title="Clear status filter"
+                  aria-label="Clear status filter"
                 >
-                  <X size={12} />
+                  <X size={12} strokeWidth={2.5} />
                 </button>
               </span>
             )}
 
             {sortBy !== 'owed_desc' && (
               <span className="app-filter-chip">
-                Sort: {sortLabel}
+                <span className="app-filter-chip-label">Sort:</span>
+                <span className="app-filter-chip-value">{sortLabel}</span>
                 <button
                   type="button"
                   onClick={() => setSortBy('owed_desc')}
                   className="app-filter-chip-remove"
                   title="Reset sort"
+                  aria-label="Reset sort"
                 >
-                  <X size={12} />
+                  <X size={12} strokeWidth={2.5} />
                 </button>
               </span>
             )}
 
             {userDensityOverride !== null && (
               <span className="app-filter-chip">
-                Layout: {density === 'detailed' ? 'Detailed' : density === 'grid' ? 'Grid' : 'Compact'}
+                <span className="app-filter-chip-label">Layout:</span>
+                <span className="app-filter-chip-value">{density === 'detailed' ? 'Detailed' : density === 'grid' ? 'Grid' : 'Compact'}</span>
                 <button
                   type="button"
                   onClick={() => setUserDensityOverride(null)}
                   className="app-filter-chip-remove"
                   title="Reset layout"
+                  aria-label="Reset layout"
                 >
-                  <X size={12} />
+                  <X size={12} strokeWidth={2.5} />
                 </button>
               </span>
             )}
@@ -386,24 +449,11 @@ export default function Friends({ onNavigate }: Props) {
             <button
               type="button"
               onClick={handleClearAll}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--text-3)',
-                fontSize: '11.5px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                padding: '3px 6px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 3,
-                transition: 'color 0.15s ease',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
-              onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}
+              className="app-filter-clear-btn"
+              title="Clear all filters"
             >
-              <RotateCcw size={12} />
-              Clear all
+              <RotateCcw size={13} strokeWidth={2.2} />
+              <span>Clear all</span>
             </button>
           </div>
         )}
