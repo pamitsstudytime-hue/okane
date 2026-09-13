@@ -73,7 +73,16 @@ export default function Recurring({ onNavigate, initialArg }: Props) {
   const [modalDefaultKind, setModalDefaultKind] = useState<RecurringKind>('autopay');
   const [deletingRule, setDeletingRule] = useState<RecurringRule | null>(null);
 
-  const rules = useMemo(() => db.recurringRules || [], [db.recurringRules]);
+  const rules = useMemo(() => {
+    const rawRules = db.recurringRules || [];
+    const seen = new Set<string>();
+    return rawRules.filter(r => {
+      if (!r || !r.id) return false;
+      if (seen.has(r.id)) return false;
+      seen.add(r.id);
+      return true;
+    });
+  }, [db.recurringRules]);
   const autopayRules = useMemo(() => rules.filter(r => r.kind === 'autopay'), [rules]);
   const quickLogRules = useMemo(() => rules.filter(r => r.kind === 'quick_log'), [rules]);
 
@@ -343,7 +352,7 @@ export default function Recurring({ onNavigate, initialArg }: Props) {
         {activeFilterCount > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', padding: '2px 2px' }}>
             {search && (
-              <span className="app-filter-chip">
+              <span key="chip-search" className="app-filter-chip">
                 <span className="app-filter-chip-label">Search:</span>
                 <span className="app-filter-chip-value">"{search}"</span>
                 <button
@@ -359,7 +368,7 @@ export default function Recurring({ onNavigate, initialArg }: Props) {
             )}
 
             {statusFilter !== 'all' && (
-              <span className="app-filter-chip">
+              <span key="chip-status" className="app-filter-chip">
                 <span className="app-filter-chip-label">Status:</span>
                 <span className="app-filter-chip-value">{statusLabel}</span>
                 <button
@@ -375,7 +384,7 @@ export default function Recurring({ onNavigate, initialArg }: Props) {
             )}
 
             {freqFilter !== 'all' && (
-              <span className="app-filter-chip" style={{ textTransform: 'capitalize' }}>
+              <span key="chip-freq" className="app-filter-chip" style={{ textTransform: 'capitalize' }}>
                 <span className="app-filter-chip-label">Freq:</span>
                 <span className="app-filter-chip-value">{freqFilter}</span>
                 <button
@@ -391,7 +400,7 @@ export default function Recurring({ onNavigate, initialArg }: Props) {
             )}
 
             {sortBy !== 'due_asc' && (
-              <span className="app-filter-chip">
+              <span key="chip-sort" className="app-filter-chip">
                 <span className="app-filter-chip-label">Sort:</span>
                 <span className="app-filter-chip-value">{sortLabel}</span>
                 <button
@@ -407,6 +416,7 @@ export default function Recurring({ onNavigate, initialArg }: Props) {
             )}
 
             <button
+              key="chip-clear-all"
               type="button"
               onClick={handleClearAll}
               className="app-filter-clear-btn"
@@ -631,14 +641,14 @@ export default function Recurring({ onNavigate, initialArg }: Props) {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingBottom: 80 }}>
-          {filteredRules.map((r, idx) => {
+          {filteredRules.map((r) => {
             const cat = db.settings?.categories?.find(c => c.name.toLowerCase() === r.category.toLowerCase());
             const linkedFriend = r.friendId ? db.friends?.find(f => f.id === r.friendId) : null;
             const wallet = r.walletId ? db.wallets?.find(w => w.id === r.walletId) : null;
 
             return (
               <AutopayCard
-                key={`${r.id}-${idx}`}
+                key={r.id}
                 rule={r}
                 category={cat}
                 linkedFriend={linkedFriend}
