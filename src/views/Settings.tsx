@@ -1258,11 +1258,10 @@ export default function Settings({
 
   const showSecurity = matches(['security', 'privacy', 'pin', 'biometric', 'fingerprint', 'lock', 'face id']);
   const showAdvanced = matches(['advanced', 'features', 'ai assistant', 'gemini', 'autopay', 'recurring', 'trips', 'splits', 'dummy', 'sample']);
-  const showAppInfo = matches(['app info', 'version', 'updates', 'release notes', 'guide', 'tutorial', 'license', 'about']);
-  const showFeedback = matches(['report bug', 'feature request', 'feedback', 'support', 'contact']);
+  const showAppInfo = matches(['app info', 'version', 'updates', 'release notes', 'guide', 'tutorial', 'license', 'about', 'report bug', 'feature request', 'feedback', 'support', 'contact']);
   const showDev = isDevMode && matches(['developer', 'dev', 'experimental', 'sql', 'database']);
   const showPerf = isDevMode && (settings.enablePerformanceCard ?? true) && matches(['performance', 'animations', 'fps', 'rendering']);
-  const showSystemSection = showSecurity || showAdvanced || showAppInfo || showFeedback || showDev || showPerf;
+  const showSystemSection = showSecurity || showAdvanced || showAppInfo || showDev || showPerf;
 
   return (
     <div className="view-container settings-page-container">
@@ -3229,29 +3228,7 @@ export default function Settings({
                   />
                 </div>
 
-                {/* 2. Report Bug & Feature Card */}
-                <div className="drawer-setting-card">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
-                    <div className="drawer-card-icon">
-                      <MessageSquarePlus size={18} />
-                    </div>
-                    <div className="drawer-card-info">
-                      <div className="drawer-card-title">Feedback Card</div>
-                      <div className="drawer-card-sub">Show card in Settings</div>
-                    </div>
-                  </div>
-                  <Switch
-                    className="custom-toggle-switch"
-                    checked={settings.enableReportBugCard ?? true}
-                    onChange={(e) => {
-                      const enabled = e.target.checked;
-                      updateSettings({ enableReportBugCard: enabled });
-                      showToast(enabled ? 'Report Bug Card enabled' : 'Report Bug Card disabled');
-                    }}
-                  />
-                </div>
-
-                {/* 3. Autopay & Subscriptions */}
+                {/* 2. Autopay & Subscriptions */}
                 <div className="drawer-setting-card">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
                     <div className="drawer-card-icon">
@@ -3502,31 +3479,6 @@ export default function Settings({
                       <span className="settings-version-pill">
                         v{currentAppVersion}
                       </span>
-                      <ChevronRight className="settings-card-arrow" size={18} />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Report Bug / Suggest a Feature Card */}
-              {showFeedback && (settings.enableReportBugCard ?? true) && (
-                <div className="card settings-summary-card" onClick={() => setShowFeedbackSheet(true)}>
-                  <div className="settings-card-inner">
-                    <div className="settings-card-left">
-                      <div className="settings-card-icon">
-                        <MessageSquarePlus size={19} />
-                      </div>
-                      <div className="settings-card-text">
-                        <h2 className="settings-card-title">
-                          Report Bug / Feature Request
-                        </h2>
-                        <p className="settings-card-sub">
-                          Feedback & suggestions
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="settings-card-right">
                       <ChevronRight className="settings-card-arrow" size={18} />
                     </div>
                   </div>

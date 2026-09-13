@@ -18,12 +18,15 @@ import {
 import { useStore } from '../store';
 import type { Friend, Settlement, Expense } from '../types';
 import { friendBalance, todayISO, unsettledExpensesForFriend } from '../db';
-import { fmtMoney, fmtDate, friendInitial, getAvatarStyle } from '../utils';
+import { fmtMoney, friendInitial, getAvatarStyle } from '../utils';
 import SettleModal from '../components/SettleModal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import SettlementDetailModal from '../components/SettlementDetailModal';
 import SettlementFilterDrawer from '../components/SettlementFilterDrawer';
 import DesktopSearchBar from '../components/DesktopSearchBar';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { useScrollMargin } from '../hooks/useScrollMargin';
+import { SettlementCompactCard } from '../components/settlements/SettlementCompactCard';
 
 export type SettlementTimeframe = 'today' | 'yesterday' | 'this_week' | 'this_month' | 'last_month' | 'last_3_months' | 'this_year' | 'all';
 
@@ -34,7 +37,7 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
   const currency = settings?.currency || 'INR';
   const friends = useMemo(() => db?.friends || [], [db?.friends]);
   const expenses = useMemo(() => db?.expenses || [], [db?.expenses]);
-  const wallets = db?.wallets || [];
+  const wallets = useMemo(() => db?.wallets || [], [db?.wallets]);
 
   const [settleFriend, setSettleFriend] = useState<Friend | null>(null);
   const [delId, setDelId] = useState<string | null>(null);
@@ -288,6 +291,47 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
       return true;
     });
   }, [timeframeFiltered, friendFilter, typeFilter, searchQuery, friends, settlementExpensesMap]);
+
+  // Virtualization setup for Settlement History
+  const friendsMap = useMemo(() => new Map(friends.map(f => [f.id, f])), [friends]);
+  const walletsMap = useMemo(() => new Map(wallets.map(w => [w.id, w])), [wallets]);
+
+  const listContainerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  useEffect(() => {
+    const el = listContainerRef.current;
+    if (!el) return;
+    const updateWidth = () => {
+      setContainerWidth(el.getBoundingClientRect().width);
+    };
+    updateWidth();
+    const ro = new ResizeObserver(updateWidth);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [filteredSettlements.length]);
+
+  const numColumns = containerWidth >= 640 ? 2 : 1;
+
+  const rows = useMemo(() => {
+    const result: Settlement[][] = [];
+    for (let i = 0; i < filteredSettlements.length; i += numColumns) {
+      result.push(filteredSettlements.slice(i, i + numColumns));
+    }
+    return result;
+  }, [filteredSettlements, numColumns]);
+
+  const scrollMargin = useScrollMargin(listContainerRef, [timeframe, friendFilter, typeFilter, searchQuery]);
+
+  const virtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => listContainerRef.current?.closest<HTMLElement>('.main-content') || document.querySelector<HTMLElement>('.main-content'),
+    estimateSize: () => 58,
+    overscan: 4,
+    scrollMargin,
+    gap: 12,
+    paddingEnd: 24,
+  });
 
   const handleDelete = (id: string) => {
     deleteSettlement(id);
@@ -892,78 +936,47 @@ export default function Settlements({ initialArg }: { initialArg?: string; onCle
             </div>
           </div>
         ) : (
-          <div className="settlement-compact-list">
-            {filteredSettlements.map((s, idx) => {
-              if (!s) return null;
-              const friend = friends.find(f => f && f.id === s.friendId);
-              const wallet = wallets.find(w => w && w.id === s.walletId);
-              const walletName = wallet?.name || s.paymentMethod;
-              const amtVal = Number(s.amount) || 0;
-              const isReceived = amtVal >= 0;
+          <div
+            ref={listContainerRef}
+            className="settlement-compact-list"
+            style={{
+              position: 'relative',
+              height: `${virtualizer.getTotalSize()}px`,
+              width: '100%',
+              display: 'block',
+            }}
+          >
+            {virtualizer.getVirtualItems().map((virtualRow) => {
+              const rowSettlements = rows[virtualRow.index];
+              if (!rowSettlements) return null;
 
               return (
                 <div
-                  key={`${s.id}-${idx}`}
-                  className="settlement-compact-card"
-                  onClick={() => setDetailSettlement(s)}
+                  key={virtualRow.key}
+                  ref={virtualizer.measureElement}
+                  data-index={virtualRow.index}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualRow.start - scrollMargin}px)`,
+                    display: 'grid',
+                    gridTemplateColumns: numColumns > 1 ? 'repeat(2, minmax(0, 1fr))' : '1fr',
+                    gap: '12px',
+                  }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
-                    {friend && (
-                      <div
-                        className="avatar"
-                        style={{
-                          ...getAvatarStyle(friend.color),
-                          width: 32,
-                          height: 32,
-                          fontSize: 12,
-                          fontWeight: 700,
-                          flexShrink: 0,
-                          borderRadius: '50%',
-                          display: 'grid',
-                          placeItems: 'center',
-                        }}
-                      >
-                        {friendInitial(friend.name, friend.avatarNumber)}
-                      </div>
-                    )}
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ fontWeight: 600, fontSize: 13.5, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {friend ? friend.name : 'Deleted friend'}
-                      </div>
-                      <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {fmtDate(s.date)}{walletName ? ` · ${walletName}` : ''}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 10 }}>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontWeight: 700, fontSize: 14, color: isReceived ? 'var(--credit)' : 'var(--debit)' }}>
-                        {isReceived ? '+' : '-'}{fmtMoney(Math.abs(amtVal), currency)}
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      className="btn btn-undo"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDelId(s.id);
-                      }}
-                      title="Undo settlement"
-                      style={{
-                        width: 28,
-                        height: 28,
-                        padding: 0,
-                        borderRadius: 7,
-                        display: 'grid',
-                        placeItems: 'center',
-                        cursor: 'pointer',
-                        flexShrink: 0,
-                      }}
-                    >
-                      <RotateCcw size={12.5} strokeWidth={2} />
-                    </button>
-                  </div>
+                  {rowSettlements.map((s) => (
+                    <SettlementCompactCard
+                      key={s.id}
+                      settlement={s}
+                      friend={friendsMap.get(s.friendId)}
+                      wallet={s.walletId ? walletsMap.get(s.walletId) : undefined}
+                      currency={currency}
+                      onSelect={setDetailSettlement}
+                      onUndo={setDelId}
+                    />
+                  ))}
                 </div>
               );
             })}

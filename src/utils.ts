@@ -32,6 +32,29 @@ export function fmtDate(iso: string): string {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+export function fmtDateWithDay(iso: string): string {
+  if (!iso) return '—';
+  const d = new Date(iso + 'T00:00:00');
+  if (isNaN(d.getTime())) return fmtDate(iso);
+  const nowYear = new Date().getFullYear();
+  const dYear = d.getFullYear();
+  if (dYear === nowYear) {
+    return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+  return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+export function getRelativeDateLabel(dateStr: string): string | null {
+  const now = new Date();
+  const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+  if (dateStr === today) return 'Today';
+  const y = new Date();
+  y.setDate(y.getDate() - 1);
+  const yesterday = y.getFullYear() + '-' + String(y.getMonth() + 1).padStart(2, '0') + '-' + String(y.getDate()).padStart(2, '0');
+  if (dateStr === yesterday) return 'Yesterday';
+  return null;
+}
+
 export function fmtMonth(iso: string): string {
   const d = new Date(iso + 'T00:00:00');
   return d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });

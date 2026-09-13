@@ -122,12 +122,17 @@ function markdownToHtml(md: string): string {
   return htmlLines.join('');
 }
 
+let sharedParser: DOMParser | null = null;
+
 /**
  * Converts DOM HTML from the rich-text editor back into pure Markdown string
  */
 function htmlToMarkdown(html: string): string {
   if (!html || !html.trim()) return '';
-  const parser = new DOMParser();
+  if (!sharedParser && typeof DOMParser !== 'undefined') {
+    sharedParser = new DOMParser();
+  }
+  const parser = sharedParser || new DOMParser();
   const doc = parser.parseFromString(`<div>${html}</div>`, 'text/html');
   const root = doc.body.firstElementChild || doc.body;
 
@@ -275,11 +280,37 @@ function NoteEditorContent({
     return () => clearTimeout(timer);
   }, [editorMode]);
 
+  const syncDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Synchronize HTML from rich-editor to background Markdown state
   const syncFromRichEditor = useCallback(() => {
+    if (syncDebounceTimerRef.current) {
+      clearTimeout(syncDebounceTimerRef.current);
+      syncDebounceTimerRef.current = null;
+    }
     if (!richEditorRef.current) return;
     const md = htmlToMarkdown(richEditorRef.current.innerHTML);
     setTempNote(md);
+  }, []);
+
+  const syncFromRichEditorDebounced = useCallback(() => {
+    if (syncDebounceTimerRef.current) {
+      clearTimeout(syncDebounceTimerRef.current);
+    }
+    syncDebounceTimerRef.current = setTimeout(() => {
+      if (richEditorRef.current) {
+        const md = htmlToMarkdown(richEditorRef.current.innerHTML);
+        setTempNote(md);
+      }
+    }, 350);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (syncDebounceTimerRef.current) {
+        clearTimeout(syncDebounceTimerRef.current);
+      }
+    };
   }, []);
 
   // Handle switching between Text mode and Markdown mode
@@ -517,7 +548,7 @@ function NoteEditorContent({
                       setIsFocused(false);
                       syncFromRichEditor();
                     }}
-                    onInput={syncFromRichEditor}
+                    onInput={syncFromRichEditorDebounced}
                     onClick={handleRichEditorClick}
                     onKeyDown={e => {
                       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {

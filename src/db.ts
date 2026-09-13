@@ -125,6 +125,7 @@ export function splitSQLStatements(sqlText: string): string[] {
 }
 
 export function executeRawSQL(sqlQuery: string): unknown {
+  ensureSQLTablesSynced();
   initSQLTables();
   const res = alasql(sqlQuery);
 
@@ -958,7 +959,17 @@ export function defaultSampleExpenses(walletId: string): Expense[] {
   ];
 }
 
+let isSQLDirty = false;
+
+export function ensureSQLTablesSynced(explicitDB?: AppDB): void {
+  if (!isSQLDirty && !explicitDB) return;
+  const target = explicitDB || cachedAppDB || loadDB();
+  syncDBToSQLTables(target);
+  isSQLDirty = false;
+}
+
 export function syncDBToSQLTables(db: AppDB): void {
+  isSQLDirty = false;
   resetSQLTables();
   try {
     const safeInsert = (sql: string, params: unknown[]) => {
@@ -1536,6 +1547,7 @@ export function loadDB(): AppDB {
 
 export function saveDB(db: AppDB): void {
   cachedAppDB = db;
+  isSQLDirty = true;
 
   // Immediate lightweight JSON save to keep UI responsive and safe
   try {
@@ -1544,24 +1556,38 @@ export function saveDB(db: AppDB): void {
     console.warn('localStorage save warning:', e);
   }
 
-  // Debounce heavy full SQL relational table syncs and string generation
+  // Defer heavy full SQL relational table syncs to idle time so typing and interactions are never blocked
   if (saveDebounceTimer) {
     clearTimeout(saveDebounceTimer);
   }
 
   saveDebounceTimer = setTimeout(() => {
-    try {
-      syncDBToSQLTables(db);
-    } catch (e) {
-      console.warn('Debounced SQL sync notice:', e);
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      (window as unknown as { requestIdleCallback: (cb: () => void) => void }).requestIdleCallback(() => {
+        if (isSQLDirty && cachedAppDB) {
+          try {
+            syncDBToSQLTables(cachedAppDB);
+          } catch (e) {
+            console.warn('Idle SQL sync notice:', e);
+          }
+        }
+      });
+    } else {
+      if (isSQLDirty && cachedAppDB) {
+        try {
+          syncDBToSQLTables(cachedAppDB);
+        } catch (e) {
+          console.warn('Debounced SQL sync notice:', e);
+        }
+      }
     }
-  }, 300);
+  }, 2500);
 }
 
 // Flush pending writes immediately if the Android app is closed/hidden
 if (typeof window !== 'undefined') {
   window.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden' && cachedAppDB) {
+    if (document.visibilityState === 'hidden' && cachedAppDB && isSQLDirty) {
       if (saveDebounceTimer) {
         clearTimeout(saveDebounceTimer);
         saveDebounceTimer = null;

@@ -121,7 +121,24 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
     return { allBalances: balances, netFriends: credit - debt };
   }, [db]);
 
-  const recentExpenses = useMemo(() => groupExpenses(expenses, db.wallets, db.friends, db.settlements).slice(0, 5), [expenses, db.wallets, db.friends, db.settlements]);
+  const recentExpenses = useMemo(() => {
+    // Process only top candidates needed for the 5 dashboard entries rather than the entire DB history
+    const candidateExpenses: Expense[] = [];
+    const neededGroupIds = new Set<string>();
+    for (let i = 0; i < expenses.length && candidateExpenses.length < 25; i++) {
+      const e = expenses[i];
+      candidateExpenses.push(e);
+      if (e.groupId) neededGroupIds.add(e.groupId);
+    }
+    if (neededGroupIds.size > 0) {
+      for (const e of expenses) {
+        if (e.groupId && neededGroupIds.has(e.groupId) && !candidateExpenses.some(c => c.id === e.id)) {
+          candidateExpenses.push(e);
+        }
+      }
+    }
+    return groupExpenses(candidateExpenses, db.wallets, db.friends, db.settlements).slice(0, 5);
+  }, [expenses, db.wallets, db.friends, db.settlements]);
 
   const balancedFriends = useMemo(() =>
     allBalances

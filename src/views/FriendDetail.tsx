@@ -159,6 +159,18 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
 
   const shown = useMemo(() => tab === 'active' ? activeExps : settledExps, [tab, activeExps, settledExps]);
 
+  const [tabLimits, setTabLimits] = useState<Record<string, number>>({});
+  const currentLimit = tabLimits[`${friendId}_${tab}`] || 60;
+
+  const displayedShown = useMemo(() => shown.slice(0, currentLimit), [shown, currentLimit]);
+
+  const categories = db?.settings?.categories;
+  const categoriesMap = useMemo(() => {
+    const map = new Map<string, NonNullable<typeof categories>[0]>();
+    (categories || []).forEach(c => map.set(c.name, c));
+    return map;
+  }, [categories]);
+
   const connectedRules = useMemo(() => {
     if (!friend) return [];
     return (db.recurringRules || []).filter(
@@ -1056,8 +1068,8 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
                       gap: 4,
                     }}
                   >
-                    {shown.map((e, idx) => {
-                      const cat = db.settings.categories.find(c => c.name === e.category);
+                    {displayedShown.map((e, idx) => {
+                      const cat = categoriesMap.get(e.category);
                       const isIn = expenseFlow(e) === 'in';
                       const isSettlement = e.category === 'Settlement' || Boolean(e.settlementId) || e.description.startsWith('Settlement');
 
@@ -1137,6 +1149,22 @@ export default function FriendDetail({ friendId, onNavigate }: Props) {
                         </div>
                       );
                     })}
+
+                    {shown.length > currentLimit && (
+                      <div style={{ display: 'flex', justifyContent: 'center', marginTop: 10 }}>
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          style={{ fontSize: 12, padding: '6px 16px' }}
+                          onClick={() => setTabLimits(prev => ({
+                            ...prev,
+                            [`${friendId}_${tab}`]: Math.min(shown.length, currentLimit + 60),
+                          }))}
+                        >
+                          Showing {currentLimit} of {shown.length} transactions — Load More
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
