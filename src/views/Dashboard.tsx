@@ -180,9 +180,9 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
           {/* Top/Left Section: Total Net Worth & Interactive Wallet Chips */}
           <div className="dashboard-hero-top">
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div className="dashboard-hero-header-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', lineHeight: 1.1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.8px', lineHeight: 1 }}>
                     Total Net Worth
                   </span>
                   {hideAmounts && (
@@ -212,20 +212,30 @@ export default function Dashboard({ onNavigate, onAddExpense }: Props) {
                     </button>
                   )}
                 </div>
-                <span className="badge" style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text-2)', fontSize: 11, fontWeight: 600, borderRadius: 999, padding: '3px 9px' }}>
+                <span className="badge" style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text-2)', fontSize: 11, fontWeight: 600, borderRadius: 999, padding: '2px 8px', lineHeight: 1.2 }}>
                   {`${visibleWallets.length} ${visibleWallets.length === 1 ? 'Wallet' : 'Wallets'}`}
                 </span>
               </div>
 
-              <div style={{ fontSize: 32, fontWeight: 800, color: totalBalance < 0 ? 'var(--debit)' : 'var(--text)', marginTop: 4, letterSpacing: '-0.8px' }}>
+              <div
+                className="dashboard-hero-balance"
+                style={{
+                  fontSize: 32,
+                  fontWeight: 800,
+                  color: totalBalance < 0 ? 'var(--debit)' : 'var(--text)',
+                  marginTop: 10,
+                  lineHeight: 1.25,
+                  letterSpacing: '-0.8px'
+                }}
+              >
                 {fmtMoney(totalBalance, currency, isCardMasked)}
               </div>
             </div>
 
             {/* Quick Wallet Breakdown Chips */}
-            <div style={{ marginTop: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, minHeight: 30 }}>
-                <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', display: 'flex', alignItems: 'center' }}>
+            <div className="dashboard-wallet-breakdown-section" style={{ marginTop: 18 }}>
+              <div className="dashboard-wallet-breakdown-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', display: 'flex', alignItems: 'center', lineHeight: 1.2 }}>
                   Wallets Breakdown
                 </div>
                 {visibleWallets.length >= 2 && (

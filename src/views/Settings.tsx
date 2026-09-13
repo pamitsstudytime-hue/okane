@@ -14,7 +14,7 @@ import { Share } from "@capacitor/share";
 
 import CategoryIcon, { AVAILABLE_ICONS } from '../components/CategoryIcon';
 import PinSetupDrawer from '../components/PinSetupDrawer';
-import { CURRENT_APP_VERSION } from '../utils/updateManager';
+import { CURRENT_APP_VERSION, getEffectiveAppVersion } from '../utils/updateManager';
 import { showSoftKeyboard } from '../utils/keyboard';
 
 function ColorPickerSection({ color, onChangeColor }: { color: string; onChangeColor: (c: string) => void }) {
@@ -368,7 +368,7 @@ export default function Settings({
       updateSettings({ enableSecurityLock: true });
       showToast('PIN Security Lock enabled!');
     } else {
-      updateSettings({ enableSecurityLock: false, enableBiometricLock: false });
+      updateSettings({ enableSecurityLock: false, enableBiometricLock: false, autoUnlockOnFace: false });
       showToast('Security lock disabled.');
     }
   };
@@ -540,6 +540,13 @@ export default function Settings({
   });
   const [showJsonView, setShowJsonView] = useState(false);
 
+  const currentAppVersion = useMemo(() => {
+    return getEffectiveAppVersion(
+      settings.installedVersion,
+      typeof jsonSettings.appVersion === 'string' ? jsonSettings.appVersion : undefined
+    );
+  }, [settings.installedVersion, jsonSettings.appVersion]);
+
   // Feedback & Bug Report state
   const [feedbackType, setFeedbackType] = useState<'bug' | 'feature'>('bug');
   const [feedbackTitle, setFeedbackTitle] = useState('');
@@ -570,7 +577,7 @@ export default function Settings({
     setErrorMessage('');
     setCreatedIssueInfo(null);
 
-    const appVersion = String(settings.installedVersion || jsonSettings.appVersion || CURRENT_APP_VERSION);
+    const appVersion = currentAppVersion;
     const platformName = Capacitor.isNativePlatform() ? Capacitor.getPlatform() : 'Web Browser';
     const token = githubTokenInput.trim() || localStorage.getItem('okane_github_token')?.trim() || '';
 
@@ -1157,7 +1164,7 @@ export default function Settings({
   const showDataSection = showData;
 
   const showSecurity = matches(['security', 'privacy', 'pin', 'biometric', 'fingerprint', 'lock', 'face id']);
-  const showAdvanced = matches(['advanced', 'features', 'ai assistant', 'gemini', 'autopay', 'recurring', 'trips', 'splits']);
+  const showAdvanced = matches(['advanced', 'features', 'ai assistant', 'gemini', 'autopay', 'recurring', 'trips', 'splits', 'dummy', 'sample']);
   const showAppInfo = matches(['app info', 'version', 'updates', 'release notes', 'guide', 'tutorial', 'license', 'about']);
   const showFeedback = matches(['report bug', 'feature request', 'feedback', 'support', 'contact']);
   const showDev = isDevMode && matches(['developer', 'dev', 'experimental', 'sql', 'database']);
@@ -1279,7 +1286,12 @@ export default function Settings({
               {showAutoKeyboard && (
                 <div
                   className="card settings-summary-card"
-                  onClick={() => updateSettings({ autoOpenKeyboard: !(settings.autoOpenKeyboard ?? true) })}
+                  onClick={() => {
+                    const nextVal = !(settings.autoOpenKeyboard ?? false);
+                    localStorage.setItem('auto_open_keyboard', String(nextVal));
+                    updateSettings({ autoOpenKeyboard: nextVal });
+                    showToast(nextVal ? 'Auto open keyboard enabled' : 'Auto open keyboard disabled');
+                  }}
                 >
                   <div className="settings-card-inner">
                     <div className="settings-card-left">
@@ -1297,8 +1309,13 @@ export default function Settings({
                     <div className="settings-card-right" onClick={(e) => e.stopPropagation()}>
                       <Switch
                         size="small"
-                        checked={settings.autoOpenKeyboard ?? true}
-                        onChange={(e) => updateSettings({ autoOpenKeyboard: e.target.checked })}
+                        checked={settings.autoOpenKeyboard ?? false}
+                        onChange={(e) => {
+                          const val = e.target.checked;
+                          localStorage.setItem('auto_open_keyboard', String(val));
+                          updateSettings({ autoOpenKeyboard: val });
+                          showToast(val ? 'Auto open keyboard enabled' : 'Auto open keyboard disabled');
+                        }}
                         sx={{
                           '& .MuiSwitch-switchBase.Mui-checked': {
                             color: '#ffffff',
@@ -2975,7 +2992,7 @@ export default function Settings({
             )}
 
             {/* Add Dummy Data Card */}
-            {showData && (
+            {showData && (settings.enableDummyData ?? false) && (
               <div
                 className="card settings-summary-card"
                 onClick={() => setShowDummyModal(true)}
@@ -3073,11 +3090,13 @@ export default function Settings({
                   <span style={{ fontSize: 10, color: 'var(--text-3)' }}>Restore from backup</span>
                 </button>
 
-                <button type="button" className="data-action-card" onClick={() => { setShowDataSheet(false); setShowDummyModal(true); }}>
-                  <Sparkles size={24} style={{ color: 'var(--accent)' }} />
-                  <span className="data-action-label" style={{ fontWeight: 600 }}>Dummy Data</span>
-                  <span style={{ fontSize: 10, color: 'var(--text-3)' }}>Add sample records</span>
-                </button>
+                {(settings.enableDummyData ?? false) && (
+                  <button type="button" className="data-action-card" onClick={() => { setShowDataSheet(false); setShowDummyModal(true); }}>
+                    <Sparkles size={24} style={{ color: 'var(--accent)' }} />
+                    <span className="data-action-label" style={{ fontWeight: 600 }}>Dummy Data</span>
+                    <span style={{ fontSize: 10, color: 'var(--text-3)' }}>Add sample records</span>
+                  </button>
+                )}
               </div>
 
               <div className="data-reset-row" onClick={() => { setShowDataSheet(false); setShowReset(true); }} role="button" tabIndex={0}>
@@ -3236,7 +3255,7 @@ export default function Settings({
                     style={{ width: 16, height: 16, accentColor: 'var(--accent)', cursor: 'pointer' }}
                   />
                   <label htmlFor="includeVersionInfo" style={{ fontSize: 12, color: 'var(--text-2)', cursor: 'pointer', flex: 1, userSelect: 'none' }}>
-                    Include current app version (<strong style={{ color: 'var(--text)' }}>v{String(settings.installedVersion || jsonSettings.appVersion || CURRENT_APP_VERSION)}</strong>) & device details
+                    Include current app version (<strong style={{ color: 'var(--text)' }}>v{currentAppVersion}</strong>) & device details
                   </label>
                 </div>
 
@@ -3336,7 +3355,7 @@ export default function Settings({
                     </div>
                     {feedbackTitle.trim() && (
                       <a
-                        href={`https://github.com/prathambahekar/okane/issues/new?title=${encodeURIComponent(`[${feedbackType.toUpperCase()}] ${feedbackTitle.trim()}`)}&body=${encodeURIComponent(`${feedbackDescription.trim()}\n\n---\n**Metadata:**\n- Type: ${feedbackType}\n- Version: ${settings.installedVersion || jsonSettings.appVersion || CURRENT_APP_VERSION}`)}`}
+                        href={`https://github.com/prathambahekar/okane/issues/new?title=${encodeURIComponent(`[${feedbackType.toUpperCase()}] ${feedbackTitle.trim()}`)}&body=${encodeURIComponent(`${feedbackDescription.trim()}\n\n---\n**Metadata:**\n- Type: ${feedbackType}\n- Version: ${currentAppVersion}`)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="btn btn-secondary btn-sm"
@@ -3376,7 +3395,7 @@ export default function Settings({
                       Advanced Features
                     </h3>
                     <p style={{ fontSize: 11.5, color: 'var(--text-3)', margin: '1px 0 0 0' }}>
-                      Toggle AI assistant, report bug card, autopay & trip bill splitting
+                      Toggle AI assistant, report bug card, autopay, trip bill splitting & dummy data
                     </p>
                   </div>
                 </div>
@@ -3575,6 +3594,55 @@ export default function Settings({
                     />
                   </div>
                 </div>
+
+                {/* 5. Dummy / Sample Data */}
+                <div style={{
+                  padding: '14px 16px',
+                  borderRadius: 14,
+                  background: 'var(--surface2)',
+                  border: '1px solid var(--border)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
+                    <div style={{
+                      width: 36, height: 36, borderRadius: 8,
+                      background: (settings.enableDummyData ?? false) ? 'var(--accent-soft)' : 'var(--border)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                    }}>
+                      <Sparkles size={18} style={{ color: (settings.enableDummyData ?? false) ? 'var(--accent)' : 'var(--text-3)' }} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>Add Dummy Data</div>
+                      <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2 }}>
+                        Populate sample expenses, friends, splits & vendor records
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                    {(settings.enableDummyData ?? false) && (
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => { setShowAdvancedSheet(false); setShowDummyModal(true); }}
+                        style={{ padding: '3px 10px', fontSize: 11.5, height: 28, gap: 4 }}
+                      >
+                        <Sparkles size={13} /> Open
+                      </button>
+                    )}
+                    <Switch
+                      checked={settings.enableDummyData ?? false}
+                      onChange={(e) => {
+                        const enabled = e.target.checked;
+                        updateSettings({ enableDummyData: enabled });
+                        showToast(enabled ? 'Dummy Data options enabled' : 'Dummy Data options disabled');
+                      }}
+                      color="primary"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>,
@@ -3722,7 +3790,7 @@ export default function Settings({
 
                   <div className="settings-card-right">
                     <span className="settings-version-pill">
-                      v{String(settings.installedVersion || jsonSettings.appVersion || CURRENT_APP_VERSION)}
+                      v{currentAppVersion}
                     </span>
                     <ChevronRight className="settings-card-arrow" size={18} />
                   </div>
@@ -4019,7 +4087,7 @@ export default function Settings({
                       App Version & Info
                     </h3>
                     <p style={{ fontSize: 11.5, color: 'var(--text-3)', margin: '1px 0 0 0' }}>
-                      v{String(settings.installedVersion || jsonSettings.appVersion || CURRENT_APP_VERSION)}
+                      v{currentAppVersion}
                     </p>
                   </div>
                 </div>
@@ -4702,7 +4770,7 @@ export default function Settings({
                 </div>
               ) : (
                 displayReleaseHistory.map((item, idx) => {
-                  const currentVer = settings.installedVersion || jsonSettings.appVersion || CURRENT_APP_VERSION;
+                  const currentVer = currentAppVersion;
                   const normalizedItemVer = item.version.replace(/^v/, '').trim();
                   const normalizedCurrentVer = String(currentVer).replace(/^v/, '').trim();
                   const isCurrent = normalizedItemVer === normalizedCurrentVer;
@@ -5012,7 +5080,7 @@ export default function Settings({
                 </div>
 
                 <Switch
-                  checked={Boolean(settings.autoUnlockOnFace ?? false)}
+                  checked={Boolean(settings.autoUnlockOnFace && isLockEnabled)}
                   disabled={!isLockEnabled}
                   onChange={(e) => {
                     const enabled = e.target.checked;

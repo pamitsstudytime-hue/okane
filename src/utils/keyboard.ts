@@ -3,19 +3,21 @@ import { Keyboard as CapKeyboard } from '@capacitor/keyboard';
 
 /**
  * Returns whether the user has enabled auto-opening the soft keyboard on mobile.
- * Defaults to true.
+ * Defaults to false (off by default).
  */
 export function isAutoOpenKeyboardEnabled(): boolean {
   try {
     const pref = localStorage.getItem('auto_open_keyboard');
-    return pref !== null ? pref === 'true' : true;
+    return pref === 'true';
   } catch {
-    return true;
+    return false;
   }
 }
 
 /**
  * Programmatically focuses an element and prompts the soft keyboard on mobile devices.
+ * Implements gesture simulation, selection management, and animation-aware retries
+ * so Android and mobile webviews reliably summon the virtual keyboard.
  */
 export function showSoftKeyboard(
   target?: HTMLElement | null,
@@ -26,7 +28,11 @@ export function showSoftKeyboard(
     return;
   }
 
-  if (target) {
+  if (!target) return;
+
+  const focusAndPrompt = () => {
+    if (!target || !document.body.contains(target)) return;
+
     try {
       target.focus({ preventScroll: !options?.scroll });
     } catch {
@@ -35,6 +41,13 @@ export function showSoftKeyboard(
       } catch {
         // ignore
       }
+    }
+
+    // Simulate input click for Chromium/Android WebView user gesture recognition
+    try {
+      target.click();
+    } catch {
+      // ignore
     }
 
     if (
@@ -69,25 +82,33 @@ export function showSoftKeyboard(
 
     if (options?.scroll !== false) {
       try {
-        setTimeout(() => {
-          if (document.activeElement === target) {
-            target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
-          }
-        }, 80);
+        target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
       } catch {
         // ignore
       }
     }
-  }
 
-  // If on native platform or plugin available, summon soft keyboard
-  if (Capacitor.isNativePlatform() || Capacitor.isPluginAvailable('Keyboard')) {
-    try {
-      CapKeyboard.show().catch(() => {});
-    } catch {
-      // ignore
+    // If on native platform or plugin available, summon soft keyboard
+    if (Capacitor.isNativePlatform() || Capacitor.isPluginAvailable('Keyboard')) {
+      try {
+        CapKeyboard.show().catch(() => {});
+      } catch {
+        // ignore
+      }
     }
-  }
+  };
+
+  // Immediate attempt
+  focusAndPrompt();
+
+  // Retry after modal enter transitions (Android WebView requires target to be fully positioned in window)
+  const t1 = setTimeout(focusAndPrompt, 120);
+  const t2 = setTimeout(focusAndPrompt, 280);
+
+  return () => {
+    clearTimeout(t1);
+    clearTimeout(t2);
+  };
 }
 
 /**

@@ -156,6 +156,7 @@ export interface Settings {
   floatingSidebar?: boolean; // Floating card layout or docked full-height layout for desktop sidebar
   hideAmounts?: boolean; // Mask financial amounts for privacy in public
   hideNavLabels?: boolean; // Hide text labels under bottom navigation bar (default: true)
+  enableDummyData?: boolean; // Toggle dummy/sample data generation options (default: false)
 }
 
 export type RecurringKind = 'autopay' | 'quick_log';

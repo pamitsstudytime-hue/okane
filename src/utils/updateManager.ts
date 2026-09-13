@@ -154,7 +154,22 @@ export async function fetchRemoteVersion(): Promise<UpdateInfo | null> {
   return null;
 }
 
-export const CURRENT_APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.9.0';
+export const CURRENT_APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.9.5';
+
+/**
+ * Returns the effective app version, ensuring the currently executing bundle version
+ * (or any newer verified installed/over-the-air update) takes precedence over stale stored database values.
+ */
+export function getEffectiveAppVersion(installedVersion?: string, remoteVersion?: string): string {
+  let highest = CURRENT_APP_VERSION;
+  if (installedVersion && compareVersions(installedVersion, highest) > 0) {
+    highest = installedVersion;
+  }
+  if (remoteVersion && compareVersions(remoteVersion, highest) > 0) {
+    highest = remoteVersion;
+  }
+  return highest;
+}
 
 export function getStoredInstalledVersion(): string {
   const stored = localStorage.getItem('installed_app_version');

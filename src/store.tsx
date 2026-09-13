@@ -19,6 +19,7 @@ import {
   getStoredInstalledVersion,
   setStoredInstalledVersion,
   CURRENT_APP_VERSION,
+  getEffectiveAppVersion,
   type UpdateInfo,
   type ReleaseItem,
 } from './utils/updateManager';
@@ -89,7 +90,24 @@ const DataStateContext = createContext<DataStateContextType | null>(null);
 const UIFeedbackContext = createContext<UIFeedbackContextType | null>(null);
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const [db, setDB] = useState<AppDB>(() => loadDB());
+  const [db, setDB] = useState<AppDB>(() => {
+    const loaded = loadDB();
+    const effective = getEffectiveAppVersion(loaded.settings.installedVersion);
+    if (loaded.settings.installedVersion !== effective) {
+      loaded.settings.installedVersion = effective;
+      setStoredInstalledVersion(effective);
+      saveDB(loaded);
+    }
+    // Ensure PIN passcode lock and biometric lock default to off unless explicitly enabled by user
+    if (typeof localStorage !== 'undefined' && !localStorage.getItem('okane_security_lock_default_v2')) {
+      localStorage.setItem('okane_security_lock_default_v2', 'true');
+      loaded.settings.enableSecurityLock = false;
+      loaded.settings.enableBiometricLock = false;
+      loaded.settings.autoUnlockOnFace = false;
+      saveDB(loaded);
+    }
+    return loaded;
+  });
   const [, setUndoStack] = useState<UndoEntry[]>([]);
   const [toasts, setToasts] = useState<Toast[]>([]);
 

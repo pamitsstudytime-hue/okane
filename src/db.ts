@@ -666,14 +666,15 @@ export function defaultDB(): AppDB {
       enableSecurityLock: false,
       enableBiometricLock: false,
       securityPin: '',
-      requireBiometricOnResume: true,
+      requireBiometricOnResume: false,
       autoUnlockOnFace: false,
       hideScrollbar: typeof localStorage !== 'undefined' ? (localStorage.getItem('hide_scrollbar') !== null ? localStorage.getItem('hide_scrollbar') === 'true' : true) : true,
       searchLocation: (typeof localStorage !== 'undefined' ? (localStorage.getItem('search_location') as 'floating' | 'topbar') : 'topbar') || 'topbar',
-      autoOpenKeyboard: typeof localStorage !== 'undefined' ? (localStorage.getItem('auto_open_keyboard') !== null ? localStorage.getItem('auto_open_keyboard') === 'true' : true) : true,
+      autoOpenKeyboard: typeof localStorage !== 'undefined' ? (localStorage.getItem('auto_open_keyboard') === 'true') : false,
       floatingSidebar: typeof localStorage !== 'undefined' ? localStorage.getItem('sidebar_floating') === 'true' : false,
       hideAmounts: typeof localStorage !== 'undefined' ? localStorage.getItem('hide_amounts') === 'true' : false,
       hideNavLabels: typeof localStorage !== 'undefined' ? (localStorage.getItem('hide_nav_labels') !== null ? localStorage.getItem('hide_nav_labels') === 'true' : true) : true,
+      enableDummyData: false,
     },
     recurringRules: [],
   };
@@ -755,9 +756,11 @@ export function sanitizeLoadedDB(rawDB: unknown): AppDB {
     categories: safeCategories,
     currency: parsed.settings?.currency || 'INR',
     defaultWalletId: parsed.settings?.defaultWalletId || safeWallets[0].id,
-    defaultCategory: parsed.settings?.defaultCategory || safeCategories[0].name,
-    enableSecurityLock: Boolean(parsed.settings?.enableSecurityLock && parsed.settings?.securityPin),
-    enableBiometricLock: Boolean(parsed.settings?.enableBiometricLock && parsed.settings?.securityPin),
+    enableSecurityLock: parsed.settings?.enableSecurityLock === true && Boolean(parsed.settings?.securityPin),
+    enableBiometricLock: parsed.settings?.enableBiometricLock === true && Boolean(parsed.settings?.securityPin),
+    autoUnlockOnFace: parsed.settings?.autoUnlockOnFace === true && Boolean(parsed.settings?.enableSecurityLock),
+    requireBiometricOnResume: parsed.settings?.requireBiometricOnResume === true,
+    autoOpenKeyboard: parsed.settings?.autoOpenKeyboard === true || (typeof localStorage !== 'undefined' && localStorage.getItem('auto_open_keyboard') === 'true'),
   };
 
   return {

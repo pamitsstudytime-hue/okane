@@ -8,6 +8,11 @@ const config: CapacitorConfig = {
     StatusBar: {
       overlaysWebView: true,
     },
+    Keyboard: {
+      resize: 'body',
+      style: 'dark',
+      resizeOnFullScreen: true,
+    },
   },
 };
 

@@ -225,10 +225,12 @@ function AppInner() {
 
   // Auto open soft keyboard when any search bar, input or textbox is selected/focused on mobile
   useEffect(() => {
-    const autoOpen = db.settings?.autoOpenKeyboard ?? true;
+    const autoOpen = db.settings?.autoOpenKeyboard ?? false;
     if (!autoOpen) return;
 
+    let isTriggering = false;
     const handleInputInteraction = (e: Event) => {
+      if (isTriggering) return;
       const target = e.target as HTMLElement | null;
       if (!target) return;
 
@@ -251,7 +253,9 @@ function AppInner() {
       }
 
       // Invoke soft keyboard manager with auto scrolling
+      isTriggering = true;
       showSoftKeyboard(target, { placeCursorAtEnd: true, scroll: true });
+      setTimeout(() => { isTriggering = false; }, 100);
     };
 
     document.addEventListener('focusin', handleInputInteraction, true);

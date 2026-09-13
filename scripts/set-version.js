@@ -66,5 +66,23 @@ if (fs.existsSync(gradlePath)) {
   console.log(`  ✓ Updated android/app/build.gradle -> versionName "${newVersion}"`);
 }
 
+// 4. Update src-tauri/tauri.conf.json
+const tauriConfPath = path.join(rootDir, 'src-tauri', 'tauri.conf.json');
+if (fs.existsSync(tauriConfPath)) {
+  const content = JSON.parse(fs.readFileSync(tauriConfPath, 'utf8'));
+  content.version = newVersion;
+  fs.writeFileSync(tauriConfPath, JSON.stringify(content, null, 2) + '\n');
+  console.log(`  ✓ Updated src-tauri/tauri.conf.json -> version: "${newVersion}"`);
+}
+
+// 5. Update android/app/src/main/assets/public/settings.json if present
+const androidSettingsJsonPath = path.join(rootDir, 'android', 'app', 'src', 'main', 'assets', 'public', 'settings.json');
+if (fs.existsSync(androidSettingsJsonPath)) {
+  const content = JSON.parse(fs.readFileSync(androidSettingsJsonPath, 'utf8'));
+  content.appVersion = newVersion;
+  fs.writeFileSync(androidSettingsJsonPath, JSON.stringify(content, null, 2) + '\n');
+  console.log(`  ✓ Updated android/app/src/main/assets/public/settings.json -> appVersion: "${newVersion}"`);
+}
+
 console.log(`\n✅ Version successfully set to v${newVersion}!`);
 console.log(`   Frontend TypeScript/React components automatically pick up the new version.\n`);
