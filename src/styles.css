@@ -9430,6 +9430,101 @@ body.no-animations *::after,
   }
 }
 
+/* Note Rich Editor & Mode Switcher */
+.note-rich-editor {
+  width: 100%;
+  min-height: 105px;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 14px 28px;
+  font-size: 13.5px;
+  color: var(--text);
+  outline: none;
+  line-height: 1.55;
+  font-family: inherit;
+  box-sizing: border-box;
+  white-space: pre-wrap;
+  word-break: break-word;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  cursor: text;
+}
+
+.note-rich-editor:focus {
+  border-color: var(--border2);
+  box-shadow: 0 0 0 1px var(--border2);
+}
+
+.note-rich-editor:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-3);
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+.note-rich-editor ul,
+.note-rich-editor ol {
+  margin: 4px 0 4px 20px;
+  padding: 0;
+}
+
+.note-rich-editor li {
+  margin: 2px 0;
+}
+
+.note-rich-editor code {
+  background: var(--surface3);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9em;
+  border: 1px solid var(--border);
+}
+
+.note-task-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 3px 0;
+}
+
+.note-mode-toggle-btn {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--text-3);
+  padding: 2.5px 9px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.15s ease;
+  user-select: none;
+  z-index: 2;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.note-mode-toggle-btn:hover {
+  background: var(--surface2);
+  color: var(--text);
+  border-color: var(--border2);
+}
+
+.note-mode-toggle-btn.active-md {
+  background: var(--surface);
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
 
 /* Print Styles for PDF Export */
 #printable-trip-report {
